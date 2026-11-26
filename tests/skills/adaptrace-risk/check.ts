@@ -48,7 +48,8 @@ const time = (v: unknown) =>
 const git = existsSync(join(repo, ".git"));
 // With ADAPTRACE_TEST_DAY, the day setup.sh rendered the dates for.
 // Empty is unset, as in setup.sh.
-const day = process.env.ADAPTRACE_TEST_DAY || undefined;
+// It matters only for a test repository (git).
+const day = (git && process.env.ADAPTRACE_TEST_DAY) || undefined;
 if (day !== undefined && !/^\d{4}-\d{2}-\d{2}$/.test(day)) {
   console.error(`ADAPTRACE_TEST_DAY is not a day: ${day} (YYYY-MM-DD)`);
   process.exit(2);
@@ -72,8 +73,11 @@ const original = (path: string) => {
   }
   return r.stdout.toString();
 };
-const originalGenerated = (path: string) =>
-  /^generated: (.*)$/m.exec(original(path))?.[1] ?? null;
+// The original frontmatter, parsed.
+const originalFrontmatter = (path: string): Record<string, unknown> => {
+  const doc = parseDocument(original(path));
+  return (doc.ok ? doc.frontmatter : null) ?? {};
+};
 
 // Nothing left to review: no risk is stale.
 const report = stale(
@@ -151,11 +155,13 @@ check(
     String(fm(SMS).impact) === "中" &&
     (!git ||
       time((fm(SMS).generated as { at?: unknown } | undefined)?.at) >
-        time(/at: ([^ }]+)/.exec(originalGenerated(SMS) ?? "")?.[1])) &&
+        time(
+          (originalFrontmatter(SMS).generated as { at?: unknown } | undefined)
+            ?.at,
+        )) &&
     time(fm(SMS).stale_after) > now &&
     (!git ||
-      time(fm(SMS).stale_after) >
-        time(/^stale_after: (.*)$/m.exec(original(SMS))?.[1])),
+      time(fm(SMS).stale_after) > time(originalFrontmatter(SMS).stale_after)),
   `the SMS cost risk is reassessed (probability: ${String(fm(SMS).probability)}, impact: ${String(fm(SMS).impact)})`,
 );
 check(
@@ -242,12 +248,28 @@ if (git) {
       changed.push(`.adaptrace/${path} (unreadable)`);
       continue;
     }
-    const rest = (fm: Record<string, unknown> | null) =>
+    // A single value and a one-item list are the same; nested keys in any
+    // order.
+    const canonical = (v: unknown): unknown =>
+      Array.isArray(v)
+        ? v.length === 1
+          ? canonical(v[0])
+          : v.map(canonical)
+        : v !== null && typeof v === "object" && !(v instanceof Date)
+          ? Object.fromEntries(
+              Object.entries(v)
+                .sort(([a], [b]) => a.localeCompare(b))
+                .map(([k, x]) => [k, canonical(x)]),
+            )
+          : v;
+    const rest = (frontmatter: Record<string, unknown> | null) =>
       JSON.stringify(
-        Object.fromEntries(
-          Object.entries(fm ?? {})
-            .filter(([k]) => !keys.includes(k))
-            .sort(([a], [b]) => a.localeCompare(b)),
+        canonical(
+          Object.fromEntries(
+            Object.entries(frontmatter ?? {}).filter(
+              ([k]) => !keys.includes(k),
+            ),
+          ),
         ),
       );
     // The IdP risk's body stays. The others keep the lines of their body as
@@ -259,9 +281,9 @@ if (git) {
         .split("\n")
         .filter((l) => l.trim() !== "");
     const kept = lines(before.body).filter((l) => !l.startsWith("対応方針"));
-    const now = lines(after.body);
+    const afterLines = lines(after.body);
     let at = 0;
-    for (const l of now) if (at < kept.length && l === kept[at]) at++;
+    for (const l of afterLines) if (at < kept.length && l === kept[at]) at++;
     const bodyOk =
       path === IDP
         ? after.body.trimEnd() === before.body.trimEnd()
