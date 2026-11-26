@@ -10,7 +10,7 @@
 - データモデル（型の一覧と依存関係のキー）は、v1.0.0で確定した。仕様は `docs/spec/schema.md`（v1.0）。型は、OKFの方針に従い、プロジェクトごとに追加できる。依存関係のキーを変えるときは、メジャーバージョンを上げる
 - CLIは `init`、`validate`、`graph`、`impact`、`assess`、`extract`、`estimate`、`progress`、`stale`、`health`、`list`、`conflicts`、`meeting`、`migrate-dates`、`sync`、`board`、`mcp`。スキーマは `docs/spec/schema.md`
 - v0.9.0までは、Accordantという名前でリリースした（GitHub Releaseのみ。npmには公開していない）
-- v1.0.0は、公開用の新しいリポジトリ（`yutaponium/Adaptrace`）でリリースする。今のリポジトリ（`yutaponium/Accordant`）はprivateのままで、公開の後にアーカイブする（2026-11-26に決定）
+- v1.0.0を、公開用の新しいリポジトリ（`yutaponium/Adaptrace`）でリリースし、publicにした。履歴は移していない。`main` にブランチ保護（PRとCIの成功が必須、承認の数は0）を設定し、Private vulnerability reportingを有効にした。旧リポジトリ（`yutaponium/Accordant`）は、privateのままアーカイブした。プラグインのインストール（7つのskill）と、`bun add -g github:yutaponium/Adaptrace#v1.0.0` でのインストールを確認した（2026-11-26）
 - 名称はAdaptraceにした（Accordantから変更、ADR-036）。ロゴを `docs/images/logo/` に置き、名称とロゴの使い方の方針を `TRADEMARKS.md` に書いた。名称とロゴはMIT Licenseの対象外（2026-11-26）
 - skillを、Claude Codeのプラグインとして配布する。リポジトリのルートがプラグインとマーケットプレイスを兼ねる（`.claude-plugin/`）。7つのskillに、共通の書き方の節を置いた（2026-11-26、ADR-037）
 - 行動規範（`CODE_OF_CONDUCT.md`）の連絡先を、プロジェクト用のメールアドレス `adaptrace.project@gmail.com` にした（2026-11-26）
@@ -22,24 +22,9 @@
 
 ## 次にやること
 
-- [ ] v1.0.0：下の「公開の手順」に従って、公開用のリポジトリでリリースする
 - [ ] CLIを1つの実行ファイルにして、GitHubのReleaseに添付する。`bun build --compile` で、Linux、macOS、Windows向けに作り、タグを付けたときにGitHub Actionsで作る。Bunのない環境でも使えるようにするため（2026-11-26に決定。v1.0.0の公開の後に行う）
 - [ ] skillの候補（ADR-026の使い分けに従い、既存の機能を組み合わせて対話しながら進める作業）。作ったら、`tests/skills/` に試験も置く
   - 済：既存のファイルの取り込み（`adaptrace-adopt`、ADR-026）、変更要求の受付（`adaptrace-change-request`、ADR-027）、見直しの実施（`adaptrace-review`、ADR-028）、定例の会議の準備（`adaptrace-weekly`、ADR-030）、議事録の取り込み（`adaptrace-minutes`、ADR-031）、判断の置き換え（`adaptrace-supersede`、ADR-032）、バンドルのヘルスチェック（`health` とskill `adaptrace-health`、ADR-033、ADR-034）
-
-## 公開の手順
-
-1. 公開用のリポジトリ `yutaponium/Adaptrace` をprivateで作り、今の `main` の内容を1つのコミットにして置く。履歴は移さない
-2. CIが通ることを確認し、v1.0.0のタグとGitHub Releaseを作る
-3. メンテナーが中身を確認してから、publicにする
-4. `main` のブランチ保護（PRとCIの成功を必須にし、1人の間は承認の数を0にする）と、Private vulnerability reportingを設定する
-5. 今のリポジトリ `yutaponium/Accordant` を、privateのままアーカイブする
-6. publicにした後に、プラグインを `/plugin marketplace add yutaponium/Adaptrace` と `/plugin install adaptrace@adaptrace` でインストールでき、7つのskillが読み込まれることを確認する
-7. publicにした後に、`bun add -g github:yutaponium/Adaptrace#v1.0.0` でインストールできることを確認する（導入のガイドとREADMEに書いた方法）
-
-## 公開の前にやること
-
-- 公開しない情報（別のプロジェクトの名前など）が、gitの過去のコミットに残っている。今のファイルからは削除済み。公開用のリポジトリには履歴を移さないので、これで解決する
 
 ## 未確定事項
 
