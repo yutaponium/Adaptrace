@@ -228,3 +228,38 @@ test("assess without --llm shows the material; bad --timeout is a usage error", 
     if (saved !== undefined) process.env.ADAPTRACE_LLM = saved;
   }
 });
+
+test("coverage: options, the milestone and usage errors", async () => {
+  const log = captureLog();
+  const error = spyOn(console, "error").mockImplementation(() => {});
+  const COVERAGE = "tests/fixtures/requirement-coverage";
+  expect(
+    await run([
+      "coverage",
+      COVERAGE,
+      "--milestone",
+      "milestones/m1-release.md",
+      "--done",
+      " done , in_progress ,",
+      "--format",
+      "json",
+    ]),
+  ).toBe(0);
+  const report = JSON.parse(String(log.mock.calls.at(-1)?.[0]));
+  expect(report.done).toEqual(["done", "in_progress"]);
+  expect(report.milestone.path).toBe("milestones/m1-release.md");
+  expect(
+    await run(["coverage", COVERAGE, "--type", "Decision", "--format", "json"]),
+  ).toBe(0);
+  expect(JSON.parse(String(log.mock.calls.at(-1)?.[0])).types).toEqual([
+    "Decision",
+  ]);
+  expect(await run(["coverage", COVERAGE, "--milestone", "nope.md"])).toBe(2);
+  expect(await run(["coverage", COVERAGE, "--done", " , "])).toBe(2);
+  expect(await run(["board", COVERAGE, "--milestone", "x.md"])).toBe(2);
+  expect(await run(["board", COVERAGE, "--done", "done"])).toBe(2);
+  expect(await run(["board", COVERAGE, "--type", "Task"])).toBe(2);
+  expect(String(error.mock.calls.at(-1)?.[0])).toContain(
+    "--type is only for list and coverage",
+  );
+});

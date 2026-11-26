@@ -449,7 +449,7 @@ For one change request, shows how far the documents it reaches have been reviewe
 Makes a table of documents, one per row ([ADR-019](../../.adaptrace/decisions/adr-019-list.md)). It is for pasting a change log or a risk register into regular meeting materials. Nothing is written.
 
 - Filters are `--type`, `--state` and `--status`. Each is an exact match with the written value. This is the same as the MCP `list_documents`. Only string values match. A value written as a number, such as `state: 2`, does not match `--state 2`. Quote it as `state: "2"`. `--status` is one of `draft`, `stable` or `deprecated`
-- The list options (`--type`, `--state`, `--status`, `--columns`, `--sort`) cannot be used with other commands
+- The list options (`--type`, `--state`, `--status`, `--columns`, `--sort`) cannot be used with other commands, except that `--type` also works with `coverage` (the requirement type)
 - Documents with `status: deprecated` are excluded by default. With `--status`, only documents with that value are shown
 - The first column is the document (path and display name)
 - The default columns are `type`, `state`, `owner`, `due` and `updated`. When filtering with `--type` without `--columns`, the `type` column is omitted
@@ -500,13 +500,16 @@ For each requirement, shows the documents that satisfy it (the documents that po
 | Status | Meaning |
 | --- | --- |
 | `uncovered` | No document without `status: deprecated` points to the requirement with `satisfies` |
-| `open` | A Task that satisfies the requirement is not done |
+| `open` | A Task that satisfies the requirement is not done. This includes a requirement that satisfies it and is not `covered` |
 | `covered` | The others |
 
 - Requirements are documents with `type: Requirement`. `--type` picks another type. Requirements with `status: deprecated` and deprecated documents that satisfy them are left out
-- Only Tasks have progress. A Task is done when its `state` is `done` (change it with `--done`; case does not matter). A document of another type that satisfies a requirement (such as a Decision) counts as satisfying it if it exists. In JSON its `done` is `null`
-- With `--milestone <document>`, only the milestone's scope is shown. The scope is the documents the milestone waits for (`depends_on` and `blocks`, in the same direction as `board`), followed on, and the requirements those documents satisfy with `satisfies`. Documents with `status: deprecated` are not in the scope, and the walk does not go past them
-- With `--milestone`, the Tasks in the scope are shown too (`scope` in JSON, nearest first), with the owner (`owner`), the due date (`due`), whether each is done, and whether its due date is after the milestone's `due` (`late`)
+- Only Tasks have progress. A Task is done when its `state` is `done` (change it with `--done`; case does not matter). If a document that satisfies a requirement is of a requirement type, it counts by whether that requirement is `covered`. A document of another type (such as a Decision) counts as satisfying it if it exists. In JSON its `done` is `null`
+- With `--milestone <document>`, only the milestone's scope is shown
+  - The scope is the documents the milestone waits for (`depends_on` and `blocks`, in the same direction as `board`). From Tasks and Milestones, the walk goes on. Other documents (requirements, decisions and so on) are in the scope, but the walk does not go past them. Documents with `status: deprecated` are not in the scope, and the walk does not go past them
+  - The requirements shown are the requirements in the scope, and those that the Tasks and Milestones in the scope (the milestone itself included) satisfy with `satisfies`
+  - Tasks outside the scope do not count toward a requirement's progress; their `inScope` in JSON is `false`. But for a requirement the milestone waits for (one in the scope), every Task that satisfies it counts
+- With `--milestone`, the documents in the scope are shown nearest first (`scope` in JSON), with the owner (`owner`), the due date (`due`) and whether the due date is after the milestone's `due` (`late`). Only Tasks have `done`. `text` and `markdown` show only the Tasks
 - `--format` is `text` (default), `markdown` or `json`. In `markdown`, documents are shown as in `board`, and `--link-base` makes them links
 
 ## Preparing a discussion meeting (`adaptrace meeting <change request>...`)

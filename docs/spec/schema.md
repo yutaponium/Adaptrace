@@ -447,7 +447,7 @@ LLMの答えの形：
 文書を1行1件の表にします（[ADR-019](../../.adaptrace/decisions/adr-019-list.md)）。変更ログやリスク登録簿を、定例の資料に貼るためのものです。何も書き込みません。
 
 - 絞り込みは `--type`、`--state`、`--status` です。どれも、書かれた値との完全一致です。MCPの `list_documents` と同じです。文字列の値だけが一致します。`state: 2` のように数として書いた値は、`--state 2` に一致しません。引用符で囲んで `state: "2"` と書いてください。`--status` は `draft`、`stable`、`deprecated` のどれかです
-- 一覧のためのオプション（`--type`、`--state`、`--status`、`--columns`、`--sort`）は、ほかのコマンドでは使えません
+- 一覧のためのオプション（`--type`、`--state`、`--status`、`--columns`、`--sort`）は、ほかのコマンドでは使えません。ただし、`--type` は `coverage` でも使えます（要件の型）
 - `status: deprecated` の文書は、既定で除きます。`--status` を指定したときは、その値の文書だけを示します
 - 先頭の列は、文書（パスと表示名）です
 - 既定の列は `type`、`state`、`owner`、`due`、`updated` です。`--columns` を指定せずに `--type` で絞り込んだときは、`type` の列を省きます
@@ -498,13 +498,16 @@ LLMの答えの形：
 | 状況 | 内容 |
 | --- | --- |
 | `uncovered` | `status: deprecated` でない文書のうち、要件を `satisfies` で指すものがない |
-| `open` | 要件を満たすTaskのうち、終わっていないものがある |
+| `open` | 要件を満たすTaskのうち、終わっていないものがある。要件を満たす要件が `covered` でない場合も含む |
 | `covered` | それ以外 |
 
 - 要件は、`type: Requirement` の文書です。`--type` で別の型にできます。`status: deprecated` の要件と、`deprecated` の満たす文書は含めません
-- 進み具合を持つのはTaskだけです。Taskは、`state` が `done`（`--done` で変えられる。大文字と小文字は区別しない）なら終わったとみなします。Task以外の満たす文書（Decisionなど）は、あれば満たしているとみなします。JSONの `done` は `null` です
-- `--milestone <文書>` を付けると、マイルストーンの範囲だけを示します。範囲は、マイルストーンが待っている文書（`depends_on` と `blocks`。`board` と同じ向き）を連鎖でたどった文書と、それらが `satisfies` で満たす要件です。`status: deprecated` の文書は範囲に含めず、その先もたどりません
-- `--milestone` のときは、範囲のTaskも示します（JSONでは `scope`。近い順）。担当者（`owner`）、期日（`due`）、終わったか、期日がマイルストーンの `due` より後か（`late`）を示します
+- 進み具合を持つのはTaskだけです。Taskは、`state` が `done`（`--done` で変えられる。大文字と小文字は区別しない）なら終わったとみなします。要件を満たす文書が要件の型なら、その要件が `covered` かどうかで判断します。それ以外の満たす文書（Decisionなど）は、あれば満たしているとみなします。JSONの `done` は `null` です
+- `--milestone <文書>` を付けると、マイルストーンの範囲だけを示します
+  - 範囲は、マイルストーンが待っている文書（`depends_on` と `blocks`。`board` と同じ向き）です。TaskとMilestoneからは、その先もたどります。Task以外の文書（要件や判断など）は範囲に入りますが、その先はたどりません。`status: deprecated` の文書は範囲に含めず、その先もたどりません
+  - 示す要件は、範囲の要件と、範囲のTaskとMilestone（マイルストーン自身を含む）が `satisfies` で満たす要件です
+  - 範囲の外のTaskは、要件の進み具合に数えません。JSONの `inScope` が `false` です。ただし、マイルストーンが待っている要件（範囲の要件）は、満たすTaskをすべて数えます
+- `--milestone` のときは、範囲の文書を近い順に示します（JSONでは `scope`）。担当者（`owner`）、期日（`due`）、期日がマイルストーンの `due` より後か（`late`）を示します。`done` を持つのはTaskだけです。`text` と `markdown` では、Taskだけを示します
 - `--format` は `text`（既定）、`markdown`、`json` です。`markdown` での文書の示し方は `board` と同じで、`--link-base` でリンクにします
 
 ## 協議の会議の準備（`adaptrace meeting <変更要求>...`）

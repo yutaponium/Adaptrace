@@ -532,7 +532,7 @@ export function createServer(options: McpOptions): McpServer {
     {
       title: "Requirement coverage",
       description:
-        "For each requirement (type Requirement unless types is given), the live documents that satisfy it with their state, and its status: uncovered (nothing satisfies it), open (a Task that satisfies it is not done) or covered. With milestone, only the milestone's scope: what it waits for through depends_on and blocks, followed on, and the requirements those documents satisfy; scope lists that work with owner, due and late (due after the milestone). Nothing is written.",
+        "For each requirement (type Requirement unless types is given), the live documents that satisfy it with their state, and its status: uncovered (nothing satisfies it), open (a Task, or a requirement, that satisfies it is not done or covered) or covered. With milestone, only the milestone's scope: what it waits for through depends_on and blocks, followed on through Tasks and Milestones, and the requirements those (and the milestone) satisfy; Tasks outside the scope (inScope false) do not count, except for a requirement the milestone waits for. scope lists the documents in it, nearest first, with owner, due, late (due after the milestone) and, for Tasks, done. Nothing is written.",
       inputSchema: {
         milestone: z.string().optional(),
         types: z.array(z.string()).min(1).optional(),

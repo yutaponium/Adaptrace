@@ -8,7 +8,7 @@
 
 - v1.0の機能（残りのskill、名前の変更）を実装した。v1.0.0から安定版とし、データの形式とコマンドはSemantic Versioningに従って変える
 - データモデル（型の一覧と依存関係のキー）は、v1.0.0で確定した。仕様は `docs/spec/schema.md`（v1.0）。型は、OKFの方針に従い、プロジェクトごとに追加できる。依存関係のキーを変えるときは、メジャーバージョンを上げる
-- CLIは `init`、`validate`、`graph`、`impact`、`assess`、`extract`、`estimate`、`progress`、`stale`、`health`、`list`、`conflicts`、`meeting`、`migrate-dates`、`sync`、`board`、`mcp`。スキーマは `docs/spec/schema.md`
+- CLIは `init`、`validate`、`graph`、`impact`、`assess`、`extract`、`estimate`、`progress`、`stale`、`health`、`list`、`conflicts`、`coverage`、`meeting`、`migrate-dates`、`sync`、`board`、`mcp`。スキーマは `docs/spec/schema.md`
 - v0.9.0までは、Accordantという名前でリリースした（GitHub Releaseのみ。npmには公開していない）
 - v1.0.0を、公開用の新しいリポジトリ（`yutaponium/Adaptrace`）でリリースし、publicにした。履歴は移していない。`main` にブランチ保護（PRとCIの成功が必須、承認の数は0）を設定し、Private vulnerability reportingを有効にした。旧リポジトリ（`yutaponium/Accordant`）は、privateのままアーカイブした。プラグインのインストール（7つのskill）と、`bun add -g github:yutaponium/Adaptrace#v1.0.0` でのインストールを確認した（2026-11-26）
 - 名称はAdaptraceにした（Accordantから変更、ADR-036）。ロゴを `docs/images/logo/` に置き、名称とロゴの使い方の方針を `TRADEMARKS.md` に書いた。名称とロゴはMIT Licenseの対象外（2026-11-26）

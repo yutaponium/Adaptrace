@@ -1,9 +1,10 @@
 // Requirement coverage (ADR-040): for each requirement, the live documents
 // that satisfy it and whether their work is done. With a milestone, only the
 // requirements in its scope: what it waits for through depends_on and blocks,
-// followed on, and the requirements those documents satisfy. It is computed
-// from the dependencies, not kept as a separate table (docs/guide/pmbok.md),
-// and writes nothing.
+// followed on through Tasks and Milestones, and the requirements those Tasks
+// and Milestones (and the milestone itself) satisfy. It is computed from the
+// dependencies, not kept as a separate table (docs/guide/pmbok.md), and
+// writes nothing.
 import { waitPairs } from "./board";
 import type { Bundle } from "./bundle";
 import type { Graph } from "./graph";
@@ -20,16 +21,22 @@ export interface Satisfier {
   type: string | null;
   title: string;
   state: string | null;
-  // Tasks: whether the state is a done one. Other types track no work: null.
+  // Tasks: whether the state is a done one. A requirement (one of the
+  // requirement types): whether it is covered itself. Other types track no
+  // work: null.
   done: boolean | null;
+  // With a milestone: whether it is in the milestone's scope. Without: true.
+  inScope: boolean;
 }
 
 export interface RequirementCoverage {
   path: string;
   title: string;
   state: string | null;
-  // uncovered: no live document satisfies it. open: a Task that satisfies it
-  // is not done. covered: the others.
+  // uncovered: no live document satisfies it. open: a Task (or a
+  // requirement) that satisfies it is not done (not covered); with a
+  // milestone, only those in its scope count, unless the milestone waits for
+  // the requirement itself. covered: the others.
   status: CoverageStatus;
   satisfiers: Satisfier[];
 }
@@ -56,8 +63,9 @@ export interface CoverageReport {
   types: string[];
   done: string[];
   requirements: RequirementCoverage[];
-  // With a milestone: the live documents it waits for, followed on, nearest
-  // first. Without one: null.
+  // With a milestone: the live documents it waits for, followed on through
+  // Tasks and Milestones, nearest first. done is set for Tasks only. Without
+  // one: null.
   scope: ScopeItem[] | null;
   byStatus: Record<CoverageStatus, number>;
 }
@@ -103,6 +111,12 @@ export function coverage(
 
   // The milestone's scope: what it waits for, followed on through live
   // documents, nearest first.
+  // Only work goes further: a Requirement or a Decision the work depends on
+  // is in the scope, but what it depends on or satisfies is not.
+  const work = (path: string) => {
+    const t = typeOf(path);
+    return t === "Task" || t === "Milestone";
+  };
   let milestone: CoverageReport["milestone"] = null;
   let scope: string[] | null = null;
   if (options.milestone !== undefined) {
@@ -129,7 +143,7 @@ export function coverage(
           if (seen.has(waitee) || !live(waitee)) continue;
           seen.add(waitee);
           order.push(waitee);
-          next.push(waitee);
+          if (work(waitee)) next.push(waitee);
         }
       }
       level = next;
@@ -145,7 +159,8 @@ export function coverage(
       (p) => live(p) && isRequirement(p),
     );
   } else {
-    const inScope = new Set(scope);
+    // What the work satisfies, the milestone's own satisfies included.
+    const inScope = new Set([...scope.filter(work), options.milestone ?? ""]);
     const found = new Set(scope.filter(isRequirement));
     for (const e of graph.edges) {
       if (e.kind !== "satisfies" || !inScope.has(e.from)) continue;
@@ -155,32 +170,63 @@ export function coverage(
   }
   paths.sort();
 
+  const scopeSet =
+    scope === null ? null : new Set([...scope, options.milestone ?? ""]);
+  const satisfiersOf = (path: string) =>
+    [
+      ...new Set(
+        (graph.backlinks.get(path) ?? [])
+          .filter((e) => e.kind === "satisfies" && live(e.from))
+          .map((e) => e.from),
+      ),
+    ].sort();
+  // A requirement's status; a requirement that satisfies another counts by
+  // its own status. A cycle of satisfies counts as not done.
+  const statuses = new Map<string, CoverageStatus>();
+  const visiting = new Set<string>();
+  const statusOf = (path: string): CoverageStatus => {
+    const known = statuses.get(path);
+    if (known !== undefined) return known;
+    if (visiting.has(path)) return "open";
+    visiting.add(path);
+    // With a milestone, work outside its scope does not count, unless the
+    // milestone waits for the requirement itself.
+    const all = scopeSet === null || scopeSet.has(path);
+    const list = satisfiersOf(path);
+    const status: CoverageStatus =
+      list.length === 0
+        ? "uncovered"
+        : list.some(
+              (p) =>
+                (all || scopeSet?.has(p) === true || !isTask(p)) &&
+                satisfied(p) === false,
+            )
+          ? "open"
+          : "covered";
+    visiting.delete(path);
+    statuses.set(path, status);
+    return status;
+  };
+  const isTask = (path: string) => typeOf(path) === "Task";
+  const satisfied = (path: string): boolean | null =>
+    isRequirement(path) ? statusOf(path) === "covered" : isDone(path);
+
   const requirements = paths.map((path): RequirementCoverage => {
-    const from = new Set(
-      (graph.backlinks.get(path) ?? [])
-        .filter((e) => e.kind === "satisfies" && live(e.from))
-        .map((e) => e.from),
-    );
-    const satisfiers = [...from].sort().map(
+    const satisfiers = satisfiersOf(path).map(
       (p): Satisfier => ({
         path: p,
         type: typeOf(p),
         title: titleOf(p),
         state: stateOf(p),
-        done: isDone(p),
+        done: satisfied(p),
+        inScope: scopeSet === null || scopeSet.has(p),
       }),
     );
-    const status: CoverageStatus =
-      satisfiers.length === 0
-        ? "uncovered"
-        : satisfiers.some((s) => s.done === false)
-          ? "open"
-          : "covered";
     return {
       path,
       title: titleOf(path),
       state: stateOf(path),
-      status,
+      status: statusOf(path),
       satisfiers,
     };
   });

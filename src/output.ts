@@ -1175,7 +1175,7 @@ export function formatCoverage(
           : r.satisfiers
               .map(
                 (s) =>
-                  `${doc(s.title, s.path, true)}${s.type ? ` ${w(s.type)}` : ""}${s.done === null ? "" : ` (${state(s).replace(/\|/g, "\\|")})`}`,
+                  `${doc(s.title, s.path, true)}${s.type ? ` ${w(s.type)}` : ""}${s.done === null ? "" : ` (${state(s)})`}${s.inScope ? "" : " (outside the milestone)"}`,
               )
               .join("<br>");
       lines.push(
@@ -1189,7 +1189,7 @@ export function formatCoverage(
       );
       for (const s of r.satisfiers) {
         lines.push(
-          `               ${doc(s.title, s.path)}  ${s.type ? w(s.type) : "(no type)"}${s.done === null ? "" : `  ${state(s)}`}`,
+          `               ${doc(s.title, s.path)}  ${s.type ? w(s.type) : "(no type)"}${s.done === null ? "" : `  ${state(s)}`}${s.inScope ? "" : "  (outside the milestone)"}`,
         );
       }
     }
@@ -1215,7 +1215,7 @@ export function formatCoverage(
       lines.push("| Task | State | Owner | Due |", "|---|---|---|---|");
       for (const i of work) {
         lines.push(
-          `| ${doc(i.title, i.path, true)} | ${state(i).replace(/\|/g, "\\|")} | ${w(i.owner ?? "").replace(/\|/g, "\\|")} | ${w(i.due ?? "")}${i.late ? " (after the milestone)" : ""} |`,
+          `| ${doc(i.title, i.path, true)} | ${state(i)} | ${w(i.owner ?? "")} | ${w(i.due ?? "")}${i.late ? " (after the milestone)" : ""} |`,
         );
       }
     } else {
