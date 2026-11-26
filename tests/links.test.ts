@@ -116,3 +116,40 @@ test("a definition cannot interrupt a paragraph", () => {
   const body = "text\n[a]: /x.md\n\nsee [a]";
   expect(extractLinks(body)).toEqual([]);
 });
+
+test("a bare '[label]:' needs a destination alone on the next line", () => {
+  const targets = (body: string) => extractLinks(body).map((l) => l.target);
+  expect(targets("[TODO]:\nSee [x](/x.md) here")).toEqual(["/x.md"]);
+  expect(targets("[a]:\n# Heading [h](/h.md)")).toEqual(["/h.md"]);
+  expect(targets('[n][1]\n\n[1]:\n  /n.md "title"')).toEqual(["/n.md"]);
+});
+
+test("labels and second labels may be inline code", () => {
+  const defs = "\n\n[`validate`]: /spec.md";
+  const targets = (line: string) =>
+    extractLinks(line + defs).map((l) => l.target);
+  expect(targets("See [the spec][`validate`].")).toEqual(["/spec.md"]);
+  expect(targets("[WIP][`design`](/d.md)")).toEqual(["/d.md"]);
+  expect(targets("![WIP][design](/d.md)")).toEqual(["/d.md"]);
+});
+
+test("empty destinations, autolinks and quoted task boxes are not references", () => {
+  const defs = "\n\n[a]: /a.md\n[x]: /x.md";
+  const targets = (line: string) =>
+    extractLinks(line + defs).map((l) => l.target);
+  expect(targets("[a]()")).toEqual([]);
+  expect(targets("<https://x.com/[a]>")).toEqual([]);
+  expect(targets("> - [x] done")).toEqual([]);
+});
+
+test("definitions after a setext underline, a thematic break or in a new quote", () => {
+  const targets = (body: string) => extractLinks(body).map((l) => l.target);
+  expect(targets("Title\n---\n[1]: /a.md\n\n[z][1]")).toEqual(["/a.md"]);
+  expect(targets("[q][1]\n\ntext\n> [1]: /q.md")).toEqual(["/q.md"]);
+});
+
+test("balanced parentheses in a destination and linked images", () => {
+  const targets = (body: string) => extractLinks(body).map((l) => l.target);
+  expect(targets("[a](./guide_(v2).md)")).toEqual(["./guide_(v2).md"]);
+  expect(targets("[![b](i.svg)](/doc.md)")).toEqual(["/doc.md"]);
+});
