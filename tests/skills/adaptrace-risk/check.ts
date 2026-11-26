@@ -121,7 +121,10 @@ check(
     (!git ||
       time((fm(SMS).generated as { at?: unknown } | undefined)?.at) >
         time(/at: ([^ }]+)/.exec(originalGenerated(SMS) ?? "")?.[1])) &&
-    time(fm(SMS).stale_after) > now,
+    time(fm(SMS).stale_after) > now &&
+    (!git ||
+      time(fm(SMS).stale_after) >
+        time(/^stale_after: (.*)$/m.exec(original(SMS))?.[1])),
   `the SMS cost risk is reassessed (probability: ${String(fm(SMS).probability)}, impact: ${String(fm(SMS).impact)})`,
 );
 check(
@@ -180,7 +183,8 @@ if (git) {
   };
   // The keys each reviewed risk may change; its body may grow at the end.
   const ALLOWED: Record<string, RegExp> = {
-    [IDP]: /^(verified|stale_after):|^\s*- |^\s+(by|at):/,
+    // verified's own lines are dropped below, with the block under it.
+    [IDP]: /^stale_after:/,
     [SMS]: /^(probability|stale_after|generated):|^\s+(by|at):/,
     [OLD]: /^(state|stale_after|generated):|^\s+(by|at):/,
   };
@@ -206,18 +210,29 @@ if (git) {
       return { front: m?.[1] ?? "", body: (m?.[2] ?? text).trimEnd() };
     };
     const before = split(original(path));
-    const now = split(read(path));
-    const keep = (front: string) =>
-      front
-        .split("\n")
-        .filter((l) => !allowed.test(l))
-        .join("\n");
-    // The IdP risk's body stays; the others may add to theirs.
+    const after = split(read(path));
+    // The frontmatter without the allowed keys, and without verified and the
+    // lines indented under it (a block list of records).
+    const keep = (front: string) => {
+      const lines: string[] = [];
+      let inVerified = false;
+      for (const l of front.split("\n")) {
+        if (/^verified:/.test(l)) inVerified = true;
+        else if (!/^\s/.test(l)) inVerified = false;
+        if (!inVerified && !allowed.test(l)) lines.push(l);
+      }
+      return lines.join("\n");
+    };
+    // The IdP risk's body stays. The others keep every line of their body
+    // but the response (対応方針), which may be rewritten, and may add more.
     const bodyOk =
       path === IDP
-        ? now.body === before.body
-        : now.body.startsWith(before.body);
-    if (keep(before.front) !== keep(now.front) || !bodyOk) {
+        ? after.body === before.body
+        : before.body
+            .split("\n")
+            .filter((l) => l.trim() !== "" && !l.startsWith("対応方針"))
+            .every((l) => after.body.includes(l));
+    if (keep(before.front) !== keep(after.front) || !bodyOk) {
       changed.push(`.adaptrace/${path}`);
     }
   }
