@@ -132,9 +132,9 @@ test("text and markdown output", () => {
   expect(md).not.toContain("\\\\");
 });
 
-// A small bundle written for one test.
+// A small bundle written for one test, removed once it is read.
 async function bundleOf(files: Record<string, string>) {
-  const { mkdtemp, mkdir, writeFile } = await import("node:fs/promises");
+  const { mkdtemp, mkdir, rm, writeFile } = await import("node:fs/promises");
   const { tmpdir } = await import("node:os");
   const { dirname, join } = await import("node:path");
   const root = await mkdtemp(join(tmpdir(), "adaptrace-coverage-"));
@@ -143,8 +143,12 @@ async function bundleOf(files: Record<string, string>) {
     await mkdir(join(root, dirname(path)), { recursive: true });
     await writeFile(join(root, path), `---\n${keys}\n---\n\n# ${path}\n`);
   }
-  const b = await loadBundle(root);
-  return { bundle: b, graph: buildGraph(b) };
+  try {
+    const b = await loadBundle(root);
+    return { bundle: b, graph: buildGraph(b) };
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
 }
 
 test("another milestone's work does not count; nested requirements outside the scope count all their work", async () => {
@@ -174,7 +178,7 @@ test("another milestone's work does not count; nested requirements outside the s
   expect(all.requirements.find((r) => r.path === "rx.md")?.status).toBe("open");
 });
 
-test("a milestone with no tasks, or with a requirement not covered, is not done", async () => {
+test("a milestone with no tasks in its scope is not done", async () => {
   const b = await bundleOf({
     "m3.md": "type: Milestone\nsatisfies: /r9.md\ndepends_on: /r8.md",
     "m4.md": "type: Milestone\nsatisfies: /r7.md",
@@ -188,4 +192,25 @@ test("a milestone with no tasks, or with a requirement not covered, is not done"
     ["r8.md", "uncovered"],
     ["r9.md", "open"],
   ]);
+});
+
+test("a shown requirement has one status, and owners may be a list", async () => {
+  const b = await bundleOf({
+    "m1.md": "type: Milestone\ndue: 2026-12-25\ndepends_on: /t.md",
+    "r1.md": "type: Requirement",
+    "r2.md": "type: Requirement\nsatisfies: /r1.md",
+    "t.md":
+      "type: Task\nstate: done\nowner: [sato, kato]\nsatisfies: [/r1.md, /r2.md]",
+    "t2.md": "type: Task\nstate: to_do\nsatisfies: /r2.md",
+  });
+  const report = coverage(b.bundle, b.graph, { milestone: "m1.md" });
+  expect(report.requirements.map((r) => [r.path, r.status])).toEqual([
+    ["r1.md", "covered"],
+    ["r2.md", "covered"],
+  ]);
+  const r1 = report.requirements.find((r) => r.path === "r1.md");
+  expect(r1?.satisfiers.find((s) => s.path === "r2.md")?.status).toBe(
+    "covered",
+  );
+  expect(report.scope?.[0]?.owner).toBe("sato, kato");
 });

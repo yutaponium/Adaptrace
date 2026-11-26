@@ -15,7 +15,7 @@ People and AI agents read and write the same information.
 The goal is to know right away which documents to review when something changes.
 
 > **Status: v1.0.0**
-> Every command under "Usage" below works. The data format and the commands change according to [Semantic Versioning](https://semver.org/). A change that breaks compatibility raises the major version.
+> Every command under "Usage" below works, except `coverage`, which is available from the release after v1.0.0. The data format and the commands change according to [Semantic Versioning](https://semver.org/). A change that breaks compatibility raises the major version.
 > The npm package is not published yet.
 >
 > The Japanese README is the original. This English version follows it (ADR-003). The specification and the guides have English versions too. The decision records (`.adaptrace/`) and the skills are in Japanese.

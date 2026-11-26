@@ -79,6 +79,15 @@ function text(value: unknown): string | null {
   return typeof value === "string" && value.trim() !== "" ? value.trim() : null;
 }
 
+// owner as text: a name, or a list of names joined.
+function people(value: unknown): string | null {
+  if (Array.isArray(value)) {
+    const names = value.map(text).filter((n) => n !== null);
+    return names.length === 0 ? null : names.join(", ");
+  }
+  return text(value);
+}
+
 // A date's day, for comparing due dates: "2026-12-15" or an ISO 8601 date
 // and time (its own date, not converted to UTC). null when not readable.
 function day(value: string | null): string | null {
@@ -210,34 +219,26 @@ export function coverage(
   paths.sort();
 
   // Whether a satisfier is done: a Task by its state; a requirement by being
-  // covered; a Milestone by its own scope having Tasks, all done, and no
-  // requirement that is not covered; others track no work (null). A cycle
-  // counts as not done.
-  // With a milestone, a requirement in its scope (or shown) counts only the
-  // work in the scope ("scoped"); a requirement that satisfies one of them
-  // from outside the scope counts all its work.
+  // covered; a Milestone by its own scope having Tasks, all done; others
+  // track no work (null). A cycle counts as not done.
+  // With a milestone, a requirement that is shown counts only the work in the
+  // scope ("scoped"); a requirement that satisfies one of them and is not
+  // shown counts all its work.
+  const shown = scopeSet === null ? null : new Set(paths);
   const statuses = new Map<string, CoverageStatus>();
   const milestones = new Map<string, boolean>();
   const visiting = new Set<string>();
   const satisfied = (path: string, scoped: boolean): boolean | null => {
     if (isRequirement(path)) {
-      return (
-        statusOf(path, scoped && scopeSet?.has(path) === true) === "covered"
-      );
+      return statusOf(path, scoped && shown?.has(path) === true) === "covered";
     }
     if (typeOf(path) === "Milestone") {
       const known = milestones.get(path);
       if (known !== undefined) return known;
       if (visiting.has(path)) return false;
       visiting.add(path);
-      const own = scopeOf(path);
-      const tasks = own.filter((p) => typeOf(p) === "Task");
-      const done =
-        tasks.length > 0 &&
-        tasks.every((p) => isDone(p) === true) &&
-        own
-          .filter(isRequirement)
-          .every((p) => statusOf(p, false) === "covered");
+      const tasks = scopeOf(path).filter((p) => typeOf(p) === "Task");
+      const done = tasks.length > 0 && tasks.every((p) => isDone(p) === true);
       visiting.delete(path);
       milestones.set(path, done);
       return done;
@@ -271,7 +272,7 @@ export function coverage(
         title: titleOf(p),
         state: stateOf(p),
         status: isRequirement(p)
-          ? statusOf(p, scoped && scopeSet?.has(p) === true)
+          ? statusOf(p, scoped && shown?.has(p) === true)
           : null,
         done: satisfied(p, scoped),
         counted: counted(p),
@@ -298,7 +299,7 @@ export function coverage(
             type: typeOf(path),
             title: titleOf(path),
             state: stateOf(path),
-            owner: text(fm(path)?.owner),
+            owner: people(fm(path)?.owner),
             due,
             done: isDone(path),
             late:
