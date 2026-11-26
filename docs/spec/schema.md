@@ -509,11 +509,11 @@ LLMの答えの形：
   - それ以外（Decisionなど）：あれば満たしているとみなします。`state` は見ません。却下した判断などは、`status: deprecated` にするか、`satisfies` を外してください。`done` は `null` です
 - `--milestone <文書>` を付けると、マイルストーンの範囲だけを示します。文書は、`status: deprecated` でない `type: Milestone` の文書です
   - 範囲は、マイルストーンが待っている文書（`depends_on` と `blocks`）から始めて、近い順にたどります。向きは `board` と同じです
-  - TaskとMilestoneからは、それが待っている文書をたどります。待っているMilestone（前のリリースなど）も、その先までたどります。要件からは、それを満たすTaskと要件をたどります
+  - TaskとMilestoneからは、それが待っている文書をたどります。待っているMilestone（前のリリースなど）も、その先までたどります。要件からは、それを満たすTaskと要件をたどります。ただし、ほかのMilestoneが直接待っているTaskは、そのリリースの作業なので、たどりません
   - それ以外の文書（判断など）は範囲に入りますが、その先はたどりません。`status: deprecated` の文書は範囲に含めず、その先もたどりません
   - 示す要件は、範囲の要件と、範囲のTaskとMilestoneが `satisfies` で満たす要件です。マイルストーン自身が満たす要件も含みます
-  - 範囲の外のTaskとMilestoneは、別のリリースの作業とみなし、数えません。JSONの `counted` が `false` です。ただし、示す要件を満たすMilestoneは、その要件を担うリリースとして数えます。その先はたどりません。示す要件は、範囲の中の作業だけで状況を決めます。示さない要件が、示す要件を満たしている場合は、その要件の作業をすべて数えて、`covered` かどうかを決めます
-- `--milestone` のときは、範囲の文書を近い順に示します（JSONでは `scope`）。担当者（`owner`）と期日（`due`）を示します。終わっていないTaskの期日がマイルストーンの `due` より後なら、`late` が `true` です。`done` を持つのはTaskだけです。`text` と `markdown` では、Taskだけを示します
+  - 数えるのは、範囲のTaskとMilestone（マイルストーン自身を含む）と、マイルストーンが待っている要件（範囲の要件）を満たすMilestoneです。後者は、その要件を担うリリースとして数え、その先はたどりません。それ以外のTaskとMilestoneは、別のリリースの作業とみなし、数えません。JSONの `counted` が `false` です。示す要件は、範囲の中の作業だけで状況を決めます。示さない要件が、示す要件を満たしている場合は、その要件の作業をすべて数えて、`covered` かどうかを決めます
+- `--milestone` のときは、範囲の文書を近い順に示します（JSONでは `scope`）。担当者（`owner`）と期日（`due`）を示します。終わっていないTaskの期日がマイルストーンの `due` より後なら、`late` が `true` です。`done` を持つのはTaskとMilestoneです。`text` と `markdown` では、TaskとMilestoneを示します
 - `--format` は `text`（既定）、`markdown`、`json` です。`markdown` での文書の示し方は `board` と同じで、`--link-base` でリンクにします
 
 ## 協議の会議の準備（`adaptrace meeting <変更要求>...`）

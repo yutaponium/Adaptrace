@@ -241,3 +241,55 @@ test("done work is not late", async () => {
     ["b.md", true],
   ]);
 });
+
+test("another release's milestone and tasks stay out of the milestone", async () => {
+  const b = await bundleOf({
+    "m1.md":
+      "type: Milestone\ndue: 2026-12-25\ndepends_on: [/r1.md, /t1.md, /m0.md]",
+    "m0.md": "type: Milestone\nstate: in_progress",
+    "m2.md": "type: Milestone\nsatisfies: /r2.md\ndepends_on: /t5.md",
+    "r1.md": "type: Requirement",
+    "r2.md": "type: Requirement",
+    "t1.md": "type: Task\nstate: done\nsatisfies: [/r1.md, /r2.md]",
+    "t5.md":
+      "type: Task\nstate: to_do\ndue: 2027-03-01\nsatisfies: /r1.md\ndepends_on: /t6.md",
+    "t6.md": "type: Task\nstate: to_do",
+  });
+  const report = coverage(b.bundle, b.graph, { milestone: "m1.md" });
+  // t5 is m2's work; m2 satisfies r2, which m1 does not wait for.
+  expect(report.requirements.map((r) => [r.path, r.status])).toEqual([
+    ["r1.md", "covered"],
+    ["r2.md", "covered"],
+  ]);
+  expect(
+    report.requirements[1]?.satisfiers.map((s) => [s.path, s.counted]),
+  ).toEqual([
+    ["m2.md", false],
+    ["t1.md", true],
+  ]);
+  // The earlier release it waits for is work, with its state.
+  expect(report.scope?.map((i) => [i.path, i.done])).toEqual([
+    ["m0.md", false],
+    ["r1.md", null],
+    ["t1.md", true],
+  ]);
+  expect(formatCoverage(report, false)).toContain(
+    "Work the milestone waits for (1 not done of 2)",
+  );
+});
+
+test("a shown requirement has one status, however it is reached", async () => {
+  const b = await bundleOf({
+    "m.md": "type: Milestone\ndepends_on: /t1.md",
+    "r1.md": "type: Requirement",
+    "r2.md": "type: Requirement\nsatisfies: /r1.md",
+    "r3.md": "type: Requirement\nsatisfies: /r2.md",
+    "t1.md": "type: Task\nstate: done\nsatisfies: [/r1.md, /r3.md]",
+    "t9.md": "type: Task\nstate: to_do\nsatisfies: /r3.md",
+  });
+  const report = coverage(b.bundle, b.graph, { milestone: "m.md" });
+  expect(report.requirements.map((r) => [r.path, r.status])).toEqual([
+    ["r1.md", "covered"],
+    ["r3.md", "covered"],
+  ]);
+});

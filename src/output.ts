@@ -1219,9 +1219,9 @@ export function formatCoverage(
       "",
     );
     if (work.length === 0) {
-      lines.push(`${markdown ? "" : "  "}No tasks.`);
+      lines.push(`${markdown ? "" : "  "}No tasks or milestones.`);
     } else if (markdown) {
-      lines.push("| Task | State | Owner | Due |", "|---|---|---|---|");
+      lines.push("| Work | State | Owner | Due |", "|---|---|---|---|");
       for (const i of work) {
         lines.push(
           `| ${doc(i.title, i.path, true)} | ${state(i)} | ${w(i.owner ?? "")} | ${w(i.due ?? "")}${i.late ? " (after the milestone)" : ""} |`,

@@ -122,7 +122,8 @@ Commands:
                       (they name what they change in changes); with --llm, whether each
                       pair conflicts, duplicates, is compatible or is unclear
   coverage [bundle]   For each Requirement, the live documents that satisfy it and whether
-                      the Tasks among them are done (uncovered, open, covered); with
+                      the Tasks and Milestones among them are done (uncovered, open,
+                      covered); with
                       --milestone, only its scope: what it waits for through depends_on and
                       blocks, followed on through its work, and what that work satisfies
   list [bundle]       A table of documents (a register or a log): --type, --state, --status
