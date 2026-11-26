@@ -22,7 +22,7 @@ import {
   judgePairs,
   SETTLED_STATES,
 } from "./conflicts";
-import { coverage, DONE_STATES, WORK_TYPES } from "./coverage";
+import { coverage, DONE_STATES, isWorkType } from "./coverage";
 import { validateAll } from "./drift";
 import { estimate, estimateContext, size } from "./estimate";
 import { extract, extractContext, writeDrafts } from "./extract";
@@ -753,7 +753,7 @@ export async function run(args: string[]): Promise<number> {
       }
       const type = values.type?.trim();
       if (type === "") throw new UsageError("--type needs a type");
-      if (type !== undefined && WORK_TYPES.includes(type)) {
+      if (type !== undefined && isWorkType(type)) {
         throw new UsageError(
           `--type ${type}: Tasks and Milestones are work, not requirements`,
         );

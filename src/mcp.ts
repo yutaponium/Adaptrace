@@ -19,7 +19,7 @@ import {
   conflictsContext,
   SETTLED_STATES,
 } from "./conflicts";
-import { coverage, DONE_STATES, WORK_TYPES } from "./coverage";
+import { coverage, DONE_STATES, isWorkType } from "./coverage";
 import { validateAll } from "./drift";
 import { estimate, estimateContext } from "./estimate";
 import { extractContext } from "./extract";
@@ -541,7 +541,7 @@ export function createServer(options: McpOptions): McpServer {
               .string()
               .trim()
               .min(1)
-              .refine((t) => !WORK_TYPES.includes(t), {
+              .refine((t) => !isWorkType(t), {
                 message: "Tasks and Milestones are work, not requirements",
               }),
           )

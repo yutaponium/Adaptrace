@@ -16,6 +16,9 @@ export const DONE_STATES = ["done"];
 export const REQUIREMENT_TYPES = ["Requirement"];
 // Work, not requirements: they cannot be given as requirement types.
 export const WORK_TYPES = ["Task", "Milestone"];
+export function isWorkType(type: string): boolean {
+  return WORK_TYPES.some((t) => t.toLowerCase() === type.toLowerCase());
+}
 
 export type CoverageStatus = "uncovered" | "open" | "covered";
 
@@ -140,23 +143,28 @@ export function coverage(
   // A milestone's scope, nearest first: the live documents it waits for.
   // From a Task or a Milestone, what it waits for in turn; from a requirement,
   // the Tasks, Milestones and requirements that satisfy it (the work it
-  // needs). Other
+  // needs), without going into such a Milestone's own work. Other
   // documents, such as a Decision the work depends on, are in the scope, but
   // the walk does not go past them.
   const scopeOf = (root: string): string[] => {
     const seen = new Set([root]);
     const order: string[] = [];
+    // Another Milestone that satisfies a requirement in the scope is in it,
+    // but its own work is its own: the walk stops there.
+    const stop = new Set<string>();
     let level = [root];
     while (level.length > 0) {
       const next: string[] = [];
       for (const path of level) {
         const t = typeOf(path);
-        const onward =
-          t === "Task" || t === "Milestone"
+        const onward = stop.has(path)
+          ? []
+          : t === "Task" || t === "Milestone"
             ? [...(waits.get(path) ?? [])].sort()
             : isRequirement(path)
               ? satisfiersOf(path).filter((p) => {
                   const pt = typeOf(p);
+                  if (pt === "Milestone" && !seen.has(p)) stop.add(p);
                   return (
                     pt === "Task" || pt === "Milestone" || isRequirement(p)
                   );
@@ -225,8 +233,9 @@ export function coverage(
   paths.sort();
 
   // Whether a satisfier is done: a Task by its state; a requirement by being
-  // covered; a Milestone by its own scope having Tasks, all done; others
-  // track no work (null). A cycle counts as not done.
+  // covered; a Milestone by its own scope having Tasks, all done, and no
+  // requirement nothing satisfies; others track no work (null). A cycle
+  // counts as not done.
   // With a milestone, a requirement that is shown counts only the work in the
   // scope ("scoped"); a requirement that satisfies one of them and is not
   // shown counts all its work.
@@ -241,11 +250,16 @@ export function coverage(
     if (typeOf(path) === "Milestone") {
       const known = milestones.get(path);
       if (known !== undefined) return known;
-      if (visiting.has(path)) return false;
-      visiting.add(path);
-      const tasks = scopeOf(path).filter((p) => typeOf(p) === "Task");
-      const done = tasks.length > 0 && tasks.every((p) => isDone(p) === true);
-      visiting.delete(path);
+      // Set first: a requirement in its scope may be satisfied by it.
+      milestones.set(path, false);
+      const own = scopeOf(path);
+      const tasks = own.filter((p) => typeOf(p) === "Task");
+      const done =
+        tasks.length > 0 &&
+        tasks.every((p) => isDone(p) === true) &&
+        own
+          .filter(isRequirement)
+          .every((p) => statusOf(p, false) !== "uncovered");
       milestones.set(path, done);
       return done;
     }

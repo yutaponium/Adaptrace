@@ -232,5 +232,20 @@ test("a milestone that satisfies a requirement in the scope joins the scope", as
   expect(report.requirements.map((r) => [r.path, r.status])).toEqual([
     ["r.md", "covered"],
   ]);
-  expect(report.scope?.map((i) => i.path)).toEqual(["r.md", "m0.md", "t.md"]);
+  // m0's own work is m0's: the walk stops at it, and m0 is done by it.
+  expect(report.scope?.map((i) => i.path)).toEqual(["r.md", "m0.md"]);
+});
+
+test("a milestone whose scope has a requirement nothing satisfies is not done", async () => {
+  const b = await bundleOf({
+    "m3.md": "type: Milestone\nsatisfies: /rz.md\ndepends_on: [/ru.md, /t1.md]",
+    "ru.md": "type: Requirement",
+    "rz.md": "type: Requirement",
+    "t1.md": "type: Task\nstate: done",
+  });
+  const report = coverage(b.bundle, b.graph, { milestone: "m3.md" });
+  expect(report.requirements.map((r) => [r.path, r.status])).toEqual([
+    ["ru.md", "uncovered"],
+    ["rz.md", "open"],
+  ]);
 });
