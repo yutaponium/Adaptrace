@@ -275,7 +275,7 @@ Converts both ways between `type: Task` documents and Backlog.md tasks (`backlog
 - By default it only shows the plan. It writes only with `--write`
 - The Backlog.md directory is given with `--backlog` (default `backlog`). It reads `statuses`, `default_status` and `task_prefix` from `config.yml`
 - `--direction import|export` limits it to one direction. Changes on the excluded side are shown as "pending" and not written. `--resolve` also does not write to the excluded side
-- `--resolve <task>=<side>` settles conflicts task by task. Name the task by its bundle path (`tasks/design.md`) or its Backlog.md id (`back-7`, in any case). Give it once per task, as many times as needed. Together with `--resolve adaptrace|backlog` for all conflicts, the per-task ones come first. These are usage errors (exit code 2): a task not linked to a Backlog.md task; one task given different sides, for example by its path and its id; both sides given for all conflicts
+- `--resolve <task>=<side>` settles conflicts task by task. Name the task by its bundle path (`tasks/design.md`) or its Backlog.md id (`back-7`, in any case). Give it as many times as needed, but one side per task. A path is read even with `./`, a leading `/` or the bundle directory in front (`.adaptrace/tasks/design.md`). Together with `--resolve adaptrace|backlog` for all conflicts, the per-task ones come first. These are usage errors (exit code 2): a task not linked to a Backlog.md task; one task given different sides, for example by its path and its id; both sides given for all conflicts
 
 ### Field mapping
 

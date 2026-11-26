@@ -230,14 +230,27 @@ export function resolveTaskSides(
   backlog: Backlog,
   entries: [string, "adaptrace" | "backlog"][],
 ): Map<string, "adaptrace" | "backlog"> | { error: string } {
-  const { ids } = linkedIds(bundle);
+  const { ids, duplicates } = linkedIds(bundle);
   const pathById = new Map([...ids].map(([path, id]) => [id, path]));
   const sides = new Map<string, "adaptrace" | "backlog">();
   for (const [key, side] of entries) {
+    const duplicated = [...duplicates].find(
+      ([id, paths]) => id === normalizeId(key) || paths.includes(key),
+    );
+    if (duplicated) {
+      return {
+        error: `--resolve ${key}=${side}: backlog.id ${duplicated[0]} is shared by ${duplicated[1].join(", ")}; give each Task its own`,
+      };
+    }
     const path = ids.has(key) ? key : pathById.get(normalizeId(key));
-    if (path === undefined || !backlog.tasks.has(ids.get(path) ?? "")) {
+    if (path === undefined) {
       return {
         error: `--resolve ${key}=${side}: not a Task linked to a Backlog.md task (by its path or backlog.id)`,
+      };
+    }
+    if (!backlog.tasks.has(ids.get(path) ?? "")) {
+      return {
+        error: `--resolve ${key}=${side}: ${path} links to ${ids.get(path)}, which is not in Backlog.md`,
       };
     }
     const before = sides.get(path);

@@ -318,6 +318,20 @@ test("sync --resolve: per task, and usage errors", async () => {
     expect(await readFile(join(parent, "b/tasks/a.md"), "utf8")).toContain(
       "title: Theirs",
     );
+    // A path with the bundle directory in front reads as the bundle path.
+    await edit("b/tasks/a.md", "title: Theirs", "title: Mine again");
+    await edit(backlogFile, "title: Theirs", "title: Theirs again");
+    expect(
+      await run([
+        ...args,
+        "--resolve",
+        `${join(parent, "b")}/tasks/a.md=adaptrace`,
+        "--write",
+      ]),
+    ).toBe(0);
+    expect(await readFile(join(parent, backlogFile), "utf8")).toContain(
+      "title: Mine again",
+    );
     // Not a linked task, or one task given both sides, or both global sides.
     expect(await run([...args, "--resolve", "requirements/r.md=backlog"])).toBe(
       2,
