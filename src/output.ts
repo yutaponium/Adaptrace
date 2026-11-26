@@ -3,6 +3,7 @@ import type { SyncAction, SyncPlan } from "./backlog";
 import type { BoardColumn } from "./board";
 import type { Bundle } from "./bundle";
 import type { ConflictReport, JudgedPair } from "./conflicts";
+import type { CoverageReport } from "./coverage";
 import type { EstimateReport, Sizes } from "./estimate";
 import type { ExtractResult, WriteOutcome } from "./extract";
 import type { Graph } from "./graph";
@@ -1132,5 +1133,107 @@ export function formatMeeting(
     "",
     "Material for the meeting, not a decision. Scheduling and sending invitations are left to people.",
   );
+  return lines.join("\n");
+}
+
+const COVERAGE_LABEL = {
+  uncovered: "uncovered",
+  open: "open",
+  covered: "covered",
+} as const;
+
+// Requirement coverage: each requirement with the documents that satisfy it,
+// then, with a milestone, the work it waits for.
+export function formatCoverage(
+  report: CoverageReport,
+  markdown: boolean,
+  linkBase?: string,
+): string {
+  const lines: string[] = [];
+  // In Markdown, a "|" left in a code span (a URL) would split a table cell.
+  const w = (t: string) =>
+    markdown
+      ? safeWords(t, true).replace(/(?<!\\)\|/g, "\\|")
+      : safeWords(t, false);
+  const doc = (title: string, path: string, table = false) =>
+    markdown
+      ? oneLine(docLink(title, path, linkBase, table))
+      : `${oneLine(title)}  ${oneLine(path)}`;
+  const state = (s: { state: string | null }) =>
+    s.state === null ? "(no state)" : w(s.state);
+  // A satisfier's progress: a requirement's status, a Task's or a
+  // Milestone's state; nothing for the others.
+  const progress = (
+    s: CoverageReport["requirements"][number]["satisfiers"][number],
+  ) => (s.status !== null ? s.status : s.done === null ? "" : state(s));
+  const m = report.milestone;
+  const heading = m
+    ? `Requirement coverage for ${markdown ? doc(m.title, m.path) : `${oneLine(m.title)} (${oneLine(m.path)})`}${m.due ? `, due ${w(m.due)}` : ""}`
+    : "Requirement coverage";
+  lines.push(markdown ? `## ${heading}` : heading, "");
+  if (report.requirements.length === 0) {
+    lines.push(
+      `${markdown ? "" : "  "}No ${report.types.map(w).join(" or ")} documents${m ? " in its scope" : ""}.`,
+    );
+  } else if (markdown) {
+    lines.push("| Status | Requirement | Satisfied by |", "|---|---|---|");
+    for (const r of report.requirements) {
+      const by =
+        r.satisfiers.length === 0
+          ? "-"
+          : r.satisfiers
+              .map(
+                (s) =>
+                  `${doc(s.title, s.path, true)}${s.type ? ` ${w(s.type)}` : ""}${progress(s) === "" ? "" : ` (${progress(s).replace(/^\((.*)\)$/, "$1")})`}${s.counted ? "" : " (outside the milestone)"}`,
+              )
+              .join("<br>");
+      lines.push(
+        `| ${COVERAGE_LABEL[r.status]} | ${doc(r.title, r.path, true)} | ${by} |`,
+      );
+    }
+  } else {
+    for (const r of report.requirements) {
+      lines.push(
+        `  ${COVERAGE_LABEL[r.status].padEnd(9)}  ${doc(r.title, r.path)}`,
+      );
+      for (const s of r.satisfiers) {
+        lines.push(
+          `               ${doc(s.title, s.path)}  ${s.type ? w(s.type) : "(no type)"}${progress(s) === "" ? "" : `  ${progress(s)}`}${s.counted ? "" : "  (outside the milestone)"}`,
+        );
+      }
+    }
+  }
+  const b = report.byStatus;
+  lines.push(
+    "",
+    `${plural(report.requirements.length, "requirement")}: ${b.uncovered} uncovered, ${b.open} open, ${b.covered} covered`,
+  );
+  if (report.scope !== null) {
+    const work = report.scope.filter((i) => i.done !== null);
+    const notDone = work.filter((i) => i.done === false);
+    lines.push(
+      "",
+      markdown
+        ? `## Work the milestone waits for (${notDone.length} not done of ${work.length})`
+        : `Work the milestone waits for (${notDone.length} not done of ${work.length})`,
+      "",
+    );
+    if (work.length === 0) {
+      lines.push(`${markdown ? "" : "  "}No tasks or milestones.`);
+    } else if (markdown) {
+      lines.push("| Work | State | Owner | Due |", "|---|---|---|---|");
+      for (const i of work) {
+        lines.push(
+          `| ${doc(i.title, i.path, true)} | ${state(i)} | ${w(i.owner ?? "")} | ${w(i.due ?? "")}${i.late ? " (after the milestone)" : ""} |`,
+        );
+      }
+    } else {
+      for (const i of work) {
+        lines.push(
+          `  ${i.done ? "done    " : "not done"}  ${doc(i.title, i.path)}${i.done ? "" : `  ${state(i)}`}${i.owner ? `  ${w(i.owner)}` : ""}${i.due ? `  due ${w(i.due)}` : ""}${i.late ? " (after the milestone)" : ""}`,
+        );
+      }
+    }
+  }
   return lines.join("\n");
 }

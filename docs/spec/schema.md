@@ -447,7 +447,7 @@ LLMの答えの形：
 文書を1行1件の表にします（[ADR-019](../../.adaptrace/decisions/adr-019-list.md)）。変更ログやリスク登録簿を、定例の資料に貼るためのものです。何も書き込みません。
 
 - 絞り込みは `--type`、`--state`、`--status` です。どれも、書かれた値との完全一致です。MCPの `list_documents` と同じです。文字列の値だけが一致します。`state: 2` のように数として書いた値は、`--state 2` に一致しません。引用符で囲んで `state: "2"` と書いてください。`--status` は `draft`、`stable`、`deprecated` のどれかです
-- 一覧のためのオプション（`--type`、`--state`、`--status`、`--columns`、`--sort`）は、ほかのコマンドでは使えません
+- 一覧のためのオプション（`--type`、`--state`、`--status`、`--columns`、`--sort`）は、ほかのコマンドでは使えません。ただし、`--type` は `coverage` でも使えます（要件の型）
 - `status: deprecated` の文書は、既定で除きます。`--status` を指定したときは、その値の文書だけを示します
 - 先頭の列は、文書（パスと表示名）です
 - 既定の列は `type`、`state`、`owner`、`due`、`updated` です。`--columns` を指定せずに `--type` で絞り込んだときは、`type` の列を省きます
@@ -491,6 +491,31 @@ LLMの答えの形：
 - `--jobs` と `--timeout` は、`assess` と同じです
 - LLMの判定は、協議の材料です。決定ではありません。何も書き込みません
 
+## 要件の充足（`adaptrace coverage [bundle]`）
+
+要件ごとに、満たす文書（`satisfies` で要件を指す文書）と、その進み具合を示します（[ADR-040](../../.adaptrace/decisions/adr-040-coverage.md)）。要求事項トレーサビリティ・マトリックスに当たる表を、依存関係から計算します。何も書き込みません。終了コードは0です。
+
+| 状況 | 内容 |
+| --- | --- |
+| `uncovered` | 数える文書のうち、要件を `satisfies` で指すものがない |
+| `open` | 数える文書のうち、終わっていないものがある |
+| `covered` | それ以外 |
+
+- 要件は、`type: Requirement` の文書です。`--type` で別の型にできます。`Task` と `Milestone` は作業なので、要件の型にはできません。`status: deprecated` の要件と、`deprecated` の満たす文書は含めません
+- 満たす文書が終わったかは、型で決めます。JSONでは `done` です
+  - Task：`state` が `done` なら、終わったとみなします。値は `--done` で変えられます。カンマ区切りで複数の値を指定できます。大文字と小文字は区別しません
+  - 要件の型の文書：その要件が `covered` なら、終わったとみなします。JSONの `status` に、その要件の状況を示します
+  - Milestone：Taskと同じく、`state` が `done` なら終わったとみなします。マイルストーンの範囲の作業から判断はしません。リリースが終わったら、Milestoneの `state` を終わった値にしてください
+  - それ以外（Decisionなど）：あれば満たしているとみなします。`state` は見ません。却下した判断などは、`status: deprecated` にするか、`satisfies` を外してください。`done` は `null` です
+- `--milestone <文書>` を付けると、マイルストーンの範囲だけを示します。文書は、`status: deprecated` でない `type: Milestone` の文書です
+  - 範囲は、マイルストーンが待っている文書（`depends_on` と `blocks`）から始めて、近い順にたどります。向きは `board` と同じです
+  - TaskとMilestoneからは、それが待っている文書をたどります。待っているMilestone（前のリリースなど）も、その先までたどります。要件からは、それを満たすTaskと要件をたどります。ただし、ほかのMilestoneが直接待っているTaskは、そのリリースの作業なので、たどりません
+  - それ以外の文書（判断など）は範囲に入りますが、その先はたどりません。`status: deprecated` の文書は範囲に含めず、その先もたどりません
+  - 示す要件は、範囲の要件と、範囲のTaskとMilestoneが `satisfies` で満たす要件です。マイルストーン自身が満たす要件も含みます
+  - マイルストーンが待っている要件（範囲の要件）は、満たす文書をすべて数えます。その要件を、どのリリースの作業かにかかわらず、すべて終える必要があるためです。範囲の作業が満たすので示す要件は、範囲のTaskとMilestone（マイルストーン自身を含む）だけを数えます。それ以外のTaskとMilestoneは、別のリリースの作業とみなし、数えません。JSONの `counted` は、その要件に対して数えたかどうかです。示す要件は、範囲の中の作業だけで状況を決めます。示さない要件が、示す要件を満たしている場合は、その要件の作業をすべて数えて、`covered` かどうかを決めます
+- `--milestone` のときは、範囲の文書を近い順に示します（JSONでは `scope`）。担当者（`owner`）と期日（`due`）を示します。終わっていないTaskの期日がマイルストーンの `due` より後なら、`late` が `true` です。`done` を持つのはTaskとMilestoneです。`text` と `markdown` では、TaskとMilestoneを示します
+- `--format` は `text`（既定）、`markdown`、`json` です。`markdown` での文書の示し方は `board` と同じで、`--link-base` でリンクにします
+
 ## 協議の会議の準備（`adaptrace meeting <変更要求>...`）
 
 まとめて協議する変更要求について、会議の準備の材料を示します（[ADR-025](../../.adaptrace/decisions/adr-025-meeting.md)）。日程調整と招待の送信はしません。連絡先は扱わず、名前と役割だけを示します。
@@ -530,6 +555,7 @@ stdioのMCPサーバーとして起動します（[ADR-012](../../.adaptrace/dec
 | `health` | `adaptrace health --format json` と同じ |
 | `progress` | `adaptrace progress --format json` と同じ。`request`（変更要求）を受け取る |
 | `conflicts` | `adaptrace conflicts --format json` と同じ。`settled`（決着した `state` の値）を受け取る |
+| `coverage` | `adaptrace coverage --format json` と同じ。`milestone`、`types`（要件の型）、`done`（終わったTaskとMilestoneの `state` の値）を受け取る |
 | `meeting_context` | `meeting` の材料（参加者、変更要求、重なり、ベースライン）と、議題・招集の文案・`Meeting` の下書きを作る手順（`instructions`）。`requests` と `audience` を受け取る。顧客向けでは、社内の検討の詳細を返さない |
 | `conflicts_context` | `conflicts` の内容に、組ごとに読む文書のパス（`materials`）、パスごとの全文（`texts`、1回ずつ）、判定の手順（`instructions`）を加えたもの。判定はエージェントが行う |
 | `estimate_context` | `estimate --format json` の内容に、変更要求の全文（`requestContent`）、届く文書の全文（`contents`）、見積もりの手順を加えたもの。`documents`（起点）と `request` を受け取る |

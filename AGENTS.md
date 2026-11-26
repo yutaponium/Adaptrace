@@ -55,6 +55,7 @@ bun src/cli.ts init / extract <議事録> --llm "<コマンド>" # バンドル�
 bun src/cli.ts estimate <文書>... --request <変更要求> # 変更が届く範囲と工数の目安
 bun src/cli.ts list --type <型>      # 文書の一覧を表にする（text / markdown / csv / json）
 bun src/cli.ts conflicts            # 影響範囲が重なる未決の変更要求
+bun src/cli.ts coverage --milestone <マイルストーン> # 要件の充足と、マイルストーンに残っている作業
 bun src/cli.ts meeting <変更要求>... # 協議の会議の準備（参加者、議題、下書き）
 bun src/cli.ts sync / board         # Backlog.md との変換（--write で書き込む）とカンバン
 bun src/cli.ts mcp                  # MCP サーバー（stdio）

@@ -449,7 +449,7 @@ For one change request, shows how far the documents it reaches have been reviewe
 Makes a table of documents, one per row ([ADR-019](../../.adaptrace/decisions/adr-019-list.md)). It is for pasting a change log or a risk register into regular meeting materials. Nothing is written.
 
 - Filters are `--type`, `--state` and `--status`. Each is an exact match with the written value. This is the same as the MCP `list_documents`. Only string values match. A value written as a number, such as `state: 2`, does not match `--state 2`. Quote it as `state: "2"`. `--status` is one of `draft`, `stable` or `deprecated`
-- The list options (`--type`, `--state`, `--status`, `--columns`, `--sort`) cannot be used with other commands
+- The list options (`--type`, `--state`, `--status`, `--columns`, `--sort`) cannot be used with other commands, except that `--type` also works with `coverage` (the requirement type)
 - Documents with `status: deprecated` are excluded by default. With `--status`, only documents with that value are shown
 - The first column is the document (path and display name)
 - The default columns are `type`, `state`, `owner`, `due` and `updated`. When filtering with `--type` without `--columns`, the `type` column is omitted
@@ -493,6 +493,31 @@ With `--llm <command>` or `ADAPTRACE_LLM`, the LLM judges for each overlapping p
 - `--jobs` and `--timeout` are the same as in `assess`
 - The LLM's judgment is material for discussion. It is not a decision. Nothing is written
 
+## Requirement coverage (`adaptrace coverage [bundle]`)
+
+For each requirement, shows the documents that satisfy it (the documents that point to it with `satisfies`) and their progress ([ADR-040](../../.adaptrace/decisions/adr-040-coverage.md)). It computes the table that a requirements traceability matrix would hold from the dependencies. It writes nothing. The exit code is 0.
+
+| Status | Meaning |
+| --- | --- |
+| `uncovered` | No document that counts points to the requirement with `satisfies` |
+| `open` | One of the documents that count is not done |
+| `covered` | The others |
+
+- Requirements are documents with `type: Requirement`. `--type` picks another type. `Task` and `Milestone` are work, so they cannot be requirement types. Requirements with `status: deprecated` and deprecated documents that satisfy them are left out
+- Whether a document that satisfies a requirement is done depends on its type. In JSON it is `done`
+  - Task: done when its `state` is `done`. Change the value with `--done`. Give several values separated by commas. Case does not matter
+  - A document of a requirement type: done when that requirement is `covered`. Its status is shown in `status` in JSON
+  - Milestone: like a Task, done when its `state` is `done`. It is not judged from the work in its scope. When a release is finished, set the Milestone's `state` to a done value
+  - Others (such as a Decision): satisfy the requirement if they exist. Their `state` is not read. Set a rejected decision and the like to `status: deprecated`, or remove its `satisfies`. `done` is `null`
+- With `--milestone <document>`, only the milestone's scope is shown. The document is a `type: Milestone` document without `status: deprecated`
+  - The scope starts from the documents the milestone waits for (`depends_on` and `blocks`) and is followed nearest first. The direction is the same as in `board`
+  - From a Task or a Milestone, the walk follows what it waits for. A Milestone it waits for (such as an earlier release) is followed on too. From a requirement, it follows the Tasks and requirements that satisfy it, except Tasks that another Milestone waits for directly: they are that release's work
+  - Other documents (such as decisions) are in the scope, but the walk does not go past them. Documents with `status: deprecated` are not in the scope, and the walk does not go past them
+  - The requirements shown are the requirements in the scope, and those that the Tasks and Milestones in the scope satisfy with `satisfies`. Requirements the milestone itself satisfies are included
+  - For a requirement the milestone waits for (one in the scope), everything that satisfies it counts, because the requirement must be done in full, whichever release does the work. For a requirement shown because the scope's work satisfies it, only the Tasks and Milestones in the scope (the milestone itself included) count. Other Tasks and Milestones are taken as another release's work and do not count. `counted` in JSON says whether a document counted for that requirement. A requirement shown gets its status from the work in the scope only. When a requirement that is not shown satisfies one that is, all of its work counts to decide whether it is `covered`
+- With `--milestone`, the documents in the scope are shown nearest first (`scope` in JSON), with the owner (`owner`) and the due date (`due`). If a Task that is not done is due after the milestone's `due`, `late` is `true`. Only Tasks and Milestones have `done`. `text` and `markdown` show the Tasks and Milestones
+- `--format` is `text` (default), `markdown` or `json`. In `markdown`, documents are shown as in `board`, and `--link-base` makes them links
+
 ## Preparing a discussion meeting (`adaptrace meeting <change request>...`)
 
 For change requests to discuss together, shows material for preparing the meeting ([ADR-025](../../.adaptrace/decisions/adr-025-meeting.md)). It does not schedule or send invitations. It does not handle contact details. It shows only names and roles.
@@ -532,6 +557,7 @@ No tool writes to files. Each call reads the bundle from disk again.
 | `health` | Same as `adaptrace health --format json` |
 | `progress` | Same as `adaptrace progress --format json`. Takes `request` (the change request) |
 | `conflicts` | Same as `adaptrace conflicts --format json`. Takes `settled` (the settled `state` values) |
+| `coverage` | Same as `adaptrace coverage --format json`. Takes `milestone`, `types` (the requirement types) and `done` (the `state` values of a finished Task or Milestone) |
 | `meeting_context` | The `meeting` material (participants, change requests, overlaps, baselines), and the steps (`instructions`) for writing the agenda, the invitation text and the `Meeting` draft. Takes `requests` and `audience`. For the customer, details of the internal discussion are not returned |
 | `conflicts_context` | The content of `conflicts`, plus the paths of the documents to read for each pair (`materials`), the full text per path (`texts`, once each) and the judgment steps (`instructions`). The agent makes the judgment |
 | `estimate_context` | The content of `estimate --format json`, plus the full text of the change request (`requestContent`), the full text of the reached documents (`contents`) and the estimating steps. Takes `documents` (the starting documents) and `request` |

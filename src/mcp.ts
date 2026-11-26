@@ -19,6 +19,7 @@ import {
   conflictsContext,
   SETTLED_STATES,
 } from "./conflicts";
+import { coverage, DONE_STATES, isWorkType } from "./coverage";
 import { validateAll } from "./drift";
 import { estimate, estimateContext } from "./estimate";
 import { extractContext } from "./extract";
@@ -523,6 +524,54 @@ export function createServer(options: McpOptions): McpServer {
     async () => {
       const bundle = await open();
       return json(healthToJson(health(bundle, buildGraph(bundle))));
+    },
+  );
+
+  server.registerTool(
+    "coverage",
+    {
+      title: "Requirement coverage",
+      description:
+        "For each requirement (type Requirement unless types is given), the live documents that satisfy it, and its status: uncovered (nothing that counts satisfies it), open (one of them is not done: a Task or a Milestone whose state is not a done one, or a requirement not covered (status)) or covered. With milestone, only the milestone's scope: what it waits for through depends_on and blocks, followed on through Tasks and Milestones and through the Tasks (not those another Milestone waits for) and requirements that satisfy a requirement in it, and the requirements that work (and the milestone) satisfies. A requirement in the scope counts everything that satisfies it; another shown one counts only Tasks and Milestones in the scope (counted false for the others: another release). scope lists the documents in it, nearest first, with owner, due, late (a Task not done, due after the milestone) and, for Tasks and Milestones, done. Nothing is written.",
+      inputSchema: {
+        milestone: z.string().optional(),
+        types: z
+          .array(
+            z
+              .string()
+              .trim()
+              .min(1)
+              .refine((t) => !isWorkType(t), {
+                message: "Tasks and Milestones are work, not requirements",
+              }),
+          )
+          .min(1)
+          .optional(),
+        done: z
+          .array(z.string().trim().min(1))
+          .min(1)
+          .optional()
+          .describe(
+            `state values that mean a Task or a Milestone is done, in any case (default ${DONE_STATES.join(", ")})`,
+          ),
+      },
+      annotations: READ_ONLY,
+    },
+    async ({ milestone, types, done }) => {
+      const bundle = await open();
+      let found: string | undefined;
+      if (milestone !== undefined) {
+        const path = findConcept(bundle, milestone);
+        if (path === null) return fail(`'${milestone}' is not a document`);
+        const fm = bundle.concepts.get(path)?.frontmatter;
+        if (fm?.type !== "Milestone" || fm.status === "deprecated") {
+          return fail(`'${milestone}' is not a live Milestone`);
+        }
+        found = path;
+      }
+      return json(
+        coverage(bundle, buildGraph(bundle), { milestone: found, types, done }),
+      );
     },
   );
 

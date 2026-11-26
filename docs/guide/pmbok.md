@@ -119,6 +119,7 @@ Adaptraceは、バンドルの中のMarkdownファイルを1つの文書とし�
 要求事項から受け入れ基準、WBS、テストまでのつながりは、Adaptraceの依存関係そのものです。
 別の表として管理すると、依存関係と表の内容がずれていきます。
 表が必要な場合は、`adaptrace graph` で図を、`adaptrace graph --format json` でデータを出力します。
+要件ごとに、満たす文書と進み具合を表にするには、`adaptrace coverage --format markdown` を使います。満たす文書がない要件は `uncovered` と示されます。`--milestone` でマイルストーンを指定すると、そのマイルストーンの範囲に絞り、マイルストーンが待っている作業も示します。`coverage` は、v1.0.0の次のリリースから使えます。
 
 ### ExcelやMS Projectの文書は、代わりの文書を置く
 
