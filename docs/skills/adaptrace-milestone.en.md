@@ -81,7 +81,6 @@ Rules shared by the Adaptrace skills.
    - `adaptrace conflicts --format json [--settled <list>]`: take the open change requests from `requests`. A change request whose `reach` (impact range) shares even one document with the `scope` or the `requirements` of `coverage`, or includes the milestone itself, touches this milestone. Change requests without `changes` (`unlinked`) cannot be judged, so write them in the report. This skill does not use `pairs` (overlaps between change requests)
 3. `adaptrace stale --format json`: the documents in `stale` that are the milestone itself or are in the `scope` or the `requirements`. Report also the documents in `unknown` (no known date) that are in the scope
 4. Note the work in the `scope` that is not done and whose due date is before the date from step 0, as work past its due date. Compare the date of `due` with the date part of the date and time from step 0
-5. `late` of `coverage` is set for Tasks only. For each Milestone in `scope` that is not done, compare its `due` with this milestone's `due`, and note it as work that misses the due date if it is later
 
 ## 3. Show the material
 
@@ -92,7 +91,7 @@ Show it in this table. Do not write a recommended judgment. For a category with 
 | Requirements lacking work (`uncovered`) | Requirement | No work satisfies it |
 | Requirements not done (`open`) | The requirement and the work not done | Owner and due date of the work |
 | Work that misses the due date (`late`, past due) | Work | Due date and owner |
-| Other work left | Work | State, owner and due date |
+| Other work left | Work | Progress (`state`), owner and due date |
 | Open change requests that touch the scope | Change request | Overlapping documents |
 | Out-of-date documents | Document | What it is older than |
 

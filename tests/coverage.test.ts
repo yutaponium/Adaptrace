@@ -231,14 +231,20 @@ test("a milestone that satisfies a requirement is done by its state", async () =
 
 test("done work is not late", async () => {
   const b = await bundleOf({
-    "m.md": "type: Milestone\ndue: 2026-12-25\ndepends_on: [/a.md, /b.md]",
+    "m.md":
+      "type: Milestone\ndue: 2026-12-25\ndepends_on: [/a.md, /b.md, /c.md, /d.md]",
     "a.md": "type: Task\nstate: done\ndue: 2026-12-30",
     "b.md": "type: Task\nstate: to_do\ndue: 2026-12-30",
+    "c.md": "type: Milestone\ndue: 2027-01-10",
+    "d.md": "type: Milestone\nstate: done\ndue: 2027-01-10",
   });
   const report = coverage(b.bundle, b.graph, { milestone: "m.md" });
+  // A Milestone it waits for can be late too, when it is not done.
   expect(report.scope?.map((i) => [i.path, i.late])).toEqual([
     ["a.md", false],
     ["b.md", true],
+    ["c.md", true],
+    ["d.md", false],
   ]);
 });
 
