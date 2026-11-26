@@ -505,14 +505,14 @@ LLMの答えの形：
 - 満たす文書が終わったかは、型で決めます。JSONでは `done` です
   - Task：`state` が `done` なら、終わったとみなします。値は `--done` で変えられます。カンマ区切りで複数の値を指定できます。大文字と小文字は区別しません
   - 要件の型の文書：その要件が `covered` なら、終わったとみなします。JSONの `status` に、その要件の状況を示します
-  - Milestone：そのマイルストーンの範囲にTaskがあり、すべて終わっていて、範囲に `uncovered` の要件がなければ、終わったとみなします
+  - Milestone：そのマイルストーンの範囲にTaskがあり、すべて終わっていて、範囲の要件にどれも満たす文書があれば、終わったとみなします。`--milestone` のときは、範囲の外のMilestoneは別のリリースとみなし、進み具合を判断しません（`done` は `null`）
   - それ以外（Decisionなど）：あれば満たしているとみなします。`state` は見ません。却下した判断などは、`status: deprecated` にするか、`satisfies` を外してください。`done` は `null` です
 - `--milestone <文書>` を付けると、マイルストーンの範囲だけを示します。文書は、`status: deprecated` でない `type: Milestone` の文書です
   - 範囲は、マイルストーンが待っている文書（`depends_on` と `blocks`）から始めて、近い順にたどります。向きは `board` と同じです
-  - TaskとMilestoneからは、それが待っている文書をたどります。要件からは、それを満たすTask、Milestone、要件をたどります。要件を満たすMilestoneは範囲に入りますが、その先はたどりません。そのMilestoneが終わったかは、そのMilestone自身の範囲で決めます
+  - TaskとMilestoneからは、それが待っている文書をたどります。要件からは、それを満たすTaskと要件をたどります
   - それ以外の文書（判断など）は範囲に入りますが、その先はたどりません。`status: deprecated` の文書は範囲に含めず、その先もたどりません
   - 示す要件は、範囲の要件と、範囲のTaskとMilestoneが `satisfies` で満たす要件です。マイルストーン自身が満たす要件も含みます
-  - 範囲の外のTaskとMilestoneは、数えません。JSONの `counted` が `false` です。示す要件は、範囲の中の作業だけで状況を決めます。示さない要件が、示す要件を満たしている場合は、その要件の作業をすべて数えて、`covered` かどうかを決めます
+  - 範囲の外のTaskは、数えません。JSONの `counted` が `false` です。示す要件は、範囲の中の作業だけで状況を決めます。示さない要件が、示す要件を満たしている場合は、その要件の作業をすべて数えて、`covered` かどうかを決めます
 - `--milestone` のときは、範囲の文書を近い順に示します（JSONでは `scope`）。担当者（`owner`）と期日（`due`）を示します。期日がマイルストーンの `due` より後なら、`late` が `true` です。`done` を持つのはTaskだけです。`text` と `markdown` では、Taskだけを示します
 - `--format` は `text`（既定）、`markdown`、`json` です。`markdown` での文書の示し方は `board` と同じで、`--link-base` でリンクにします
 
