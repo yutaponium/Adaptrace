@@ -4,6 +4,7 @@
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { loadBundle } from "../../../src/bundle";
+import { parseDocument } from "../../../src/frontmatter";
 import { buildGraph } from "../../../src/graph";
 import { lastUpdated } from "../../../src/history";
 import { stale } from "../../../src/impact";
@@ -72,13 +73,14 @@ const report = stale(
   new Date(now),
   resourceStates(bundle),
 );
+// Closed risks are not reviewed (SKILL.md), even when they are stale.
 const staleRisks = report.stale
   .map((s) => s.path)
-  .filter((p) => String(fm(p).type) === "Risk");
+  .filter((p) => String(fm(p).type) === "Risk" && fm(p).state !== "closed");
 check(
   "must",
   staleRisks.length === 0,
-  `no risk is stale${staleRisks.length ? ` (${staleRisks.join(", ")})` : ""}`,
+  `no open risk is stale${staleRisks.length ? ` (${staleRisks.join(", ")})` : ""}`,
 );
 
 // Kept as it was: reviewed, not changed.
@@ -181,12 +183,12 @@ if (git) {
     if (r.exitCode !== 0) gitFailed = true;
     return r.stdout.toString();
   };
-  // The keys each reviewed risk may change; its body may grow at the end.
-  const ALLOWED: Record<string, RegExp> = {
-    // verified's own lines are dropped below, with the block under it.
-    [IDP]: /^stale_after:/,
-    [SMS]: /^(probability|stale_after|generated):|^\s+(by|at):/,
-    [OLD]: /^(state|stale_after|generated):|^\s+(by|at):/,
+  // The keys each reviewed risk may change, compared as parsed YAML, so the
+  // style (flow or block) does not matter.
+  const ALLOWED: Record<string, string[]> = {
+    [IDP]: ["verified", "stale_after"],
+    [SMS]: ["probability", "stale_after", "generated"],
+    [OLD]: ["state", "stale_after", "generated"],
   };
   const changed = run([
     "diff",
@@ -204,35 +206,38 @@ if (git) {
         p !== "" && p !== "log.md" && p !== "tasks/index.md" && !(p in ALLOWED),
     )
     .map((p) => `.adaptrace/${p}`);
-  for (const [path, allowed] of Object.entries(ALLOWED)) {
-    const split = (text: string) => {
-      const m = /^---\n([\s\S]*?)\n---\n?([\s\S]*)$/.exec(text);
-      return { front: m?.[1] ?? "", body: (m?.[2] ?? text).trimEnd() };
-    };
-    const before = split(original(path));
-    const after = split(read(path));
-    // The frontmatter without the allowed keys, and without verified and the
-    // lines indented under it (a block list of records).
-    const keep = (front: string) => {
-      const lines: string[] = [];
-      let inVerified = false;
-      for (const l of front.split("\n")) {
-        if (/^verified:/.test(l)) inVerified = true;
-        else if (!/^\s/.test(l)) inVerified = false;
-        if (!inVerified && !allowed.test(l)) lines.push(l);
-      }
-      return lines.join("\n");
-    };
-    // The IdP risk's body stays. The others keep every line of their body
-    // but the response (対応方針), which may be rewritten, and may add more.
+  for (const [path, keys] of Object.entries(ALLOWED)) {
+    const before = parseDocument(original(path));
+    const after = parseDocument(read(path));
+    if (!before.ok || !after.ok) {
+      changed.push(`.adaptrace/${path} (unreadable)`);
+      continue;
+    }
+    const rest = (fm: Record<string, unknown> | null) =>
+      JSON.stringify(
+        Object.fromEntries(
+          Object.entries(fm ?? {})
+            .filter(([k]) => !keys.includes(k))
+            .sort(([a], [b]) => a.localeCompare(b)),
+        ),
+      );
+    // The IdP risk's body stays. The others keep the lines of their body as
+    // whole lines, in order, but the response (対応方針), which may be
+    // rewritten, and may add lines.
+    const lines = (body: string) =>
+      body
+        .trimEnd()
+        .split("\n")
+        .filter((l) => l.trim() !== "");
+    const kept = lines(before.body).filter((l) => !l.startsWith("対応方針"));
+    const now = lines(after.body);
+    let at = 0;
+    for (const l of now) if (at < kept.length && l === kept[at]) at++;
     const bodyOk =
       path === IDP
-        ? after.body === before.body
-        : before.body
-            .split("\n")
-            .filter((l) => l.trim() !== "" && !l.startsWith("対応方針"))
-            .every((l) => after.body.includes(l));
-    if (keep(before.front) !== keep(after.front) || !bodyOk) {
+        ? after.body.trimEnd() === before.body.trimEnd()
+        : at === kept.length;
+    if (rest(before.frontmatter) !== rest(after.frontmatter) || !bodyOk) {
       changed.push(`.adaptrace/${path}`);
     }
   }

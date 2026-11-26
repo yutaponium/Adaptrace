@@ -65,7 +65,7 @@ Rules shared by the Adaptrace skills.
 ## 1. Decide the risks to review
 
 1. `adaptrace list --format json --columns type,state`: check the type names and the `state` values. Note the risk type (`Risk` and so on) and the `state` values risks use (`open`, `closed` and so on). A document whose `state` is an empty string (`""`) has no `state`
-2. `adaptrace stale --format json`: take the documents of the risk type from `stale`. Risks whose `state` is a closed value are not reviewed. If closed risks appear in `stale`, write them in the report. The `kind` in `reasons` is the reason
+2. `adaptrace stale --format json`: take the documents of the risk type from `stale`. The results of `stale` have no type or `state`, so match them by path with the results of step 1.1. Risks whose `state` is a closed value are not reviewed. Judge which values mean closed from their names (such as `closed`); if unsure, ask the user. If closed risks appear in `stale`, write them in the report. The `kind` in `reasons` is the reason
    - `expired`: past the review date (`staleAfter`)
    - `older-than-dependency`: a dependency (`dependency`) was updated after the risk
    - Show other reasons (such as a changed file) as they are
@@ -81,7 +81,7 @@ Rules shared by the Adaptrace skills.
 For each risk, do the following.
 
 1. Read the risk's body and frontmatter. Check the assessment keys (`probability`, `impact` and so on; the names depend on the bundle) and the owner (`owner`)
-2. For a risk whose dependency was updated, read that dependency and summarize what changed. If there is git history, you may check the changes after the risk's last update with `git log -p -- <the dependency's file>`
+2. For a risk whose dependency was updated, read that dependency and summarize what changed. If there is git history, check the changes after the risk's last update with `git log -p -- <the dependency's file>`. If you cannot check them, say "What changed cannot be checked. The current content is as follows", and do not state what changed as fact
 3. In `backlinks` of `adaptrace graph --format json`, check the documents that point to the risk (mitigation tasks and the like). Show how far the mitigations have gone as material too
 4. Show the material and ask how to handle it. You may add a recommendation with a reason
 
@@ -93,20 +93,20 @@ For each risk, do the following.
 | Close | The cause is gone, the period has passed and so on; it is no longer a risk | Set `state` to the closed value. Remove `stale_after`. Set `generated` to now, and write why it was closed in the body. Keep dependencies such as `depends_on` as history. If a dependency is updated later, the risk appears in `stale`, but closed risks are not reviewed (step 1.2) |
 | It happened | The risk occurred | Set `state` to the value for occurred. Set `generated` to now, and write what happened in the body. Ask whether `stale_after` becomes a date to review until the response is done, or is removed. Guide the user to handle the response as a change request (skill `adaptrace-change-request`) or an issue |
 
-5. Ask for the next review date. You may suggest one from the interval between the `stale_after` and the last update of existing risks. The user decides. Count expressions such as "in two weeks" from today. Write `stale_after` in the existing form (a date, or a date and time). If it is a date and time, follow the existing values for the time and time zone too
-6. Use the `state` values noted in step 1.1. If there is no value for closed or occurred, show candidates (`closed`, `occurred` and so on) and ask the user. Use the values existing risks use for the assessment keys too (such as 高, 中, 低)
+5. Ask for the next review date. You may suggest one from the interval between the `stale_after` and the last update of existing risks. The user decides. Count expressions such as "in two weeks" from today. Write `stale_after` as an ISO 8601 date and time with a time zone (the rule of `validate`). Follow the existing values for the time and time zone. If the existing values are dates only, tell the user that `validate` warns about them
+6. Use the `state` values noted in step 1.1. If there is no value for closed or occurred, show candidates (`closed`, `occurred` and so on) and ask the user. Use the values existing risks use for the assessment keys too. If the existing values are part of a scale (such as 中 and 低), a value of the same scale (高) may be used. Confirm with the user a new value whose scale is unclear
 
 ### How to write the records
 
 - Write one `verified` as `verified: { by: human:<ID>, at: <date and time> }` on one line, on the line after `generated`. If it already exists, keep the earlier records, make it a block list and add the new one at the end
 - Write `verified` only when continuing unchanged. When the assessment or body is updated, or the risk is closed, setting `generated` to now is the review record. Do not remove existing `verified`
 - When you change an assessment key, change only its value. Do not move the key
-- When you add to the body, write the review date and the reason for the change. Write only what you heard from the user
+- When you add to the body, write the review date and the reason for the change. Write only what you heard from the user and facts written in the dependency documents. When you write a fact from a dependency, name the document (for example, "according to ADR-0002"). Turn relative expressions such as "last week" into dates from today's date, or confirm them with the user
 
 ### Mitigation tasks
 
 - Ask the user for the title, owner (`owner`) and due date (`due`). Leave out items not decided. If the title is not decided, do not create the task; write it in the report
-- Follow existing tasks for the path and name
+- Follow existing tasks for the path and name. If there are too few existing tasks to read a rule from, use a short English name for the title and show it in the diff. In the body, write only a heading, or only what you heard from the user
 - Point to the risk with `derived_from`. Set `state` to the value existing tasks use for not started. If existing tasks have no value for not started, show candidates (`to_do` and so on) and ask the user
 - Set `generated` to the date and time from step 0 and the agent that did the work ("Shared conventions")
 - If the type has an `index.md`, add one line in the form `* [display name](file name)`

@@ -2,7 +2,7 @@
 type: Decision
 title: リスクの見直しは、skillが見直しの対象を1件ずつ示し、評価、対応策、次の見直し日を利用者と決めて記録する
 state: accepted
-generated: { by: claude-code/claude-opus-5-5, at: 2026-11-26T19:23:52+09:00 }
+generated: { by: claude-code/claude-opus-5-5, at: 2026-11-26T19:53:57+09:00 }
 depends_on:
   - /decisions/adr-020-verified-review.md
   - /decisions/adr-026-adopt-skill.md

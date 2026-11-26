@@ -105,7 +105,7 @@ const SKILLS = [
     date: "2026-11-26T10:00:00+09:00",
     inputs: [".adaptrace/risks/idp-lock-in.md", ".adaptrace/risks/sms-cost.md"],
     failures: [
-      "FAIL  no risk is stale",
+      "FAIL  no open risk is stale",
       "FAIL  the IdP risk is verified, unchanged, with a later review date",
       "FAIL  one mitigation task, derived from the SMS cost risk",
     ],
@@ -455,6 +455,28 @@ for (const skill of SKILLS) {
           await Bun.write(idp, `${text}\n追記\n`);
           expect(run()).toContain("FAIL  no other document changed");
           await Bun.write(idp, text);
+          // verified in block style is the same record.
+          await Bun.write(
+            idp,
+            text.replace(
+              /^verified: \{ by: (\S+), at: (\S+) \}$/m,
+              "verified:\n- by: $1\n  at: $2",
+            ),
+          );
+          expect(run()).toContain("ok    no other document changed");
+          await Bun.write(idp, text);
+          // An edited line of the closed risk's body.
+          const old = join(dest, ".adaptrace/risks/legacy-browser.md");
+          const oldText = await Bun.file(old).text();
+          await Bun.write(
+            old,
+            oldText.replace(
+              "# 古いブラウザでログインできない",
+              "# 古いブラウザでログインできない（対応しない）",
+            ),
+          );
+          expect(run()).toContain("FAIL  no other document changed");
+          await Bun.write(old, oldText);
           // No other new document.
           await Bun.write(
             join(dest, ".adaptrace/tasks/another.md"),

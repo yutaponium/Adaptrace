@@ -61,7 +61,7 @@ skillを修正したら、試験の必要度を判断する（ADR-042）。試�
 
 - `must`
   - `validate` のエラーが0件
-  - `stale` に、リスクが1件も出ない
+  - `stale` に、閉じていないリスクが1件も出ない
   - IdP-Xの契約のリスク：`verified` が追加され、`generated`、評価（`probability`、`impact`）、本文が変わっていない。`stale_after` が今より後
   - SMSの費用に関するリスク：`probability` が「高」、`impact` が「中」。`generated` が新しい。`stale_after` が元の値と今より後
   - 対応策のタスクが1件あり、`derived_from` でSMSの費用のリスクを指す。担当が `suzuki` で、期日がある
