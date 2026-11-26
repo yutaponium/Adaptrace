@@ -150,7 +150,7 @@ Options:
                       documents, the change starts from what it names in changes
   --type <type>       list: only documents of this type (exact match)
                       coverage: the type of the requirements (default Requirement)
-  --milestone <doc>   coverage: only the requirements and work in the milestone's scope
+  --milestone <doc>   coverage: only the requirements and work in the scope of this Milestone
   --done <states>     coverage: comma-separated state values that mean a Task is done, in
                       any case (default done)
   --state <state>     list: only documents in this state
@@ -743,11 +743,19 @@ export async function run(args: string[]): Promise<number> {
             `'${values.milestone}' is not a document in ${bundle.root}`,
           );
         }
+        const fm = bundle.concepts.get(found)?.frontmatter;
+        if (fm?.type !== "Milestone" || fm.status === "deprecated") {
+          throw new UsageError(
+            `'${values.milestone}' is not a live Milestone (type: Milestone, not deprecated)`,
+          );
+        }
         milestone = found;
       }
+      const type = values.type?.trim();
+      if (type === "") throw new UsageError("--type needs a type");
       const report = coverage(bundle, buildGraph(bundle), {
         milestone,
-        types: values.type === undefined ? undefined : [values.type],
+        types: type === undefined ? undefined : [type],
         done,
       });
       console.log(

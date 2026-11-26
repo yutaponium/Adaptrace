@@ -171,10 +171,19 @@ export function coverage(
     };
     scope = scopeOf(root);
   }
-  const scopeSet = scope === null ? null : new Set(scope);
-  // Counts toward progress: with a milestone, Tasks in its scope only.
-  const counted = (path: string) =>
-    scopeSet === null || typeOf(path) !== "Task" || scopeSet.has(path);
+  const scopeSet =
+    scope === null ? null : new Set([...scope, options.milestone ?? ""]);
+  // Counts toward progress: with a milestone, a Task or a Milestone in its
+  // scope (the milestone itself included); other work is not this
+  // milestone's.
+  const counted = (path: string) => {
+    const t = typeOf(path);
+    return (
+      scopeSet === null ||
+      (t !== "Task" && t !== "Milestone") ||
+      scopeSet.has(path)
+    );
+  };
 
   // Requirements: all live ones, or those in the scope and those its work
   // (Tasks and Milestones, the milestone itself included) satisfies.
@@ -201,41 +210,58 @@ export function coverage(
   paths.sort();
 
   // Whether a satisfier is done: a Task by its state; a requirement by being
-  // covered; a Milestone by all the Tasks in its own scope being done
-  // (unknown, null, when it has none); others track no work (null). A cycle
+  // covered; a Milestone by its own scope having Tasks, all done, and no
+  // requirement that is not covered; others track no work (null). A cycle
   // counts as not done.
+  // With a milestone, a requirement in its scope (or shown) counts only the
+  // work in the scope ("scoped"); a requirement that satisfies one of them
+  // from outside the scope counts all its work.
   const statuses = new Map<string, CoverageStatus>();
-  const milestones = new Map<string, boolean | null>();
+  const milestones = new Map<string, boolean>();
   const visiting = new Set<string>();
-  const satisfied = (path: string): boolean | null => {
-    if (isRequirement(path)) return statusOf(path) === "covered";
+  const satisfied = (path: string, scoped: boolean): boolean | null => {
+    if (isRequirement(path)) {
+      return (
+        statusOf(path, scoped && scopeSet?.has(path) === true) === "covered"
+      );
+    }
     if (typeOf(path) === "Milestone") {
       const known = milestones.get(path);
       if (known !== undefined) return known;
-      const tasks = scopeOf(path).filter((p) => typeOf(p) === "Task");
+      if (visiting.has(path)) return false;
+      visiting.add(path);
+      const own = scopeOf(path);
+      const tasks = own.filter((p) => typeOf(p) === "Task");
       const done =
-        tasks.length === 0 ? null : tasks.every((p) => isDone(p) === true);
+        tasks.length > 0 &&
+        tasks.every((p) => isDone(p) === true) &&
+        own
+          .filter(isRequirement)
+          .every((p) => statusOf(p, false) === "covered");
+      visiting.delete(path);
       milestones.set(path, done);
       return done;
     }
     return isDone(path);
   };
-  const statusOf = (path: string): CoverageStatus => {
-    const known = statuses.get(path);
+  const statusOf = (path: string, scoped: boolean): CoverageStatus => {
+    const key = `${scoped ? "s" : "a"}:${path}`;
+    const known = statuses.get(key);
     if (known !== undefined) return known;
-    if (visiting.has(path)) return "open";
-    visiting.add(path);
-    const list = satisfiersOf(path).filter(counted);
+    if (visiting.has(key)) return "open";
+    visiting.add(key);
+    const list = satisfiersOf(path).filter((p) => !scoped || counted(p));
     const status: CoverageStatus =
       list.length === 0
         ? "uncovered"
-        : list.some((p) => satisfied(p) === false)
+        : list.some((p) => satisfied(p, scoped) === false)
           ? "open"
           : "covered";
-    visiting.delete(path);
-    statuses.set(path, status);
+    visiting.delete(key);
+    statuses.set(key, status);
     return status;
   };
+  const scoped = scopeSet !== null;
 
   const requirements = paths.map((path): RequirementCoverage => {
     const satisfiers = satisfiersOf(path).map(
@@ -244,8 +270,10 @@ export function coverage(
         type: typeOf(p),
         title: titleOf(p),
         state: stateOf(p),
-        status: isRequirement(p) ? statusOf(p) : null,
-        done: satisfied(p),
+        status: isRequirement(p)
+          ? statusOf(p, scoped && scopeSet?.has(p) === true)
+          : null,
+        done: satisfied(p, scoped),
         counted: counted(p),
       }),
     );
@@ -253,7 +281,7 @@ export function coverage(
       path,
       title: titleOf(path),
       state: stateOf(path),
-      status: statusOf(path),
+      status: statusOf(path, scoped),
       satisfiers,
     };
   });

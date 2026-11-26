@@ -1150,7 +1150,11 @@ export function formatCoverage(
   linkBase?: string,
 ): string {
   const lines: string[] = [];
-  const w = (t: string) => safeWords(t, markdown);
+  // In Markdown, a "|" left in a code span (a URL) would split a table cell.
+  const w = (t: string) =>
+    markdown
+      ? safeWords(t, true).replace(/(?<!\\)\|/g, "\\|")
+      : safeWords(t, false);
   const doc = (title: string, path: string, table = false) =>
     markdown
       ? oneLine(docLink(title, path, linkBase, table))

@@ -552,6 +552,10 @@ export function createServer(options: McpOptions): McpServer {
       if (milestone !== undefined) {
         const path = findConcept(bundle, milestone);
         if (path === null) return fail(`'${milestone}' is not a document`);
+        const fm = bundle.concepts.get(path)?.frontmatter;
+        if (fm?.type !== "Milestone" || fm.status === "deprecated") {
+          return fail(`'${milestone}' is not a live Milestone`);
+        }
         found = path;
       }
       return json(

@@ -131,3 +131,61 @@ test("text and markdown output", () => {
   expect(md).toContain("(in\\_progress)");
   expect(md).not.toContain("\\\\");
 });
+
+// A small bundle written for one test.
+async function bundleOf(files: Record<string, string>) {
+  const { mkdtemp, mkdir, writeFile } = await import("node:fs/promises");
+  const { tmpdir } = await import("node:os");
+  const { dirname, join } = await import("node:path");
+  const root = await mkdtemp(join(tmpdir(), "adaptrace-coverage-"));
+  await writeFile(join(root, "index.md"), "# B\n");
+  for (const [path, keys] of Object.entries(files)) {
+    await mkdir(join(root, dirname(path)), { recursive: true });
+    await writeFile(join(root, path), `---\n${keys}\n---\n\n# ${path}\n`);
+  }
+  const b = await loadBundle(root);
+  return { bundle: b, graph: buildGraph(b) };
+}
+
+test("another milestone's work does not count; nested requirements outside the scope count all their work", async () => {
+  const b = await bundleOf({
+    "m1.md": "type: Milestone\ndepends_on: [/rx.md, /t1.md]",
+    "m2.md": "type: Milestone\nsatisfies: /rx.md\ndepends_on: /t3.md",
+    "rx.md": "type: Requirement",
+    "r1.md": "type: Requirement",
+    "rs.md": "type: Requirement\nsatisfies: /r1.md",
+    "t1.md": "type: Task\nstate: done\nsatisfies: /r1.md",
+    "t2.md": "type: Task\nstate: done\nsatisfies: /rs.md",
+    "t3.md": "type: Task\nstate: to_do",
+    "t4.md": "type: Task\nstate: done\nsatisfies: /rx.md",
+  });
+  const report = coverage(b.bundle, b.graph, { milestone: "m1.md" });
+  expect(report.requirements.map((r) => [r.path, r.status])).toEqual([
+    ["r1.md", "covered"],
+    ["rx.md", "covered"],
+  ]);
+  const rx = report.requirements.find((r) => r.path === "rx.md");
+  expect(rx?.satisfiers.map((s) => [s.path, s.counted])).toEqual([
+    ["m2.md", false],
+    ["t4.md", true],
+  ]);
+  // Without the milestone, m2's work is left.
+  const all = coverage(b.bundle, b.graph);
+  expect(all.requirements.find((r) => r.path === "rx.md")?.status).toBe("open");
+});
+
+test("a milestone with no tasks, or with a requirement not covered, is not done", async () => {
+  const b = await bundleOf({
+    "m3.md": "type: Milestone\nsatisfies: /r9.md\ndepends_on: /r8.md",
+    "m4.md": "type: Milestone\nsatisfies: /r7.md",
+    "r7.md": "type: Requirement",
+    "r8.md": "type: Requirement",
+    "r9.md": "type: Requirement",
+  });
+  const report = coverage(b.bundle, b.graph);
+  expect(report.requirements.map((r) => [r.path, r.status])).toEqual([
+    ["r7.md", "open"],
+    ["r8.md", "uncovered"],
+    ["r9.md", "open"],
+  ]);
+});

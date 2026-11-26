@@ -263,3 +263,16 @@ test("coverage: options, the milestone and usage errors", async () => {
     "--type is only for list and coverage",
   );
 });
+
+test("coverage: --milestone must be a live Milestone, --type not empty", async () => {
+  captureLog();
+  const error = spyOn(console, "error").mockImplementation(() => {});
+  const COVERAGE = "tests/fixtures/requirement-coverage";
+  expect(
+    await run(["coverage", COVERAGE, "--milestone", "tasks/t-a-login.md"]),
+  ).toBe(2);
+  expect(String(error.mock.calls.at(-1)?.[0])).toContain(
+    "is not a live Milestone",
+  );
+  expect(await run(["coverage", COVERAGE, "--type", " "])).toBe(2);
+});
