@@ -92,7 +92,9 @@ check(
   verified.length > 0 &&
     String(fm(IDP).probability) === "中" &&
     String(fm(IDP).impact) === "大" &&
-    read(IDP).includes("対応方針：契約の更新の3か月前に、ほかのIdPと比べる。") &&
+    read(IDP).includes(
+      "対応方針：契約の更新の3か月前に、ほかのIdPと比べる。",
+    ) &&
     (!git || idpGenerated === originalGenerated(IDP)) &&
     time(fm(IDP).stale_after) > now,
   "the IdP risk is verified, unchanged, with a later review date",
@@ -109,7 +111,8 @@ check(
   "must",
   String(fm(SMS).probability) === "高" &&
     String(fm(SMS).impact) === "中" &&
-    (!git || /^generated: (.*)$/m.exec(read(SMS))?.[1] !== originalGenerated(SMS)) &&
+    (!git ||
+      /^generated: (.*)$/m.exec(read(SMS))?.[1] !== originalGenerated(SMS)) &&
     time(fm(SMS).stale_after) > now,
   `the SMS cost risk is reassessed (probability: ${String(fm(SMS).probability)}, impact: ${String(fm(SMS).impact)})`,
 );
@@ -219,9 +222,14 @@ if (git) {
       "--",
       ".adaptrace",
     ]).split("\0"),
-    ...run(["ls-files", "-z", "--others", "--exclude-standard", "--", ".adaptrace"]).split(
-      "\0",
-    ),
+    ...run([
+      "ls-files",
+      "-z",
+      "--others",
+      "--exclude-standard",
+      "--",
+      ".adaptrace",
+    ]).split("\0"),
   ]
     .filter((p) => p !== "")
     .filter((p) => !(task !== undefined && p === `.adaptrace/${task}`));

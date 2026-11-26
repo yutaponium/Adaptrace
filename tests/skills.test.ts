@@ -101,6 +101,16 @@ const SKILLS = [
     ],
   },
   {
+    name: "adaptrace-risk",
+    date: "2026-11-26T10:00:00+09:00",
+    inputs: [".adaptrace/risks/idp-lock-in.md", ".adaptrace/risks/sms-cost.md"],
+    failures: [
+      "FAIL  no risk is stale",
+      "FAIL  the IdP risk is verified, unchanged, with a later review date",
+      "FAIL  one mitigation task, derived from the SMS cost risk",
+    ],
+  },
+  {
     name: "adaptrace-health",
     date: "2026-11-26T10:00:00+09:00",
     inputs: [".adaptrace/tasks/data-migration.md"],
@@ -400,6 +410,54 @@ for (const skill of SKILLS) {
           // No new task for the requirement with no work.
           await Bun.write(
             join(dest, ".adaptrace/tasks/session-timeout.md"),
+            "---\ntype: Task\n---\n\n# T\n",
+          );
+          expect(run()).toContain("FAIL  no other document changed");
+        } finally {
+          await rm(parent, { recursive: true, force: true });
+        }
+      });
+    }
+    if (skill.name === "adaptrace-risk") {
+      test("an untouched document changed fails, the review does not", async () => {
+        const parent = await mkdtemp(join(tmpdir(), "adaptrace-skill-"));
+        try {
+          const dest = join(parent, "repo");
+          // The day expected/ is rendered for.
+          expect(
+            Bun.spawnSync(["sh", join(dir, "setup.sh"), dest], {
+              env: { ...process.env, ADAPTRACE_TEST_DAY: "2026-11-26" },
+            }).exitCode,
+          ).toBe(0);
+          await cp(join(dir, "expected/.adaptrace"), join(dest, ".adaptrace"), {
+            recursive: true,
+          });
+          const run = () =>
+            Bun.spawnSync([
+              process.execPath,
+              join(dir, "check.ts"),
+              dest,
+            ]).stdout.toString();
+          // expected/ is for 2026-11-26: only the change checks apply here.
+          expect(run()).toContain("ok    no other document changed");
+          // A risk not to review.
+          const vendor = join(dest, ".adaptrace/risks/vendor-support.md");
+          const original = await Bun.file(vendor).text();
+          await Bun.write(
+            vendor,
+            original.replace("probability: 低", "probability: 中"),
+          );
+          expect(run()).toContain("FAIL  no other document changed");
+          await Bun.write(vendor, original);
+          // The kept risk's body stays as it was.
+          const idp = join(dest, ".adaptrace/risks/idp-lock-in.md");
+          const text = await Bun.file(idp).text();
+          await Bun.write(idp, `${text}\n追記\n`);
+          expect(run()).toContain("FAIL  no other document changed");
+          await Bun.write(idp, text);
+          // No other new document.
+          await Bun.write(
+            join(dest, ".adaptrace/tasks/another.md"),
             "---\ntype: Task\n---\n\n# T\n",
           );
           expect(run()).toContain("FAIL  no other document changed");
