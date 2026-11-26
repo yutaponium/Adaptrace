@@ -95,8 +95,8 @@ for (const d of DECIDED) {
   );
   check(
     "should",
-    String(gen(d.path).by).startsWith("human:"),
-    `${d.name}'s generated.by is the user (${String(gen(d.path).by)})`,
+    String(gen(d.path).by) === "human:hayashi",
+    `${d.name}'s generated.by is the user who asked (${String(gen(d.path).by)})`,
   );
 }
 
@@ -125,7 +125,7 @@ if (existsSync(join(repo, ".git"))) {
     .filter(
       (p) =>
         p !== "" &&
-        !/(^|\/)(index|log)\.md$/.test(p) &&
+        !/(^|\/)log\.md$/.test(p) &&
         !decided.has(p.replace(/^\.adaptrace\//, "")),
     );
   // No new document either: committed, staged or untracked.
@@ -177,12 +177,12 @@ if (existsSync(join(repo, ".git"))) {
   }
   const removed = git(["diff", "--numstat", "test-base", "--", ".adaptrace"])
     .split("\n")
-    .filter((l) => /(^|\/)(index|log)\.md$/.test(l))
+    .filter((l) => /(^|\/)log\.md$/.test(l))
     .some((l) => l.split("\t")[1] !== "0");
   check(
     "must",
     !gitFailed && changed.length === 0 && !removed,
-    `no other document changed${gitFailed ? " (git failed: no test-base?)" : ""}${changed.length ? ` (${changed.join(", ")})` : ""}${removed ? " (lines removed from index.md or log.md)" : ""}`,
+    `no other document changed${gitFailed ? " (git failed: no test-base?)" : ""}${changed.length ? ` (${changed.join(", ")})` : ""}${removed ? " (lines removed from log.md)" : ""}`,
   );
 } else {
   console.log("      other documents: not a git repository, not compared");

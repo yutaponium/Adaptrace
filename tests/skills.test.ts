@@ -320,6 +320,12 @@ for (const skill of SKILLS) {
           );
           expect(run()).toContain("ok    no other document changed");
           await Bun.write(cr, text);
+          // index.md does not change, not even by an added line.
+          const index = join(dest, ".adaptrace/change-requests/index.md");
+          const list = await Bun.file(index).text();
+          await Bun.write(index, `${list}\n承認済み：cr-002\n`);
+          expect(run()).toContain("FAIL  no other document changed");
+          await Bun.write(index, list);
           // A new document, such as a Decision for each request.
           await Bun.write(
             join(dest, ".adaptrace/decisions/cr-002-decision.md"),
