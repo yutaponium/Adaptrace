@@ -26,7 +26,7 @@ The key is not to move everything at once. Start small, with the documents where
 
 ## 1. Get Adaptrace ready to use
 
-Adaptrace runs on [Bun](https://bun.sh/). Install Bun, then install Adaptrace in one of these two ways.
+Install Adaptrace in one of the following ways. Installing directly from GitHub and cloning need [Bun](https://bun.sh/). Without Bun, download an executable instead.
 If you use the tag of a released version, everyone on the team gets the same behavior.
 
 **Install directly from GitHub** (the simplest)
@@ -37,6 +37,20 @@ adaptrace --version
 ```
 
 This gives you the `adaptrace` command. Adaptrace is not published on npm, so it is installed from the GitHub repository.
+
+**Download an executable** (no Bun needed)
+
+From [Releases](https://github.com/yutaponium/Adaptrace/releases), download the file for your platform (`adaptrace-<version>-<platform>.tar.gz`, or `.zip` for Windows). The platforms are `linux-x64`, `linux-arm64`, `darwin-arm64` (Apple silicon), `darwin-x64` (Intel Mac) and `windows-x64`. You can check the file with `SHA256SUMS` on the same page. The Linux builds use glibc, so they do not run on musl systems such as Alpine Linux.
+
+Extracting it creates a folder with the same name. Put the `adaptrace` inside (`adaptrace.exe` on Windows) in a folder on your PATH.
+
+```bash
+tar -xzf adaptrace-v1.0.0-linux-x64.tar.gz
+sudo mv adaptrace-v1.0.0-linux-x64/adaptrace /usr/local/bin/
+adaptrace --version
+```
+
+The executables are not signed. On macOS, run `xattr -d com.apple.quarantine adaptrace-v1.0.0-darwin-arm64/adaptrace` before you move it, because a file downloaded with a browser does not open as it is. If Windows shows a warning, choose "More info" and run it.
 
 **Clone the repository**
 

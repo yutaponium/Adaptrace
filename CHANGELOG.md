@@ -6,6 +6,7 @@
 
 ### Added
 
+- CLIを1つの実行ファイルにして、GitHubのReleaseに添付するようにした（ADR-038）。Bunのない環境でも使える。対象は `linux-x64`、`linux-arm64`、`darwin-arm64`、`darwin-x64`、`windows-x64`。`v*` のタグをpushすると、`.github/workflows/release.yml` が作り、`SHA256SUMS` と、取り込んだ依存パッケージのライセンスの一覧（`THIRD_PARTY_LICENSES.md`）も添える
 - 本文のリンクとして、参照形式のリンク（`[text][1]`、`[text][]`、`[text]`）と、`<...>` で囲んだ空白入りのリンク先（`[text](<my file.md>)`）を読むようにした。`validate` のリンク切れの検査と、参照の一覧が対象になる。参照形式のリンクは、リンクを使った行で示す
 
 ## [1.0.0] - 2026-11-26
