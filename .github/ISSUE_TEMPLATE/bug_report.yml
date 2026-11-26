@@ -1,0 +1,28 @@
+name: 不具合の報告 / Bug report
+description: 期待どおりに動かないことを報告する
+labels: [bug]
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: 起きたこと / What happened
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: 期待したこと / Expected behavior
+    validations:
+      required: true
+  - type: textarea
+    id: repro
+    attributes:
+      label: 再現手順 / Steps to reproduce
+      description: 使ったコマンドと、最小の OKF バンドル（可能なら）
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: バージョン / Version
+      description: "`bun src/cli.ts --version` と `bun --version` の出力"

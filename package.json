@@ -1,0 +1,28 @@
+{
+  "name": "adaptrace",
+  "version": "1.0.0",
+  "description": "Manage requirements, decisions, tasks, risks and their dependencies as OKF-compliant Markdown",
+  "license": "MIT",
+  "type": "module",
+  "private": true,
+  "bin": {
+    "adaptrace": "./src/cli.ts"
+  },
+  "scripts": {
+    "lint": "biome check .",
+    "format": "biome format --write .",
+    "typecheck": "tsc --noEmit",
+    "test": "bun test",
+    "validate:self": "bun src/cli.ts validate .adaptrace"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^2.6.8",
+    "@types/bun": "^1.4.5",
+    "typescript": "^7.0.2"
+  },
+  "packageManager": "bun@1.4.4",
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.32.2",
+    "zod": "^4.6.7"
+  }
+}

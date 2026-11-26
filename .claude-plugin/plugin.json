@@ -1,0 +1,14 @@
+{
+  "name": "adaptrace",
+  "version": "1.0.0",
+  "description": "Claude Code skills for Adaptrace: bring in existing files, take change requests, review, prepare regular meetings, take in minutes, replace decisions and check the health of the dependencies, in OKF Markdown bundles",
+  "author": {
+    "name": "yutaponium",
+    "email": "adaptrace.project@gmail.com",
+    "url": "https://github.com/yutaponium"
+  },
+  "homepage": "https://github.com/yutaponium/Adaptrace",
+  "repository": "https://github.com/yutaponium/Adaptrace",
+  "license": "MIT",
+  "keywords": ["okf", "markdown", "requirements", "decisions", "change-management", "traceability"]
+}

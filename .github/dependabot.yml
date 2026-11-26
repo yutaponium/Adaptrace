@@ -1,0 +1,16 @@
+# Dependabot keeps the actions, pinned to commit SHAs, and the bun.lock
+# dependencies up to date. It opens a pull request once a week.
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    commit-message:
+      prefix: ci
+  - package-ecosystem: bun
+    directory: /
+    schedule:
+      interval: weekly
+    commit-message:
+      prefix: chore

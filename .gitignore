@@ -1,0 +1,21 @@
+# Dependencies and build output
+node_modules/
+dist/
+coverage/
+*.tsbuildinfo
+
+# Secrets
+.env
+.env.*
+!.env.example
+*.key
+*.pem
+
+# Local settings
+.claude/settings.local.json
+.DS_Store
+CLAUDE.local.md
+AGENTS.local.md
+
+# Drafts of mails and notes (kept locally, never committed)
+.draft/

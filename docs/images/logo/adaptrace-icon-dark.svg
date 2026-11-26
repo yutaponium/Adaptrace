@@ -1,0 +1,59 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 190 190" width="190" height="190" role="img" aria-label="Adaptrace icon (dark mode)">
+  <defs>
+    <!-- Clip the exiting bottom trace line cleanly flush with the document bottom edge (y=171.5) -->
+    <clipPath id="c-bottom-clip-dark">
+      <rect x="0" y="0" width="190" height="171.5" />
+    </clipPath>
+  </defs>
+  <g transform="translate(5, 0)">
+  <g id="plan-c-icon">
+    <!-- Document Outer Frame -->
+    <path d="M 122,26 L 56,26 C 44,26 36,34 36,46 L 36,144 C 36,156 44,164 56,164 L 134,164 C 146,164 154,156 154,144 L 154,58"
+          fill="none" stroke="#E2E8F0" stroke-width="15" stroke-linecap="butt" stroke-linejoin="round" />
+
+    <!-- Folded corner (dog-ear) -->
+    <path d="M 122,18.5 L 122,46 C 122,53 127,58 134,58 L 161.5,58 Z"
+          fill="#94A3B8" />
+
+    <!-- Markdown '#' Symbol (Right half in Slate) -->
+    <g fill="#94A3B8">
+      <polygon points="109,54 125,54 111,146 95,146" />
+      <rect x="94" y="75" width="44" height="15" />
+      <rect x="88" y="112" width="46" height="15" />
+    </g>
+
+    <!-- Markdown '#' Symbol (Left half in Navy) -->
+    <g fill="#E2E8F0">
+      <polygon points="73,54 89,54 75,146 59,146" />
+      <rect x="52" y="75" width="52" height="15" />
+      <rect x="16" y="112" width="80" height="15" />
+    </g>
+
+    <!-- Emerald Trace Path (overlaying the '#' grid) -->
+    <!-- Path 1: Left node -> curve up -> Top-Left node -> Top-Right node -> Bottom-Right node -->
+    <path d="M 34,119.5
+             L 62,119.5
+             Q 71,119.5 72.5,110.5
+             L 77.5,82.5
+             L 113.5,82.5
+             L 107.5,119.5"
+          fill="none" stroke="#10E5A0" stroke-width="6.5" stroke-linecap="round" stroke-linejoin="round" />
+
+    <!-- Path 2: Bottom-Right node -> curve down -> flush with bottom of document frame -->
+    <path d="M 107.5,119.5
+             L 81,119.5
+             Q 72,119.5 70.5,128.5
+             L 62.5,176"
+          fill="none" stroke="#10E5A0" stroke-width="6.5" stroke-linecap="butt" stroke-linejoin="round"
+          clip-path="url(#c-bottom-clip-dark)" />
+
+    <!-- Trace Nodes -->
+    <g fill="#10E5A0">
+      <circle cx="34" cy="119.5" r="7" />
+      <circle cx="77.5" cy="82.5" r="7" />
+      <circle cx="113.5" cy="82.5" r="7" />
+      <circle cx="107.5" cy="119.5" r="7" />
+    </g>
+  </g>
+  </g>
+</svg>
