@@ -62,10 +62,21 @@ check(
   ]) && list(fm(R1).depends_on).length === 3,
   `the year-end release keeps the rest of its work and REQ-2 (depends_on: ${list(fm(R1).depends_on).join(", ")})`,
 );
+// Nothing is added beyond the move: release-2 waits for its own work and
+// the SMS task (by depends_on, or by the task's blocks), and no other blocks.
+const r2 = list(fm(R2).depends_on).sort();
+const smsBlocks = list(fm("tasks/sms-send.md").blocks);
 check(
   "must",
-  keeps(R2, ["/tasks/audit-log.md"]),
-  "the second release keeps its own work",
+  (r2.join() === ["/tasks/audit-log.md", SMS].sort().join() &&
+    smsBlocks.length === 0) ||
+    (r2.join() === "/tasks/audit-log.md" && smsBlocks.join() === `/${R2}`),
+  `the second release waits for its own work and the SMS task, and nothing else (depends_on: ${r2.join(", ")}; sms-send blocks: ${smsBlocks.join(", ")})`,
+);
+check(
+  "must",
+  list(fm(R1).blocks).length === 0 && list(fm(R2).blocks).length === 0,
+  "no blocks added to the milestones",
 );
 check(
   "must",
