@@ -2,7 +2,7 @@
 type: Decision
 title: Backlog.mdとの同期は、skillが `sync` の計画を項目ごとに示し、衝突や問題の扱いを利用者と決めてから書き込む
 state: accepted
-generated: { by: claude-code/claude-opus-5-5, at: 2026-11-26T22:13:05+09:00 }
+generated: { by: claude-code/claude-opus-5-5, at: 2026-11-26T22:27:02+09:00 }
 depends_on:
   - /decisions/adr-011-backlog-sync.md
   - /decisions/adr-026-adopt-skill.md
@@ -22,11 +22,11 @@ depends_on:
   - 見つからないタスク：Backlog.mdの側で戻すか、Adaptraceの文書を残すか（`sync` は知らせ続ける）を、利用者と決める。Adaptraceの文書を削除するのは、利用者が明示したときだけにする
 - skillが書き換えるのは、次だけにする
   - `sync --write` が書く、AdaptraceのTaskの文書と、Backlog.mdのタスクのファイル
-  - 上の扱いで決めた、AdaptraceのTaskの文書のキーと本文
+  - 上の扱いで決めた、AdaptraceのTask文書のキーと本文
   - `log.md`（行の追加だけ）
 - Backlog.mdのファイル（`config.yml` を含む）は、`sync --write` のほかでは書き換えない
 - `sync --write` は、実行する内容（`--resolve` の指定を含む）と、`--write` を付けない計画を示し、承認を得てから実行する
-- 取り込みで `generated` が更新されたタスクに依存する文書は、`stale` に出る。skillは報告に書き、見直しは skill `adaptrace-review` を案内する
+- 取り込みで `generated` が更新されたタスクに依存する文書は、`stale` に出る。skillは報告に書き、見直しはskill `adaptrace-review` を案内する
 
 ## 理由
 

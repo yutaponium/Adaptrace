@@ -395,7 +395,7 @@ adaptrace sync --write    # actually writes
 - When the same task has changed on both sides, it does not overwrite either. It reports a conflict. Use `--resolve adaptrace` or `--resolve backlog` to make both sides match one of them. You can also give it per task, as in `--resolve tasks/design.md=backlog`.
 
 Developers move tasks in Backlog.md. Before the regular meeting, the PM brings them in with `sync` and checks `stale` and `board`.
-If you use Claude Code, the skill `adaptrace-sync` syncs for you. It shows the `sync` plan item by item, decides with you how to handle conflicts and other problems task by task, and writes after your approval.
+If you use Claude Code, the skill `adaptrace-sync` syncs for you. It shows the `sync` plan item by item, decides with you how to handle conflicts and other problems task by task, and writes after your approval. This skill is available from the release after v1.0.0. You get the skill the same way as in [the guide to adopting Adaptrace in an existing repository](adoption.en.md#have-claude-code-help-you-bring-in-files). If you installed the plugin, you already have all the skills. If you copy the folder, replace `adaptrace-adopt` in the command with `adaptrace-sync`.
 With this flow, everyone can use the tool they are used to.
 
 [Using Adaptrace with Backlog.md](backlog-md.en.md) explains everything from installation to working with both, with screenshots.

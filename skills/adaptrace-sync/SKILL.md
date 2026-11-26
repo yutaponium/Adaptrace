@@ -18,7 +18,7 @@ description: AdaptraceのバンドルのタスクとBacklog.mdのタスクを、
 - **衝突でどちらにそろえるかを、自分で決めない。** 両側の内容を示し、利用者が決める。選ばなかった側の変更は失われることを伝える
 - 書き換えてよいのは、次だけにする。ほかの文書は変えない
   - `sync --write` が書く、AdaptraceのTaskの文書と、Backlog.mdのタスクのファイル
-  - 手順2で利用者と決めた、AdaptraceのTaskの文書のキーと本文
+  - 手順2で利用者と決めた、AdaptraceのTask文書のキーと本文
   - `log.md`：行を追加するだけ
 - **Backlog.mdのファイル（`config.yml` を含む）は、`sync --write` のほかでは書き換えない。** 手で書き換えると、`backlog.sync` のハッシュと食い違い、次の `sync` で衝突になる。Backlog.mdの側で変えることは、利用者に案内する
 - `backlog.sync` と `backlog.fields` は、手で書き換えない
@@ -32,7 +32,7 @@ description: AdaptraceのバンドルのタスクとBacklog.mdのタスクを、
 |---|---|---|
 | コマンドに渡す文書 | バンドルの中のパス。先頭に `/` を付けない | `adaptrace sync --resolve tasks/manual.md=backlog` |
 | フロントマターのキーの値 | バンドルの中のパス。先頭に `/` を付ける | `depends_on: /tasks/login-mfa.md` |
-| Backlog.mdのタスク | `--backlog` のディレクトリの中のパス | `tasks/back-3 - 操作マニュアルを書く.md` |
+| Backlog.mdのタスク | `--backlog` のディレクトリの中のパス | `tasks/back-12 - 設計書を書く.md` |
 
 ## 共通の書き方
 
@@ -57,7 +57,7 @@ Adaptraceのskillに共通の決まり。
 3. Backlog.mdのディレクトリを確認する。既定は、リポジトリのルートの `backlog/` で、`config.yml` がある。なければ、利用者に尋ねる。ほかの場所にあれば、以降のすべての `sync` に `--backlog <ディレクトリ>` を付ける
 4. `backlog/config.yml` を読み、ステータスの一覧（`statuses`）を控える。Adaptraceの `state` は、ステータスを小文字にして、空白などを `_` にした値で対応する（例：`In Progress` と `in_progress`）
 5. `adaptrace validate` を実行し、同期の前からあるエラーと警告を把握しておく
-6. 利用者が片方向だけを望んだときは、以降のすべての `sync` に `--direction import`（取り込むだけ）か `--direction export`（書き出すだけ）を付ける。除外した側の変更は `pending` として示され、書き込まれない
+6. 利用者が片方向だけを望んだときは、以降のすべての `sync` に `--direction import`（取り込むだけ）か `--direction export`（書き出すだけ）を付ける。除外した側の変更は `pending` として示され、書き込まれない。除外した側の新しいタスク（`--direction export` ならBacklog.mdの新しいタスク、`--direction import` ならBacklog.mdと対応付いていないTask）は、計画に出ない。報告では、そのことも伝える
 
 ## 1. 計画を示す
 
@@ -115,7 +115,7 @@ Adaptraceのskillに共通の決まり。
 
 ### 見つからないタスク（`missing`）
 
-Backlog.mdの `backlog/archive/tasks/` と `backlog/drafts/` に、同じIDのタスクがあるかを確認して示す。`sync` は、アーカイブと下書きのタスクを変換しない。`backlog/completed/` のタスクは変換するので、`missing` にはならない。扱いを尋ねる。
+Backlog.mdの `backlog/archive/tasks/`、`backlog/archive/drafts/`、`backlog/drafts/` に、同じIDのタスクがあるかを確認して示す。`sync` は、アーカイブと下書きのタスクを変換しない。`backlog/completed/` のタスクは変換するので、`missing` にはならない。扱いを尋ねる。
 
 - Backlog.mdの側で戻す：利用者に、Backlog.mdの側で戻すよう案内する。戻された後に、手順1からやり直す
 - Adaptraceの文書を残す：変更しない。`sync` は、このタスクを毎回知らせ、終了コードは1になる。ライフサイクルのキー `status` を `deprecated` にしても、知らせ続ける
@@ -137,10 +137,10 @@ Backlog.mdの `backlog/archive/tasks/` と `backlog/drafts/` に、同じIDの�
 1. 手順2で決めた文書の編集があれば、文書ごとに差分を示し、承認を得てから書く。利用者が選択肢で値を選んだだけでは、承認ではない。差分と一緒に、編集した後の `sync` の計画がどうなるか（`export-new` になる、衝突がAdaptraceの側にそろうなど）を示す
 2. 決めた `--resolve` を付けて、`--write` を付けずに `adaptrace sync --format json` を実行する。計画が、決めた扱いのとおりになっているかを確認する。扱いを決めたタスクの `kind` と `fields`、新しいIDが振られるタスクを確認する。手順2で「今回はそろえない」「残す」と決めたもののほかに、問題が残っていないかを確認する
 3. 実行するコマンドと、その計画（書き出す、取り込む、作るタスク）を示して、承認を得る
-4. `--write` を付けて実行する。`--resolve` の指定は、手順3の2と同じにする。残した問題があると、書き込んでも終了コードは1になる。書き込めたかは、出力の `written` が `true` であることと、`errors` で判断する
+4. `--write` を付けて実行する。`--resolve` の指定は、手順3の2と同じにする。残した問題があると、書き込んでも終了コードは1になる。`written` は `--write` を付けたことを示すだけである。終了コードが0か1で、JSONが出力されれば、書き込めている。エラーで止まってJSONが出なければ、一部のファイルだけが書き込まれた可能性がある。手順3の6で状態を確認し、利用者に知らせる
    - `sync` は、書き込むタスクのフロントマターを、自分の書式で書き直す（1行の `{ ... }` や `[...]` を、複数行にするなど）。取り込んだタスクの `generated` は、`adaptrace/<版>` とUTCの日時になる。どれも `sync` の仕様なので、直さない
    - Backlog.mdのファイル名は、題を変えても変わらない
-5. `log.md` に記録するかを、最後に1回だけ尋ねる。手順3の3と一緒に尋ねてよい。追加する場合は、今日の日付で見出し（`## YYYY-MM-DD`）を作り、その下に `* **Update**: <説明>` の形で、この同期全体を1行で書く。Backlog.mdから新しいタスクを取り込んだなら、`* **Creation**: <説明>` の行も、`Update` の行の下に書く。書く行は、書き込む前に示す
+5. `log.md` に記録するかを、最後に1回だけ尋ねる。手順3の3と一緒に尋ねてよい。追加する場合は、今日の日付の見出し（`## YYYY-MM-DD`）の下に書く。見出しがなければ作る（「共通の書き方」）。`* **Update**: <説明>` の形で、この同期全体を1行で書く。Backlog.mdから新しいタスクを取り込んだなら、`* **Creation**: <説明>` の行も、`Update` の行の下に書く。書く行は、書き込む前に示す
 6. `adaptrace sync --format json` をもう一度実行し、変更が残っていないこと、問題が利用者の決めたものだけであることを確認する
 7. `adaptrace validate` を実行する。手順0の時点より増えたエラーがあれば、原因を説明して、修正の差分を示す
 8. `adaptrace stale --format json` を実行する。取り込んだタスクは `generated` が新しくなるので、それに依存している文書が「依存先より古い」と出る。`state` だけを取り込んだ場合も出るので、出ても内容の見直しが要るとは限らない。出た文書と、取り込んだ項目を報告に書く

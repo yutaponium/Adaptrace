@@ -37,7 +37,7 @@ All of these are in the Adaptrace repository; how to find them is in "Shared con
 |---|---|---|
 | A document passed to a command | The path inside the bundle, without a leading `/` | `adaptrace sync --resolve tasks/manual.md=backlog` |
 | The value of a frontmatter key | The path inside the bundle, with a leading `/` | `depends_on: /tasks/login-mfa.md` |
-| A Backlog.md task | The path inside the `--backlog` directory | `tasks/back-3 - 操作マニュアルを書く.md` |
+| A Backlog.md task | The path inside the `--backlog` directory | `tasks/back-12 - 設計書を書く.md` |
 
 ## Shared conventions
 
@@ -62,7 +62,7 @@ Rules shared by the Adaptrace skills.
 3. Check the Backlog.md directory. By default it is `backlog/` at the repository root, with `config.yml` in it. If it is not there, ask the user. If it is elsewhere, add `--backlog <directory>` to every later `sync`
 4. Read `backlog/config.yml` and note the list of statuses (`statuses`). An Adaptrace `state` matches the status lowercased, with spaces and the like turned into `_` (for example `In Progress` and `in_progress`)
 5. Run `adaptrace validate` and note the errors and warnings that exist before the sync
-6. When the user wants one direction only, add `--direction import` (import only) or `--direction export` (export only) to every later `sync`. Changes on the excluded side are shown as `pending` and not written
+6. When the user wants one direction only, add `--direction import` (import only) or `--direction export` (export only) to every later `sync`. Changes on the excluded side are shown as `pending` and not written. New tasks on the excluded side (new Backlog.md tasks with `--direction export`, Tasks not linked to Backlog.md with `--direction import`) do not appear in the plan. Say so in the report too
 
 ## 1. Show the plan
 
@@ -120,7 +120,7 @@ Read the document and show whether it has the `backlog` key. Without `backlog`, 
 
 ### Task not found (`missing`)
 
-Check whether a task with the same id is in Backlog.md's `backlog/archive/tasks/` or `backlog/drafts/`, and show it. `sync` does not convert archived or draft tasks. Tasks in `backlog/completed/` are converted, so they do not become `missing`. Ask how to handle it.
+Check whether a task with the same id is in Backlog.md's `backlog/archive/tasks/`, `backlog/archive/drafts/` or `backlog/drafts/`, and show it. `sync` does not convert archived or draft tasks. Tasks in `backlog/completed/` are converted, so they do not become `missing`. Ask how to handle it.
 
 - Restore it on the Backlog.md side: tell the user to restore it on the Backlog.md side. After that, start again from step 1
 - Keep the Adaptrace document: change nothing. `sync` reports this task every time, with exit code 1. Setting the lifecycle key `status` to `deprecated` still keeps it reported
@@ -142,10 +142,10 @@ Read the documents with the same id (`adaptrace` and `others`) and show how they
 1. If step 2 decided edits to documents, show the diff for each document and write after approval. The user choosing a value among choices is not approval. With the diff, show how the `sync` plan will look after the edit (it becomes `export-new`, the conflict is settled to the Adaptrace side, and so on)
 2. Run `adaptrace sync --format json` with the decided `--resolve` and without `--write`. Check that the plan matches the decided handling. Check the `kind` and `fields` of the tasks whose handling was decided, and the tasks that get a new id. Check that no problem remains other than those decided in step 2 as "do not settle it now" or "keep"
 3. Show the command to run and its plan (what is exported, imported and created) and get approval
-4. Run it with `--write`. Use the same `--resolve` as in step 3.2. If problems were left, the exit code is 1 even after writing. Judge whether it wrote by `written` being `true` in the output, and by `errors`
+4. Run it with `--write`. Use the same `--resolve` as in step 3.2. If problems were left, the exit code is 1 even after writing. `written` only shows that `--write` was given. If the exit code is 0 or 1 and JSON is printed, it wrote. If it stops with an error and prints no JSON, only some files may have been written. Check the state in step 3.6 and tell the user
    - `sync` rewrites the frontmatter of the tasks it writes in its own style (a one-line `{ ... }` or `[...]` becomes several lines, and so on). Imported tasks get `generated` with `adaptrace/<version>` and a UTC time. These are how `sync` works; do not change them
    - The Backlog.md file name does not change when the title changes
-5. Ask once, at the end, whether to record it in `log.md`. You may ask together with step 3.3. If adding, create a heading with today's date (`## YYYY-MM-DD`) and under it write the whole sync in one line as `* **Update**: <description>`. If you imported new tasks from Backlog.md, also write a `* **Creation**: <description>` line, below the `Update` line. Show the lines before writing them
+5. Ask once, at the end, whether to record it in `log.md`. You may ask together with step 3.3. If adding, write under the heading with today's date (`## YYYY-MM-DD`); create the heading if there is none ("Shared conventions"). Under it, write the whole sync in one line as `* **Update**: <description>`. If you imported new tasks from Backlog.md, also write a `* **Creation**: <description>` line, below the `Update` line. Show the lines before writing them
 6. Run `adaptrace sync --format json` again and check that no changes are left and that the only problems are the ones the user decided to leave
 7. Run `adaptrace validate`. If there are more errors than at step 0, explain the cause and show a diff to fix them
 8. Run `adaptrace stale --format json`. Imported tasks get a newer `generated`, so documents that depend on them show as "older than a dependency". This happens even when only `state` was imported, so it does not always mean the content needs review. Write those documents and the imported fields in the report

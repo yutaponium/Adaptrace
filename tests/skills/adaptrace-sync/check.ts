@@ -5,7 +5,7 @@
 // copies it as it is (no dates to render).
 import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
 import { join, relative } from "node:path";
-import { loadBacklog, planSync } from "../../../src/backlog";
+import { loadBacklog, normalizeId, planSync } from "../../../src/backlog";
 import { loadBundle } from "../../../src/bundle";
 import { parseDocument } from "../../../src/frontmatter";
 import { validate } from "../../../src/validate";
@@ -41,11 +41,7 @@ const list = (v: unknown) =>
   (Array.isArray(v) ? v : v === undefined || v === null ? [] : [v]).map(String);
 const linkId = (path: string) =>
   String((fm(path).backlog as { id?: unknown } | undefined)?.id ?? "");
-const task = (id: string) =>
-  backlog.tasks.get(id.toLowerCase()) ??
-  [...backlog.tasks.values()].find(
-    (t) => t.id.toLowerCase() === id.toLowerCase(),
-  );
+const task = (id: string) => backlog.tasks.get(normalizeId(id));
 const theirs = (id: string) =>
   (task(id)?.frontmatter ?? {}) as Record<string, unknown>;
 
