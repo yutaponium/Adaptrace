@@ -310,6 +310,22 @@ for (const skill of SKILLS) {
             text.replace("メールが届かない会員がいるので、", ""),
           );
           expect(run()).toContain("FAIL  no other document changed");
+          // A block-style generated is fine.
+          await Bun.write(
+            cr,
+            text.replace(
+              /^generated: \{ by: (\S+), at: (\S+) \}$/m,
+              "generated:\n  by: $1\n  at: $2",
+            ),
+          );
+          expect(run()).toContain("ok    no other document changed");
+          await Bun.write(cr, text);
+          // A new document, such as a Decision for each request.
+          await Bun.write(
+            join(dest, ".adaptrace/decisions/cr-002-decision.md"),
+            "---\ntype: Decision\n---\n\n# CR-002\n",
+          );
+          expect(run()).toContain("FAIL  no other document changed");
         } finally {
           await rm(parent, { recursive: true, force: true });
         }

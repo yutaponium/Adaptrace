@@ -32,8 +32,9 @@ const read = (path: string) =>
   existsSync(join(root, path)) ? readFileSync(join(root, path), "utf8") : "";
 const fm = (path: string) =>
   (bundle.concepts.get(path)?.frontmatter ?? {}) as Record<string, unknown>;
-const at = (path: string) =>
-  String((fm(path).generated as { at?: unknown } | undefined)?.at);
+const gen = (path: string) =>
+  (fm(path).generated ?? {}) as { at?: unknown; by?: unknown };
+const at = (path: string) => String(gen(path).at);
 
 // The decided requests: the state, a 判断 section, and the reasons.
 const DECIDED = [
@@ -92,6 +93,11 @@ for (const d of DECIDED) {
     at(d.path) !== d.was && at(d.path) !== "undefined",
     `${d.name}'s generated.at is new (${at(d.path)})`,
   );
+  check(
+    "should",
+    String(gen(d.path).by).startsWith("human:"),
+    `${d.name}'s generated.by is the user (${String(gen(d.path).by)})`,
+  );
 }
 
 // Only the decided requests changed, and only their state, generated and
@@ -122,17 +128,44 @@ if (existsSync(join(repo, ".git"))) {
         !/(^|\/)(index|log)\.md$/.test(p) &&
         !decided.has(p.replace(/^\.adaptrace\//, "")),
     );
+  // No new document either: committed, staged or untracked.
+  const added = [
+    ...git([
+      "diff",
+      "--name-only",
+      "-z",
+      "--diff-filter=A",
+      "test-base",
+      "--",
+      ".adaptrace",
+    ]).split("\0"),
+    ...git([
+      "ls-files",
+      "-z",
+      "--others",
+      "--exclude-standard",
+      "--",
+      ".adaptrace",
+    ]).split("\0"),
+  ].filter((p) => p !== "");
+  changed.push(...added.map((p) => `${p} (new)`));
   for (const path of decided) {
     // The frontmatter without state and generated, and the body as received:
     // the new text may only follow it.
     const split = (text: string) => {
       const m = /^---\n([\s\S]*?)\n---\n?([\s\S]*)$/.exec(text);
       const [front, body] = m ? [m[1] ?? "", m[2] ?? ""] : ["", text];
+      // A key's lines: the key line and the indented lines under it, as in
+      // a block-style generated.
+      const lines: string[] = [];
+      let skipping = false;
+      for (const l of front.split("\n")) {
+        if (/^(state|generated):/.test(l)) skipping = true;
+        else if (!/^\s/.test(l)) skipping = false;
+        if (!skipping) lines.push(l);
+      }
       return {
-        front: front
-          .split("\n")
-          .filter((l) => !/^(state|generated):/.test(l))
-          .join("\n"),
+        front: lines.join("\n"),
         body: body.trimEnd(),
       };
     };
