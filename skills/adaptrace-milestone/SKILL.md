@@ -63,7 +63,7 @@ Adaptraceのskillに共通の決まり。
 2. `adaptrace list --type Milestone --format json --columns state,due`：マイルストーンの一覧
 3. 利用者が名前や番号で言ったマイルストーンを、一覧から特定する。見つからなければ、推測せずに尋ねる
 4. マイルストーンの本文を読む。期日（`due`）と、`state` を確認する。`state` がなければ、まだ終わっていない
-5. 手順1の1で確認した、TaskとMilestoneの `state` の値のうち、終わったことを表す値を決める。`coverage` の既定は `done` である。`done` 以外に、終わったことを表すと名前から分かる値（`completed` など）があれば、以降の `coverage` に `--done <値,...>` を付ける。どちらか分からない値があれば、利用者に尋ねる
+5. 手順1の1で確認した、TaskとMilestoneの `state` の値のうち、終わったことを表す値を決める。`coverage` の既定は `done` である。`done` 以外に、終わったことを表すと名前から分かる値（`completed` など）があれば、以降の `coverage` に `--done <値,...>` を付ける。`--done` は既定を置き換えるので、`done` も使っていれば一緒に並べる（例：`--done done,completed`）。どちらか分からない値があれば、利用者に尋ねる
 6. 手順1の1で確認した、変更要求の `state` の値を、未決（受付、検討中など）と決着（承認、却下など）に分ける。手順2の2で使う。名前から分からない値は、利用者に尋ねる
 
 ## 2. 材料を集める
@@ -72,7 +72,7 @@ Adaptraceのskillに共通の決まり。
    - `requirements`：範囲の要件と状況（`uncovered`、`open`、`covered`）。要件は、マイルストーンが直接待っている要件と、範囲の作業が `satisfies` で満たす要件である。`satisfiers` の `counted` が `false` の文書は、別のリリースの作業として数えていない。Decisionなど作業でない文書は、`done` が `null` で、あれば満たしているとみなす
    - `scope`：範囲の文書。マイルストーンが待っている文書と、そこから待っている文書をたどった文書、要件を満たす作業が入る。作業が依存する判断なども入るが、その先はたどらない。`done` が `false` のTaskとMilestoneが、残っている作業。`done` が `null` の文書（要件や判断）は、作業ではないので、作業の一覧には入れない。`late` が `true` の作業は、終わっておらず、期日がマイルストーンより後
 2. `adaptrace conflicts --format json`：`requests` から、未決の変更要求を取り出す。`reach`（影響範囲）が、`coverage` の `scope` か `requirements` の文書か、マイルストーン自身と1つでも重なる変更要求が、このマイルストーンに関わる。`changes` を持たない変更要求（`unlinked`）は、関わるかを判断できないので、報告に書く。`pairs`（変更要求どうしの重なり）は、このskillでは使わない
-   - 手順1の6で決着に分けた値に、`conflicts` の既定にない値（`declined` など）があれば、`--settled` を付ける。決着の値が1つもないか、すべて既定にあれば、付けない。既定は `approved`、`accepted`、`rejected`、`deferred`、`implemented`、`closed`、`done`。`--settled` は既定を置き換えるので、使う値をすべて並べる
+   - `conflicts` に渡す決着の値の一覧を決める。既定は `approved`、`accepted`、`rejected`、`deferred`、`implemented`、`closed`、`done`。一覧は、既定から、手順1の6で未決に分けた値（`deferred` を「保留中で未決」として使っている場合など）を除き、決着に分けた値を加えたものにする。一覧が既定と違えば、`--settled` を付ける。`--settled` は既定を置き換えるので、一覧のすべての値を並べる
 3. `adaptrace stale --format json`：`stale` のうち、マイルストーン自身と、`scope` か `requirements` にある文書。`unknown`（日時が分からない文書）のうち範囲にあるものも、報告に書く
 4. `scope` の作業のうち、手順0の日付より前の期日で、終わっていないものを、期日を過ぎた作業として控える。日付は、`due` の日付と、手順0の日時の日付部分で比べる
 
@@ -85,6 +85,7 @@ Adaptraceのskillに共通の決まり。
 | 作業が足りない要件（`uncovered`） | 要件 | 満たす作業がない |
 | 終わっていない要件（`open`） | 要件と、終わっていない作業 | 作業の担当と期日 |
 | 期日に間に合わない作業（`late`、期日を過ぎた作業） | 作業 | 期日と担当 |
+| そのほかの残っている作業 | 作業（`scope` の `done` が `false` のTaskとMilestoneで、上の区分にないもの） | 状態、担当、期日 |
 | 範囲に関わる未決の変更要求 | 変更要求 | 重なる文書 |
 | 古くなった文書 | 文書 | 何より古いか |
 

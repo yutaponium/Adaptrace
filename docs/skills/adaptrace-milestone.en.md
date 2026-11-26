@@ -68,7 +68,7 @@ Rules shared by the Adaptrace skills.
 2. `adaptrace list --type Milestone --format json --columns state,due`: the list of milestones
 3. Find in the list the milestone the user named. If you cannot find it, ask instead of guessing
 4. Read the milestone's body. Check its due date (`due`) and `state`. Without `state`, it is not done yet
-5. Of the `state` values of Tasks and Milestones checked in step 1.1, decide which mean done. The default of `coverage` is `done`. If another value clearly means done by its name (such as `completed`), add `--done <value,...>` to `coverage` from here on. If you are unsure about a value, ask the user
+5. Of the `state` values of Tasks and Milestones checked in step 1.1, decide which mean done. The default of `coverage` is `done`. If another value clearly means done by its name (such as `completed`), add `--done <value,...>` to `coverage` from here on. `--done` replaces the default, so if `done` is used too, list it as well (example: `--done done,completed`). If you are unsure about a value, ask the user
 6. Sort the `state` values of the change requests checked in step 1.1 into undecided (submitted, under review and so on) and settled (approved, rejected and so on), for step 2.2. Ask the user about values whose names do not tell
 
 ## 2. Gather the material
@@ -77,7 +77,7 @@ Rules shared by the Adaptrace skills.
    - `requirements`: the requirements in the scope and their status (`uncovered`, `open`, `covered`). They are the requirements the milestone waits for directly, and those the work in the scope satisfies with `satisfies`. A satisfier with `counted: false` is another release's work and is not counted. A document that is not work, such as a Decision, has `done: null` and counts as satisfying the requirement if it exists
    - `scope`: the documents in the scope: what the milestone waits for, what is reached from there through what it waits for, and the work that satisfies a requirement. Decisions and the like that the work depends on are in it too, but the walk does not go past them. Tasks and Milestones with `done: false` are the work left. Documents with `done: null` (requirements, decisions) are not work and do not go in the list of work. Work with `late: true` is not done and is due after the milestone
 2. `adaptrace conflicts --format json`: take the open change requests from `requests`. A change request whose `reach` (impact range) shares even one document with the `scope` or the `requirements` of `coverage`, or includes the milestone itself, touches this milestone. Change requests without `changes` (`unlinked`) cannot be judged, so write them in the report. This skill does not use `pairs` (overlaps between change requests)
-   - If the values sorted as settled in step 1.6 include one that is not among the defaults of `conflicts` (such as `declined`), add `--settled`. If there are no settled values, or all are defaults, do not add it. The defaults are `approved`, `accepted`, `rejected`, `deferred`, `implemented`, `closed` and `done`. `--settled` replaces the defaults, so list every value you use
+   - Decide the list of settled values to pass to `conflicts`. The defaults are `approved`, `accepted`, `rejected`, `deferred`, `implemented`, `closed` and `done`. The list is the defaults, minus the values sorted as undecided in step 1.6 (for example, when `deferred` is used for "on hold, not decided"), plus the values sorted as settled. If the list differs from the defaults, add `--settled`. `--settled` replaces the defaults, so list every value in the list
 3. `adaptrace stale --format json`: the documents in `stale` that are the milestone itself or are in the `scope` or the `requirements`. Report also the documents in `unknown` (no known date) that are in the scope
 4. Note the work in the `scope` that is not done and whose due date is before the date from step 0, as work past its due date. Compare the date of `due` with the date part of the date and time from step 0
 
@@ -90,6 +90,7 @@ Show it in this table. Do not write a recommended judgment. For a category with 
 | Requirements lacking work (`uncovered`) | Requirement | No work satisfies it |
 | Requirements not done (`open`) | The requirement and the work not done | Owner and due date of the work |
 | Work that misses the due date (`late`, past due) | Work | Due date and owner |
+| Other work left | Work (Tasks and Milestones in `scope` with `done: false` that are in no category above) | State, owner and due date |
 | Open change requests that touch the scope | Change request | Overlapping documents |
 | Out-of-date documents | Document | What it is older than |
 
