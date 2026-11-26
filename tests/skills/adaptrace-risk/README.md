@@ -8,7 +8,7 @@ skillを修正したら、試験の必要度を判断する（ADR-042）。試�
 | ファイル | 内容 |
 |---|---|
 | `repo/` | 模擬のリポジトリ。見直しが必要なリスク3件と、見直しの要らないリスク2件がある |
-| `setup.sh` | `repo/` から試験用のgitリポジトリを作り、skillをコピーする。日付は、今日からの相対の日付にする（`../render-dates.ts`）。環境変数 `ADAPTRACE_TEST_DAY`（`YYYY-MM-DD`）で、基準の日を指定できる |
+| `setup.sh` | `repo/` から試験用のgitリポジトリを作り、skillをコピーする。日付は、今日からの相対の日付にする（`../render-dates.ts`）。環境変数 `ADAPTRACE_TEST_DAY`（`YYYY-MM-DD`）で、基準の日を指定できる。指定したら、`run.ts` と `check.ts` にも同じ値を渡す |
 | `prompts/runner.md` | 実行役への依頼 |
 | `check.ts` | skillを実行した後のリポジトリと、対話の記録を確認する。`must` が1つでも失敗すると、終了コード1 |
 | `expected/`、`expected.dialog.md` | 期待する結果と、期待する報告の抜粋。日付は、2026-11-26を基準の日にした値 |
@@ -66,7 +66,7 @@ skillを修正したら、試験の必要度を判断する（ADR-042）。試�
   - SMSの費用のリスク：`probability` が「高」、`impact` が「中」。`generated` が新しい。`stale_after` が今より後
   - 対応策のタスクが1件あり、`derived_from` でSMSの費用のリスクを指す。担当が `suzuki` で、期日がある
   - 古いブラウザのリスク：`state` が `closed` で、`stale_after` がない
-  - ほかの文書は変更していない。リスクの文書で変えたのは、扱いに必要なキーと本文の追記だけ。新しい文書はタスク1件だけ。`index.md` と `log.md` は追加だけ
+  - ほかの文書は変更していない。リスクの文書で変えたのは、扱いに必要なキーと本文の追記だけ。新しい文書はタスク1件だけ。`tasks/index.md` は1行の追加だけ、`log.md` は追加だけ。ほかの `index.md` は変えていない
 - `should`
   - IdP-Xの契約のリスクの `verified.by` が `human:hayashi`
   - SMSの費用のリスクの本文に、上限のことが書いてある

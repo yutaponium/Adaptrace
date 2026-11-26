@@ -44,7 +44,13 @@ const time = (v: unknown) =>
 // In a test repository (git), now; expected/ and failing/ are rendered for
 // 2026-11-26, so they are checked as on that day.
 const git = existsSync(join(repo, ".git"));
-const now = git ? Date.now() : Date.parse("2026-11-26T12:00:00+09:00");
+// With ADAPTRACE_TEST_DAY, the day setup.sh rendered the dates for.
+const day = process.env.ADAPTRACE_TEST_DAY;
+const now = !git
+  ? Date.parse("2026-11-26T12:00:00+09:00")
+  : day
+    ? Date.parse(`${day}T12:00:00+09:00`)
+    : Date.now();
 
 // The original documents: in a test repository, the ones setup.sh rendered
 // (git test-base). expected/ and failing/ are not compared with them.
@@ -78,11 +84,15 @@ check(
 // Kept as it was: reviewed, not changed.
 const IDP = "risks/idp-lock-in.md";
 const rawVerified: unknown = fm(IDP).verified;
-const verified = list(
-  (Array.isArray(rawVerified) ? rawVerified : [rawVerified])
-    .filter((v: unknown) => v !== undefined)
-    .map((v: unknown) => (v as { by?: unknown }).by),
-);
+// The by of each record that has one.
+const verified = (Array.isArray(rawVerified) ? rawVerified : [rawVerified])
+  .filter(
+    (v: unknown): v is { by: string } =>
+      typeof v === "object" &&
+      v !== null &&
+      typeof (v as { by?: unknown }).by === "string",
+  )
+  .map((v) => v.by);
 const idpGenerated = /^generated: (.*)$/m.exec(read(IDP))?.[1] ?? "";
 check(
   "must",
@@ -109,7 +119,8 @@ check(
   String(fm(SMS).probability) === "高" &&
     String(fm(SMS).impact) === "中" &&
     (!git ||
-      /^generated: (.*)$/m.exec(read(SMS))?.[1] !== originalGenerated(SMS)) &&
+      time((fm(SMS).generated as { at?: unknown } | undefined)?.at) >
+        time(/at: ([^ }]+)/.exec(originalGenerated(SMS) ?? "")?.[1])) &&
     time(fm(SMS).stale_after) > now,
   `the SMS cost risk is reassessed (probability: ${String(fm(SMS).probability)}, impact: ${String(fm(SMS).impact)})`,
 );
@@ -185,7 +196,8 @@ if (git) {
     .split("\0")
     .map((p) => p.replace(/^\.adaptrace\//, ""))
     .filter(
-      (p) => p !== "" && !/(^|\/)(index|log)\.md$/.test(p) && !(p in ALLOWED),
+      (p) =>
+        p !== "" && p !== "log.md" && p !== "tasks/index.md" && !(p in ALLOWED),
     )
     .map((p) => `.adaptrace/${p}`);
   for (const [path, allowed] of Object.entries(ALLOWED)) {
@@ -204,7 +216,7 @@ if (git) {
     const bodyOk =
       path === IDP
         ? now.body === before.body
-        : now.body.startsWith(before.body.split("\n")[0] ?? "");
+        : now.body.startsWith(before.body);
     if (keep(before.front) !== keep(now.front) || !bodyOk) {
       changed.push(`.adaptrace/${path}`);
     }
@@ -233,12 +245,28 @@ if (git) {
   changed.push(...added.map((p) => `${p} (new)`));
   const removed = run(["diff", "--numstat", "test-base", "--", ".adaptrace"])
     .split("\n")
-    .filter((l) => /(^|\/)(index|log)\.md$/.test(l.split("\t")[2] ?? ""))
+    .filter((l) =>
+      [".adaptrace/log.md", ".adaptrace/tasks/index.md"].includes(
+        l.split("\t")[2] ?? "",
+      ),
+    )
     .some((l) => l.split("\t")[1] !== "0");
+  // tasks/index.md gains one line at most: the new task.
+  const indexAdded = Number(
+    run([
+      "diff",
+      "--numstat",
+      "test-base",
+      "--",
+      ".adaptrace/tasks/index.md",
+    ]).split("\t")[0] || 0,
+  );
+  if (indexAdded > 1)
+    changed.push(".adaptrace/tasks/index.md (more than one line)");
   check(
     "must",
     !gitFailed && changed.length === 0 && !removed,
-    `no other document changed${gitFailed ? " (git failed: no test-base?)" : ""}${changed.length ? ` (${changed.join(", ")})` : ""}${removed ? " (lines removed from index.md or log.md)" : ""}`,
+    `no other document changed${gitFailed ? " (git failed: no test-base?)" : ""}${changed.length ? ` (${changed.join(", ")})` : ""}${removed ? " (lines removed from tasks/index.md or log.md)" : ""}`,
   );
 } else {
   console.log("      other documents: not a git repository, not compared");

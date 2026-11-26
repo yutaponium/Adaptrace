@@ -60,17 +60,17 @@ Rules shared by the Adaptrace skills.
 2. Check where the bundle is. The default is `.adaptrace/` at the root of the repository. If it is not there, ask the user. If it is somewhere else, add `--bundle <directory>` to every command from here on
 3. Run `adaptrace validate` and note the errors and warnings that exist before the review
 4. Get the current date and time with the time zone, once (for example, with GNU date, `date --iso-8601=seconds`). Use it for `verified.at` and `generated.at`
-5. Ask for the ID of the person who judges the review (example: `sato`). Use it for `by` of `verified` and `generated` (`human:<ID>`). Follow how existing documents write `by`
+5. Ask for the ID of the person who judges the review (example: `sato`). Use it for `by` of `verified` and `generated` of the reviewed risks (`human:<ID>`). A risk's assessment is a person's judgment, so `by` is the person who judged, even when the agent writes the body. Follow how existing documents write `by`. For `generated.by` of a new task, follow "Shared conventions" and use the agent that did the work
 
 ## 1. Decide the risks to review
 
 1. `adaptrace list --format json --columns type,state`: check the type names and the `state` values. Note the risk type (`Risk` and so on) and the `state` values risks use (`open`, `closed` and so on). A document whose `state` is an empty string (`""`) has no `state`
-2. `adaptrace stale --format json`: take the documents of the risk type from `stale`. The `kind` in `reasons` is the reason
+2. `adaptrace stale --format json`: take the documents of the risk type from `stale`. Risks whose `state` is a closed value are not reviewed. If closed risks appear in `stale`, write them in the report. The `kind` in `reasons` is the reason
    - `expired`: past the review date (`staleAfter`)
    - `older-than-dependency`: a dependency (`dependency`) was updated after the risk
    - Show other reasons (such as a changed file) as they are
 3. If the user named risks, include them. If you cannot find one, ask instead of guessing
-4. Show the risks to review in a table. Decide the order with the user. If there is no preference, start from the oldest due review
+4. Show the risks to review in a table. Decide the order with the user. If there is no preference, list the risks past their review date, oldest first, then the risks whose dependencies were updated, by the oldest update of the dependency
 
 | Risk | State (`state`) | Reason | Review date, or the updated dependency |
 |---|---|---|---|
@@ -87,18 +87,19 @@ For each risk, do the following.
 
 | Handling | When it fits | Change |
 |---|---|---|
-| Continue unchanged | The assessment and the body are fine as they are | Add a review record to `verified`. Set `stale_after` to the next review date. Do not change `generated` or the body |
+| Continue unchanged | The assessment and the body are fine as they are | Add a review record to `verified`. Set `stale_after` to the next review date. Do not change `generated` or the body. A risk whose dependency was updated also leaves `stale`, because the time of `verified` is now later than the dependency's update |
 | Update the assessment or body | Probability, impact, the response and so on changed | Change the keys decided and the body. Set `generated` to now. Set `stale_after` to the next review date |
 | Create a mitigation task | A new response is needed | Create a new Task document. Combine with one of the two above |
-| Close | The cause is gone, the period has passed and so on; it is no longer a risk | Set `state` to the closed value. Remove `stale_after`. Set `generated` to now, and write why it was closed in the body |
-| It happened | The risk occurred | Set `state` to the value for occurred. Set `generated` to now, and write what happened in the body. Guide the user to handle the response as a change request (skill `adaptrace-change-request`) or an issue |
+| Close | The cause is gone, the period has passed and so on; it is no longer a risk | Set `state` to the closed value. Remove `stale_after`. Set `generated` to now, and write why it was closed in the body. Keep dependencies such as `depends_on` as history. If a dependency is updated later, the risk appears in `stale`, but closed risks are not reviewed (step 1.2) |
+| It happened | The risk occurred | Set `state` to the value for occurred. Set `generated` to now, and write what happened in the body. Ask whether `stale_after` becomes a date to review until the response is done, or is removed. Guide the user to handle the response as a change request (skill `adaptrace-change-request`) or an issue |
 
-5. Ask for the next review date. You may suggest one from the interval between the `stale_after` and the last update of existing risks. The user decides. Write `stale_after` in the existing form (a date, or a date and time)
-6. Use the `state` values noted in step 1.1. If there is no value for closed or occurred, show candidates (`closed`, `occurred` and so on) and ask the user
+5. Ask for the next review date. You may suggest one from the interval between the `stale_after` and the last update of existing risks. The user decides. Count expressions such as "in two weeks" from today. Write `stale_after` in the existing form (a date, or a date and time). If it is a date and time, follow the existing values for the time and time zone too
+6. Use the `state` values noted in step 1.1. If there is no value for closed or occurred, show candidates (`closed`, `occurred` and so on) and ask the user. Use the values existing risks use for the assessment keys too (such as 高, 中, 低)
 
 ### How to write the records
 
 - Write one `verified` as `verified: { by: human:<ID>, at: <date and time> }` on one line, on the line after `generated`. If it already exists, keep the earlier records, make it a block list and add the new one at the end
+- Write `verified` only when continuing unchanged. When the assessment or body is updated, or the risk is closed, setting `generated` to now is the review record. Do not remove existing `verified`
 - When you change an assessment key, change only its value. Do not move the key
 - When you add to the body, write the review date and the reason for the change. Write only what you heard from the user
 
@@ -106,7 +107,7 @@ For each risk, do the following.
 
 - Ask the user for the title, owner (`owner`) and due date (`due`). Leave out items not decided. If the title is not decided, do not create the task; write it in the report
 - Follow existing tasks for the path and name
-- Point to the risk with `derived_from`. Set `state` to the value existing tasks use for not started
+- Point to the risk with `derived_from`. Set `state` to the value existing tasks use for not started. If existing tasks have no value for not started, show candidates (`to_do` and so on) and ask the user
 - Set `generated` to the date and time from step 0 and the agent that did the work ("Shared conventions")
 - If the type has an `index.md`, add one line in the form `* [display name](file name)`
 
@@ -124,8 +125,8 @@ generated: { by: <agent>/<model ID>, at: <date and time from step 0> }
 
 ## 3. Write
 
-1. Show the changes decided in step 2 as a diff per document, and write them after approval. You may write risk by risk, or together after deciding all the risks
-2. Ask whether to record this in `log.md`. You may ask together with the diff in item 1 of this step. If so, write one line `* **Update**: <description>` for the whole session under today's date heading (`## YYYY-MM-DD`). If you created tasks, write a `* **Creation**: <description>` line too
+1. After deciding the handling of all the risks, show the changes decided in step 2 as a diff per document, get approval for them together, and write them. If the user wants to write risk by risk, do so
+2. Ask whether to record this in `log.md` once, at the end. You may ask together with the diff in item 1 of this step. If so, write one line `* **Update**: <description>` for the whole session under today's date heading (`## YYYY-MM-DD`). If you created tasks, write a `* **Creation**: <description>` line too
 3. Run `adaptrace validate`. If there are more errors than at step 0, explain the cause and show a diff that fixes them
 4. Run `adaptrace stale --format json` again, and check that the reviewed risks no longer appear. If a risk still appears, report why
 

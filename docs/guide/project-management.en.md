@@ -261,9 +261,10 @@ risks/idp-lockin.md  updated 2026-10-05T11:00:00+09:00 (generated.at)
   past stale_after (2026-10-26T00:00:00+09:00)
 ```
 
-After the review, set `stale_after` to the next review date and `generated.at` to the current date and time.
+After the review, set `stale_after` to the next review date. If you changed the content, set `generated.at` to the current date and time; if not, record who reviewed it and when in `verified`.
 
 If you use Claude Code, the skill `adaptrace-risk` lets you review the risks past their review date one at a time. It decides with you whether to update the assessment, create a mitigation task or close the risk, and when to review it next, and records them after you approve. For a risk whose content did not change, it records `verified` without changing `generated`. This skill is available from the release after v1.0.0. You get the skill the same way as in [the guide to adopting Adaptrace in an existing repository](adoption.en.md#have-claude-code-help-you-bring-in-files). If you installed the plugin, you already have all the skills. If you copy the folder, replace `adaptrace-adopt` in the command with `adaptrace-risk`.
+
 If the risk is linked to a decision with `depends_on`, it also appears in `stale` when the decision changes.
 
 ## Replacing a decision
