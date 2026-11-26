@@ -2,6 +2,7 @@
 
 ## 2026-11-26
 
+* **Creation**: マイルストーンの判定を支援するskillの方針を [ADR-041](/decisions/adr-041-milestone-skill.md) として記録した
 * **Creation**: 要件の充足を示す `coverage` の方針を [ADR-040](/decisions/adr-040-coverage.md) として記録した
 * **Creation**: 変更要求の判断を記録するskillの方針を [ADR-039](/decisions/adr-039-change-decision-skill.md) として記録した
 * **Creation**: CLIの実行ファイルを作ってReleaseに添付する方針を [ADR-038](/decisions/adr-038-release-binaries.md) として記録した
