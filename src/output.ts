@@ -1161,22 +1161,11 @@ export function formatCoverage(
       : `${oneLine(title)}  ${oneLine(path)}`;
   const state = (s: { state: string | null }) =>
     s.state === null ? "(no state)" : w(s.state);
-  // A satisfier's progress: a requirement's status, a Milestone's work, a
-  // Task's state; nothing for the others.
+  // A satisfier's progress: a requirement's status, a Task's or a
+  // Milestone's state; nothing for the others.
   const progress = (
     s: CoverageReport["requirements"][number]["satisfiers"][number],
-  ) =>
-    s.status !== null
-      ? s.status
-      : s.type === "Milestone"
-        ? s.done === null
-          ? ""
-          : s.done
-            ? "work done"
-            : "work left"
-        : s.done === null
-          ? ""
-          : state(s);
+  ) => (s.status !== null ? s.status : s.done === null ? "" : state(s));
   const m = report.milestone;
   const heading = m
     ? `Requirement coverage for ${markdown ? doc(m.title, m.path) : `${oneLine(m.title)} (${oneLine(m.path)})`}${m.due ? `, due ${w(m.due)}` : ""}`

@@ -151,7 +151,7 @@ Options:
   --type <type>       list: only documents of this type (exact match)
                       coverage: the type of the requirements (default Requirement)
   --milestone <doc>   coverage: only the requirements and work in the scope of this Milestone
-  --done <states>     coverage: comma-separated state values that mean a Task is done, in
+  --done <states>     coverage: comma-separated state values that mean a Task or a Milestone is done, in
                       any case (default done)
   --state <state>     list: only documents in this state
   --status <status>   list: only documents with this status (draft | stable | deprecated)

@@ -30,9 +30,8 @@ export interface Satisfier {
   // A requirement (one of the requirement types): its own status. Others:
   // null.
   status: CoverageStatus | null;
-  // A Task: whether the state is a done one. A requirement: whether it is
-  // covered. A Milestone: whether every Task in its scope is done. Other
-  // types track no work: null.
+  // A Task or a Milestone: whether the state is a done one. A requirement:
+  // whether it is covered. Other types track no work: null.
   done: boolean | null;
   // Whether it counts toward the status: with a milestone, a Task outside
   // its scope does not. Without a milestone: true.
@@ -58,7 +57,7 @@ export interface ScopeItem {
   owner: string | null;
   due: string | null;
   done: boolean | null;
-  // Due after the milestone (both dates readable).
+  // A Task not done yet, due after the milestone (both dates readable).
   late: boolean;
 }
 
@@ -116,8 +115,10 @@ export function coverage(
   const typeOf = (path: string) => text(fm(path)?.type);
   const titleOf = (path: string) => text(fm(path)?.title) ?? path;
   const stateOf = (path: string) => text(fm(path)?.state);
+  // Tasks and Milestones track their progress in state.
   const isDone = (path: string): boolean | null => {
-    if (typeOf(path) !== "Task") return null;
+    const t = typeOf(path);
+    if (t !== "Task" && t !== "Milestone") return null;
     const state = stateOf(path);
     return state !== null && doneSet.has(state.toLowerCase());
   };
@@ -187,24 +188,6 @@ export function coverage(
   }
   const scopeSet =
     scope === null ? null : new Set([...scope, options.milestone ?? ""]);
-  // A Milestone that satisfies a requirement in the scope delivers part of
-  // the work it waits for (an earlier release, or a later one it relies
-  // on): it counts, but its own work is not walked into.
-  const delivering = new Set(
-    (scope ?? [])
-      .filter(isRequirement)
-      .flatMap(satisfiersOf)
-      .filter((p) => typeOf(p) === "Milestone"),
-  );
-  // Counts toward progress: with a milestone, a Task in its scope, and a
-  // Milestone in its scope (the milestone itself included) or delivering to
-  // it. Other Tasks and Milestones are another release's work.
-  const counted = (path: string) => {
-    const t = typeOf(path);
-    if (scopeSet === null || (t !== "Task" && t !== "Milestone")) return true;
-    return scopeSet.has(path) || (t === "Milestone" && delivering.has(path));
-  };
-
   // Requirements: all live ones, or those in the scope and those its work
   // (Tasks and Milestones, the milestone itself included) satisfies.
   let paths: string[];
@@ -229,45 +212,37 @@ export function coverage(
   }
   paths.sort();
 
-  // Whether a satisfier is done: a Task by its state; a requirement by being
-  // covered; a Milestone by its own scope having Tasks, all done, and every
-  // requirement in it satisfied by something in it; others track no work
-  // (null). A cycle of requirements counts as not done.
+  // A Milestone that satisfies a requirement shown declares that it
+  // delivers it (an earlier release, or a later one): it counts, judged by
+  // its own state, and its work is not walked into.
+  const delivering = new Set(
+    scope === null
+      ? []
+      : paths.flatMap(satisfiersOf).filter((p) => typeOf(p) === "Milestone"),
+  );
+  // Counts toward progress: with a milestone, a Task in its scope, and a
+  // Milestone in its scope (the milestone itself included) or delivering a
+  // requirement shown. Other Tasks and Milestones are another release's
+  // work.
+  const counted = (path: string) => {
+    const t = typeOf(path);
+    if (scopeSet === null || (t !== "Task" && t !== "Milestone")) return true;
+    return scopeSet.has(path) || (t === "Milestone" && delivering.has(path));
+  };
+
+  // Whether a satisfier is done: a Task or a Milestone by its state; a
+  // requirement by being covered; others track no work (null). A cycle of
+  // requirements counts as not done.
   // With a milestone, a requirement that is shown counts only the work in the
   // scope ("scoped"); a requirement that satisfies one of them and is not
   // shown counts all its work.
   const shown = scopeSet === null ? null : new Set(paths);
   const statuses = new Map<string, CoverageStatus>();
-  const milestones = new Map<string, boolean>();
   const visiting = new Set<string>();
-  // Judged from the scope alone, so it never waits on a requirement status.
-  const milestoneDone = (path: string): boolean => {
-    const known = milestones.get(path);
-    if (known !== undefined) return known;
-    const own = scopeOf(path);
-    const ownSet = new Set(own);
-    const tasks = own.filter((p) => typeOf(p) === "Task");
-    // Each requirement in it is satisfied by something: a Task or a
-    // requirement in it, or a document that tracks no work (a Decision).
-    // Not by the milestone itself or another Milestone.
-    const done =
-      tasks.length > 0 &&
-      tasks.every((p) => isDone(p) === true) &&
-      own.filter(isRequirement).every((p) =>
-        satisfiersOf(p).some((q) => {
-          const t = typeOf(q);
-          if (t === "Milestone") return false;
-          return t === "Task" || isRequirement(q) ? ownSet.has(q) : true;
-        }),
-      );
-    milestones.set(path, done);
-    return done;
-  };
   const satisfied = (path: string, scoped: boolean): boolean | null => {
     if (isRequirement(path)) {
       return statusOf(path, scoped && shown?.has(path) === true) === "covered";
     }
-    if (typeOf(path) === "Milestone") return milestoneDone(path);
     return isDone(path);
   };
   const statusOf = (path: string, scoped: boolean): CoverageStatus => {
@@ -326,9 +301,14 @@ export function coverage(
             state: stateOf(path),
             owner: people(fm(path)?.owner),
             due,
-            done: isDone(path),
+            done: typeOf(path) === "Task" ? isDone(path) : null,
+            // Only work not done yet can be late.
             late:
-              milestoneDay !== null && dueDay !== null && dueDay > milestoneDay,
+              typeOf(path) === "Task" &&
+              isDone(path) === false &&
+              milestoneDay !== null &&
+              dueDay !== null &&
+              dueDay > milestoneDay,
           };
         });
 

@@ -6,7 +6,7 @@
 
 ### Added
 
-- `adaptrace coverage [bundle]` とMCPのツール `coverage`（ADR-040）：要件ごとに、満たす文書（`satisfies`）と進み具合を示す。数える文書のうち、満たす文書がない要件は `uncovered`、終わっていない文書（Task、要件、Milestone）がある要件は `open`、それ以外は `covered`。`--milestone` で、マイルストーンが待っている文書をたどった範囲に絞り、範囲のTaskを担当者と期日とともに示す。`--done` で終わったTaskの `state`、`--type` で要件の型を変えられる。`--format text|markdown|json`
+- `adaptrace coverage [bundle]` とMCPのツール `coverage`（ADR-040）：要件ごとに、満たす文書（`satisfies`）と進み具合を示す。数える文書のうち、満たす文書がない要件は `uncovered`、終わっていない文書（`state` が終わった値でないTaskとMilestone、`covered` でない要件）がある要件は `open`、それ以外は `covered`。`--milestone` で、マイルストーンが待っている文書をたどった範囲に絞り、範囲のTaskを担当者と期日とともに示す。`--done` で終わったTaskとMilestoneの `state`、`--type` で要件の型を変えられる。`--format text|markdown|json`
 - Claude Codeのskill `adaptrace-change-decision`（`skills/adaptrace-change-decision/`、ADR-039）：変更要求の承認、却下、保留の判断を記録する。`state` をバンドルで使っている値にし、本文の末尾に「判断」の見出しで、判断した日、判断した人、理由を書く。判断の前に、影響範囲が重なる未決の変更要求を調べ、承認した変更要求の見直し（skill `adaptrace-review`）と合わせて報告する。書き込みは承認を得てから行う
 - CLIを1つの実行ファイルにして、GitHubのReleaseに添付するようにした（ADR-038）。Bunのない環境でも使える。対象は `linux-x64`、`linux-arm64`、`darwin-arm64`、`darwin-x64`、`windows-x64`。`v*` のタグをpushすると、`.github/workflows/release.yml` が作り、`SHA256SUMS` と、取り込んだ依存パッケージのライセンスの一覧（`THIRD_PARTY_LICENSES.md`）も添える
 - 本文のリンクとして、参照形式のリンク（`[text][1]`、`[text][]`、`[text]`）と、`<...>` で囲んだ空白入りのリンク先（`[text](<my file.md>)`）を読むようにした。`validate` のリンク切れの検査と、参照の一覧が対象になる。参照形式のリンクは、リンクを使った行で示す
