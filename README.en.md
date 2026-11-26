@@ -172,7 +172,7 @@ This is the layout of a bundle that contains the Task document above. The bundle
 
 ## Installation
 
-Adaptrace runs on [Bun](https://bun.sh/). Install Bun, then install Adaptrace directly from GitHub. It is not published on npm.
+Adaptrace runs on [Bun](https://bun.sh/). Install Bun, then install Adaptrace directly from GitHub. It is not published on npm. Without Bun, use "Download an executable" below.
 
 ```bash
 bun add -g github:yutaponium/Adaptrace#v1.0.0
@@ -180,6 +180,16 @@ adaptrace --version
 ```
 
 This gives you the `adaptrace` command. To move to a newer version, change the tag after `#` and run the same command.
+
+**Download an executable** (no Bun needed)
+
+From [Releases](https://github.com/yutaponium/Adaptrace/releases), download the file for your platform (`adaptrace-<version>-<platform>.tar.gz`, or `.zip` for Windows). Extract it and put `adaptrace` in a folder on your PATH. The platforms are `linux-x64`, `linux-arm64`, `darwin-arm64` (Apple silicon), `darwin-x64` (Intel Mac) and `windows-x64`. You can check the file with `SHA256SUMS` on the same page. The executables are not signed. If macOS will not open it, run `xattr -d com.apple.quarantine adaptrace`. If Windows shows a warning, choose "More info" and run it.
+
+```bash
+tar -xzf adaptrace-v1.0.0-linux-x64.tar.gz
+sudo mv adaptrace /usr/local/bin/
+adaptrace --version
+```
 
 You can also use a clone of the repository. In that case, read `adaptrace` in this README as `bun <your clone>/src/cli.ts`.
 

@@ -69,6 +69,7 @@ docs/            STATUS.md、仕様（spec/）、ガイド（guide/）、skill�
 examples/        コピーして使うバンドルのテンプレート（pmbok/）
 skills/          利用者に配布するClaude Codeのskill（adaptrace-adopt/、adaptrace-change-request/、adaptrace-review/、adaptrace-weekly/、adaptrace-minutes/、adaptrace-supersede/、adaptrace-health/）
 src/             CLI とコア
+scripts/         リリースのビルドで使うスクリプト（依存パッケージのライセンスの一覧など）
 tests/           テスト。fixtures/ に検証用の OKF バンドル、skills/ にskillの試験
 .github/         CI、Issue / PR のテンプレート
 ```

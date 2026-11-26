@@ -37,3 +37,4 @@
 * [ADR-035](adr-035-pin-actions.md) - GitHub ActionsをSHAで固定してDependabotで更新し、DependabotのコミットはDCOの対象外にする
 * [ADR-036](adr-036-rename-adaptrace.md) - 名前をAccordantからAdaptraceに変え、柔軟な意思決定と硬い開発プロセスをつなぐツールと説明する
 * [ADR-037](adr-037-plugin.md) - skillをClaude Codeのプラグインとして配布し、skillに共通の書き方を各skillに置く
+* [ADR-038](adr-038-release-binaries.md) - CLIを1つの実行ファイルにして、タグを付けたときにGitHub Actionsで作り、Releaseに添付する

@@ -26,7 +26,7 @@ The key is not to move everything at once. Start small, with the documents where
 
 ## 1. Get Adaptrace ready to use
 
-Adaptrace runs on [Bun](https://bun.sh/). Install Bun, then install Adaptrace in one of these two ways.
+Adaptrace runs on [Bun](https://bun.sh/). Install Bun, then install Adaptrace in one of these two ways. Without Bun, download an executable instead.
 If you use the tag of a released version, everyone on the team gets the same behavior.
 
 **Install directly from GitHub** (the simplest)
@@ -37,6 +37,16 @@ adaptrace --version
 ```
 
 This gives you the `adaptrace` command. Adaptrace is not published on npm, so it is installed from the GitHub repository.
+
+**Download an executable** (no Bun needed)
+
+From [Releases](https://github.com/yutaponium/Adaptrace/releases), download the file for your platform (`adaptrace-<version>-<platform>.tar.gz`, or `.zip` for Windows). Extract it and put `adaptrace` in a folder on your PATH. The platforms are `linux-x64`, `linux-arm64`, `darwin-arm64` (Apple silicon), `darwin-x64` (Intel Mac) and `windows-x64`. You can check the file with `SHA256SUMS` on the same page. The executables are not signed. If macOS will not open it, run `xattr -d com.apple.quarantine adaptrace`. If Windows shows a warning, choose "More info" and run it.
+
+```bash
+tar -xzf adaptrace-v1.0.0-linux-x64.tar.gz
+sudo mv adaptrace /usr/local/bin/
+adaptrace --version
+```
 
 **Clone the repository**
 
