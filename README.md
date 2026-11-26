@@ -376,13 +376,13 @@ copilot mcp add adaptrace -- adaptrace mcp .adaptrace
 
 ## skillの追加
 
-Adaptraceには、作業の手順をAIエージェントに教えるskillが8つあります。skillは、オープンな標準「[Agent Skills](https://agentskills.io/)」の形式です。
+Adaptraceには、作業の手順をAIエージェントに教えるskillが8つあります。`adaptrace-change-decision` は、v1.0.0の次のリリースから使えます。skillは、オープンな標準「[Agent Skills](https://agentskills.io/)」の形式です。
 
 > **skillの試験は、Claude Codeでだけ実行しています。** ほかのエージェントでの動作は、確認していません。skillには、Claude Codeの機能を前提にした指示も含まれます（選択肢で尋ねるツールなど）。
 
 ### Claude Code
 
-Claude Codeのプラグインとして、8つのskillをまとめてインストールできます。
+Claude Codeのプラグインとして、リリースしたすべてのskillをまとめてインストールできます。
 
 ```text
 /plugin marketplace add yutaponium/Adaptrace

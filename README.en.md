@@ -378,13 +378,13 @@ Write the same JSON as for Antigravity in the project's `.cursor/mcp.json` (or `
 
 ## Adding the skills
 
-Adaptrace has eight skills that teach an AI agent the steps of a task. The skills follow the open [Agent Skills](https://agentskills.io/) format.
+Adaptrace has eight skills that teach an AI agent the steps of a task. `adaptrace-change-decision` is available from the release after v1.0.0. The skills follow the open [Agent Skills](https://agentskills.io/) format.
 
 > **The skills are tested only with Claude Code.** How they work with other agents has not been checked. The skills also contain instructions that assume Claude Code features (such as a tool that asks questions with choices). The skills are written in Japanese; English reference translations are in [docs/skills/](docs/skills/).
 
 ### Claude Code
 
-You can install all eight skills together as a Claude Code plugin.
+You can install all the released skills together as a Claude Code plugin.
 
 ```text
 /plugin marketplace add yutaponium/Adaptrace

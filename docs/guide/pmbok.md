@@ -375,7 +375,7 @@ Starts from `requirements/mfa.md` and reaches 16 more documents. 17 documents in
 
 承認されたら、変更要求を `state: approved` にし、起点の文書を更新します。
 
-Claude Codeを使っている場合は、skill `adaptrace-change-decision` で、承認、却下、保留の判断を記録できます。`state` を変え、変更要求の本文に、判断した日、判断した人、理由を書きます。重なっていた未決の変更要求と、次の手順も示します。複数の変更要求の判断を、まとめて記録することもできます。skillの入手方法は、[既存のリポジトリに導入するガイド](adoption.md#claude-codeに取り込みを手伝ってもらう) と同じです。プラグインでインストールした場合は、すべてのskillがそろっています。フォルダをコピーする場合は、コマンドの `adaptrace-adopt` を `adaptrace-change-decision` に置き換えてください。
+Claude Codeを使っている場合は、skill `adaptrace-change-decision` で、承認、却下、保留の判断を記録できます。`state` を変え、変更要求の本文に、判断した日、判断した人、理由を書きます。重なっていた未決の変更要求と、次の手順も示します。複数の変更要求の判断を、まとめて記録することもできます。このskillは、v1.0.0の次のリリースから使えます。skillの入手方法は、[既存のリポジトリに導入するガイド](adoption.md#claude-codeに取り込みを手伝ってもらう) と同じです。プラグインでインストールした場合は、すべてのskillがそろっています。フォルダをコピーする場合は、コマンドの `adaptrace-adopt` を `adaptrace-change-decision` に置き換えてください。
 
 起点の文書には、`derived_from` で変更要求を追加し、`generated.at` を今の日時にします。
 

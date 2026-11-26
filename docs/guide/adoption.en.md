@@ -200,7 +200,7 @@ You can also work through step 4 and the next step, step 5, in a conversation us
 A skill is a file that teaches Claude Code the steps of a task. The skills are written in Japanese.
 
 1. Install the skill. You can install it as a Claude Code plugin, or copy its folder
-   - **Plugin (recommended)**: run these two commands in Claude Code. All eight Adaptrace skills are installed together. Their names get the prefix `adaptrace:` (for example `/adaptrace:adaptrace-adopt`)
+   - **Plugin (recommended)**: run these two commands in Claude Code. All the released Adaptrace skills are installed together. Their names get the prefix `adaptrace:` (for example `/adaptrace:adaptrace-adopt`)
 
      ```text
      /plugin marketplace add yutaponium/Adaptrace

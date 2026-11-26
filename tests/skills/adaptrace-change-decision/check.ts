@@ -135,7 +135,7 @@ if (existsSync(join(repo, ".git"))) {
     .filter(
       (p) =>
         p !== "" &&
-        !/(^|\/)log\.md$/.test(p) &&
+        p !== ".adaptrace/log.md" &&
         !decided.has(p.replace(/^\.adaptrace\//, "")),
     );
   // No new document either: committed, staged or untracked.
@@ -187,7 +187,7 @@ if (existsSync(join(repo, ".git"))) {
   }
   const removed = git(["diff", "--numstat", "test-base", "--", ".adaptrace"])
     .split("\n")
-    .filter((l) => /(^|\/)log\.md$/.test(l))
+    .filter((l) => l.split("\t")[2] === ".adaptrace/log.md")
     .some((l) => l.split("\t")[1] !== "0");
   check(
     "must",
@@ -201,13 +201,10 @@ if (existsSync(join(repo, ".git"))) {
 if (dialogPath === undefined) {
   console.log("      no dialog given: the report is not checked");
 } else {
-  // The report: the runner's turns after the user's last answer.
-  const parts = readFileSync(dialogPath, "utf8").split(
-    /^(?=## (?:Runner \d+$|User \d+ \(|Stopped$|Error$))/m,
-  );
-  const lastUser = parts.findLastIndex((p) => p.startsWith("## User"));
-  const dialog = parts
-    .slice(lastUser + 1)
+  // The runner's turns: the report may come before a last word from the
+  // user, such as thanks.
+  const dialog = readFileSync(dialogPath, "utf8")
+    .split(/^(?=## (?:Runner \d+$|User \d+ \(|Stopped$|Error$))/m)
     .filter((part) => part.startsWith("## Runner"))
     .join("\n");
   check(

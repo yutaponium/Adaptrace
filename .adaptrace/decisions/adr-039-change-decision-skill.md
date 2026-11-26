@@ -2,7 +2,7 @@
 type: Decision
 title: 変更要求の判断は、skillが変更要求の文書に記録し、次の手順と影響を受ける変更要求を示す
 state: accepted
-generated: { by: claude-code/claude-opus-5-5, at: 2026-11-26T17:02:25+09:00 }
+generated: { by: claude-code/claude-opus-5-5, at: 2026-11-26T17:13:04+09:00 }
 depends_on:
   - /decisions/adr-023-changes-key.md
   - /decisions/adr-026-adopt-skill.md
@@ -19,11 +19,11 @@ depends_on:
 - 変更要求の文書で変えるのは、次の2つだけにする
   - `state`：判断を表す値にする。値は、バンドルの既存の変更要求で使っている値にそろえる。使っている値がなければ、`approved`、`rejected`、`deferred` を勧め、利用者の確認を得る。これらは `conflicts` が決着とみなす既定の値である。`state` の値の一覧は未確定事項なので、skillで値を固定しない
   - 本文：末尾に「判断」の見出しを追加する。判断した日、判断した人か会議、結果、理由を書く。保留なら、再検討の時期か条件も書く。利用者から聞いた内容だけを書く。会議の議事録の文書があれば、本文から参照する（依存関係にしない）
-- 本文を変えたので、変更要求の `generated` を更新する。ただし、すでに変更要求を `derived_from` で指している文書があれば、本文も `generated` も変えず、判断の記録は `log.md` だけにする。見直しが始まった後に `generated` を新しくすると、起点が古いと示されるため（ADR-028）
+- 本文を変えたので、変更要求の `generated` を更新する。ただし、すでに変更要求を見直しの連鎖のキー（`derived_from` など）で指している文書があれば、本文も `generated` も変えず、判断の記録は `log.md` だけにする。見直しが始まった後に `generated` を新しくすると、起点が古いと示されるため（ADR-028）
 - `received_at`、`changes`、`requested_by` は変えない
 - ほかの文書は変えない。起点への `derived_from` の追加、影響を受ける文書の見直し、反映済みにする手順は、skill `adaptrace-review` が行う（ADR-028）
 - 判断の後に、次を報告する
-  - 承認した変更要求：見直しは `adaptrace-review` で進められること。影響範囲と見直しの順番（`impact --order review`）
+  - 承認した変更要求：見直しは `adaptrace-review` で進められること。目安として、見直しの順番（`impact --order review`）を示してよい
   - 影響範囲が重なっていた未決の変更要求：判断の前の `conflicts` で調べる。承認した変更要求と重なっていた未決の変更要求は、起点が変わるので、見積もりと判定をやり直す必要があること
   - 却下や保留の結果を依頼者に伝えるのは、人が行うこと。利用者が望めば、連絡の文案を会話の中で示す
 - `validate` で、判断の前からあるエラーと、判断の後のエラーを比べる
