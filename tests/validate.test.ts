@@ -31,13 +31,14 @@ test("reports each problem in the invalid bundle", async () => {
   ]);
 });
 
-test("edge cases: catalog links, code in log.md, empty root frontmatter, value lines", async () => {
+test("edge cases: catalog links, reference links, code in log.md, empty root frontmatter, value lines", async () => {
   const issues = validate(await loadBundle("tests/fixtures/edge"));
   const found = issues.map((i) => `${i.code} ${i.file}:${i.line}`);
   expect(found).toEqual([
     "broken-link index.md:6",
     "dependency-target t/c.md:5",
     "dependency-target t/c.md:8",
+    "broken-link t/d.md:5",
     "dependency-deadlock t/e.md:7",
   ]);
 });
