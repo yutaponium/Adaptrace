@@ -25,12 +25,12 @@
 - 要件ごとに、満たす文書と進み具合を示す `coverage` を、CLIとMCPに追加した。`--milestone` で、マイルストーンが待っている文書をたどった範囲に絞る（2026-11-26、ADR-040）。期日がマイルストーンより後の作業に付ける `late` を、TaskだけでなくMilestoneにも付けるようにした（2026-11-26）
 - マイルストーンの判定を支援するskill `adaptrace-milestone` を追加した。材料を示し、扱いを利用者と決め、マイルストーンの計画だけを変える（2026-11-26、ADR-041）
 - リスクの見直しを支援するskill `adaptrace-risk` を追加した。1件ずつ扱いを利用者と決め、`verified` と `stale_after` に記録する（2026-11-26、ADR-043）
+- `sync --resolve <タスク>=<側>` で、Backlog.mdとの衝突をタスクごとにそろえられるようにした（2026-11-26）。Backlog.mdとの同期を支援するskill `adaptrace-sync` を追加した。衝突などの扱いを利用者と決めてから書き込む（2026-11-26、ADR-045）
 
 ## 次にやること
 
-- [ ] skillの候補（2026-11-26に4つ追加。ADR-026の使い分けに従い、既存の機能を組み合わせて対話しながら進める作業）。作ったら、`tests/skills/` に試験も置く
-  - 済：既存のファイルの取り込み（`adaptrace-adopt`、ADR-026）、変更要求の受付（`adaptrace-change-request`、ADR-027）、見直しの実施（`adaptrace-review`、ADR-028）、定例の会議の準備（`adaptrace-weekly`、ADR-030）、議事録の取り込み（`adaptrace-minutes`、ADR-031）、判断の置き換え（`adaptrace-supersede`、ADR-032）、バンドルのヘルスチェック（`health` とskill `adaptrace-health`、ADR-033、ADR-034）、変更要求の判断の記録（`adaptrace-change-decision`、ADR-039）、マイルストーンの判定（`coverage` とskill `adaptrace-milestone`、ADR-040、ADR-041）、リスクの見直し（`adaptrace-risk`、ADR-043）
-  - [ ] Backlog.mdとの同期（`adaptrace-sync`）：`sync` の差分を項目ごとに示し、どちらに合わせるか（`--resolve`）を利用者と決める。Backlog.mdを使うチーム向け
+- [x] skillの候補（2026-11-26に4つ追加。ADR-026の使い分けに従い、既存の機能を組み合わせて対話しながら進める作業）。作ったら、`tests/skills/` に試験も置く
+  - 済：既存のファイルの取り込み（`adaptrace-adopt`、ADR-026）、変更要求の受付（`adaptrace-change-request`、ADR-027）、見直しの実施（`adaptrace-review`、ADR-028）、定例の会議の準備（`adaptrace-weekly`、ADR-030）、議事録の取り込み（`adaptrace-minutes`、ADR-031）、判断の置き換え（`adaptrace-supersede`、ADR-032）、バンドルのヘルスチェック（`health` とskill `adaptrace-health`、ADR-033、ADR-034）、変更要求の判断の記録（`adaptrace-change-decision`、ADR-039）、マイルストーンの判定（`coverage` とskill `adaptrace-milestone`、ADR-040、ADR-041）、リスクの見直し（`adaptrace-risk`、ADR-043）、Backlog.mdとの同期（`sync --resolve <タスク>=<側>` とskill `adaptrace-sync`、ADR-045）
   - `state` を書き換えるskillは、`state` の値の一覧が未確定なので、バンドルで使っている値にそろえる（`adaptrace-change-request` と同じ方針）
 
 ## 未確定事項

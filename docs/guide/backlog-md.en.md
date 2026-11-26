@@ -305,6 +305,8 @@ adaptrace sync --resolve tasks/design.md=adaptrace --resolve back-7=backlog --wr
 Even with `--resolve`, nothing is written unless you add `--write`.
 Changes on the side you did not choose are lost. If you need them, restore them by hand afterwards.
 
+If you use Claude Code, the skill `adaptrace-sync` shows both sides of each conflict side by side and decides with you which side to keep. To keep the changes of both, it writes them into the Adaptrace document and then keeps the Adaptrace side.
+
 To sync in one direction only, add `--direction import` (bring in only) or `--direction export` (export only).
 
 ## Steps before a regular meeting

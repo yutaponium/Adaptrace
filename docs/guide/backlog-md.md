@@ -303,6 +303,8 @@ adaptrace sync --resolve tasks/design.md=adaptrace --resolve back-7=backlog --wr
 `--resolve` でも、`--write` を付けなければ確認だけです。
 選ばなかった側の変更は失われます。必要な変更は、そろえた後で手で戻してください。
 
+Claude Codeを使っている場合は、skill `adaptrace-sync` が、衝突ごとに両側の内容を並べて示し、どちらにそろえるかを一緒に決めます。両方の変更を残すときは、Adaptraceの文書に書いてから、Adaptraceの側にそろえます。
+
 片方向だけにしたいときは、`--direction import`（取り込むだけ）か `--direction export`（書き出すだけ）を付けます。
 
 ## 定例の前の流れ
