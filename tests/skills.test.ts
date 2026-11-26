@@ -96,7 +96,7 @@ const SKILLS = [
       ".adaptrace/tasks/sms-send.md",
     ],
     failures: [
-      "FAIL  the year-end release no longer waits for the SMS task",
+      "FAIL  the first release no longer waits for the SMS task",
       "FAIL  the second release waits for the SMS task",
     ],
   },
@@ -355,7 +355,10 @@ for (const skill of SKILLS) {
         try {
           const dest = join(parent, "repo");
           expect(
-            Bun.spawnSync(["sh", join(dir, "setup.sh"), dest]).exitCode,
+            // The day expected/ is rendered for.
+            Bun.spawnSync(["sh", join(dir, "setup.sh"), dest], {
+              env: { ...process.env, ADAPTRACE_TEST_DAY: "2026-11-26" },
+            }).exitCode,
           ).toBe(0);
           await cp(join(dir, "expected/.adaptrace"), join(dest, ".adaptrace"), {
             recursive: true,
@@ -381,7 +384,7 @@ for (const skill of SKILLS) {
           const text = await Bun.file(release).text();
           await Bun.write(
             release,
-            text.replace("title: 年内リリース", "title: 年内"),
+            text.replace("title: 第1期リリース", "title: 第1期"),
           );
           expect(run()).toContain("FAIL  no other document changed");
           await Bun.write(release, text);
@@ -391,7 +394,7 @@ for (const skill of SKILLS) {
             text.replace("  - /requirements/req-2-session-timeout.md\n", ""),
           );
           expect(run()).toContain(
-            "FAIL  the year-end release keeps the rest of its work and REQ-2",
+            "FAIL  the first release keeps the rest of its work and REQ-2",
           );
           await Bun.write(release, text);
           // No new task for the requirement with no work.

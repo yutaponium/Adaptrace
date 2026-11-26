@@ -1,6 +1,7 @@
 #!/bin/sh
 # Creates the test repository for the adaptrace-milestone skill in <dir>:
-# a git repository with the files in repo/, committed on 2026-11-26, and
+# a git repository with the files in repo/ (due dates relative to today),
+# committed on 2026-11-26, and
 # the skill copied into .claude/skills/.
 set -eu
 dest=${1:?usage: setup.sh <dir>}
@@ -12,6 +13,9 @@ if [ -e "$dest" ]; then
 fi
 mkdir -p "$dest"
 cp -R "$here/repo/." "$dest/"
+# Due dates relative to today (ADAPTRACE_TEST_DAY to fix the day): what is
+# late or past due depends on it. expected/ is rendered for 2026-11-26.
+bun "$here/../render-dates.ts" "$dest" ${ADAPTRACE_TEST_DAY:+"$ADAPTRACE_TEST_DAY"}
 cd "$dest"
 # Not the maintainer's git templates or global ignore file.
 git init -q --template=

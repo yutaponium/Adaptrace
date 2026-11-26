@@ -14,7 +14,7 @@ fi
 mkdir -p "$dest"
 cp -R "$here/repo/." "$dest/"
 # Dates relative to today: what is overdue or due soon depends on it.
-bun "$here/render-dates.ts" "$dest"
+bun "$here/../render-dates.ts" "$dest" ${ADAPTRACE_TEST_DAY:+"$ADAPTRACE_TEST_DAY"}
 cd "$dest"
 # Not the maintainer's git templates or global ignore file.
 git init -q --template=
