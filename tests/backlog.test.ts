@@ -358,7 +358,7 @@ test("--resolve per task settles each conflict to its own side", async () => {
     generatedBy: "adaptrace/test",
     resolve: "adaptrace",
     resolveTasks: new Map([
-      ["back-7", "backlog"],
+      ["BACK-7", "backlog"],
       ["tasks/design.md", "adaptrace"],
     ]),
   });

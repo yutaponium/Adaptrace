@@ -9,9 +9,9 @@ import {
   type Direction,
   loadBacklog,
   loadBacklogConfig,
-  normalizeId,
   nowIso,
   planSync,
+  resolveTaskSides,
 } from "./backlog";
 import { board, doneState } from "./board";
 import { loadBundle } from "./bundle";
@@ -146,7 +146,7 @@ Options:
                       extract, meeting: create the drafted files
                       migrate-dates: write generated into the documents
   --resolve <side>    sync: settle conflicts with adaptrace | backlog; or <task>=<side> for
-                      one task (a bundle path or a Backlog.md id), given once per task
+                      one linked task (a bundle path or a Backlog.md id), once per task
   --references        graph: include body links as untyped edges
   --link-base <url>   board, estimate, progress, list, conflicts, meeting, coverage --format markdown: link titles to <url> + path
   --request <doc>     estimate: the change request, given to the LLM as the reason; without
@@ -682,17 +682,19 @@ export async function run(args: string[]): Promise<number> {
       // (a bundle path or a Backlog.md id); it may be given several times.
       type Side = "adaptrace" | "backlog";
       let resolve: Side | undefined;
-      const resolveTasks = new Map<string, Side>();
-      for (const value of values.resolve ?? []) {
+      const entries: [string, Side][] = [];
+      for (const raw of values.resolve ?? []) {
+        const value = raw.trim();
         const eq = value.lastIndexOf("=");
         if (eq === -1) {
-          if (resolve !== undefined) {
-            throw new UsageError("--resolve <side> may be given once");
-          }
-          resolve = pickOption("--resolve", value, [
+          const side = pickOption("--resolve", value, [
             "adaptrace",
             "backlog",
           ]) as Side;
+          if (resolve !== undefined && resolve !== side) {
+            throw new UsageError("--resolve <side> is given both ways");
+          }
+          resolve = side;
           continue;
         }
         const task = value.slice(0, eq).trim().replace(/^\/+/, "");
@@ -701,7 +703,7 @@ export async function run(args: string[]): Promise<number> {
           "backlog",
         ]) as Side;
         if (task === "") throw new UsageError(`--resolve ${value}: no task`);
-        resolveTasks.set(task, side);
+        entries.push([task, side]);
       }
       const bundle = await openBundle(bundleDir);
       const backlogDir = values.backlog ?? DEFAULT_BACKLOG;
@@ -709,16 +711,11 @@ export async function run(args: string[]): Promise<number> {
         throw new UsageError(`Backlog.md directory '${backlogDir}' not found`);
       }
       const backlog = await loadBacklog(backlogDir);
-      // A task named in --resolve must exist: a typo would leave a conflict.
-      for (const task of resolveTasks.keys()) {
-        const known =
-          bundle.concepts.get(task)?.frontmatter.type === "Task" ||
-          backlog.tasks.has(normalizeId(task));
-        if (!known) {
-          throw new UsageError(
-            `--resolve ${task}=...: not a Task in the bundle or a Backlog.md task id`,
-          );
-        }
+      // Each named task must be linked on both sides, with one side only:
+      // a typo or a contradiction would otherwise go unnoticed.
+      const resolveTasks = resolveTaskSides(bundle, backlog, entries);
+      if (!(resolveTasks instanceof Map)) {
+        throw new UsageError(resolveTasks.error);
       }
       const plan = planSync(bundle, backlog, {
         direction: direction as Direction,
