@@ -87,7 +87,8 @@ Rules shared by the Adaptrace skills.
    - The field names are `title`, `state`, `tags`, `dependencies` (the `depends_on` to tasks), `body` and `fields`. `body` is the body, including the heading line at the top (`# <title>`). If the title changed and the heading too, `body` shows as changed as well. `fields` are keys with no Adaptrace counterpart, such as `assignee` and `priority`. The plan does not say which key differs, so compare the keys in the Backlog.md file with `backlog.fields` in the Adaptrace document and show them
    - For `import` and `export`, read the Adaptrace document and the Backlog.md file, and show the values before and after for the fields that changed. For `import-new` and `export-new`, show the title, status, assignee (`assignee`) and labels
    - If there are `errors`, show the file and the message. They are unreadable Backlog.md files or a wrong `task_prefix`. Tell the user to fix them on the Backlog.md side
-3. If there are no problems, go to step 3
+   - `archived` is not a problem, so you need not ask how to handle it. The Adaptrace document is not changed, and `sync` writes nothing. Show the Backlog.md file (`backlogPath`) and the `state` of the Adaptrace document. If `changed` is `true`, the Adaptrace document changed since the last sync. Tell the user that the change is not exported to Backlog.md. To have it in Backlog.md, tell the user to restore the task from the archive in Backlog.md. Only when the user says they want to change the document's `state` or body, show the diff and change it ("Rules for editing documents" in step 2). The next `sync` reports it as `archived` again, but the exit code stays 0.
+3. If there are no problems, go to step 3. `pending` and `archived` are not problems
 
 ## 2. Decide how to handle the problems
 
@@ -127,10 +128,6 @@ Check whether a task with the same id is in Backlog.md's `backlog/drafts/`, and 
 - Keep the Adaptrace document: change nothing. `sync` reports this task every time, with exit code 1. Setting the lifecycle key `status` to `deprecated` still keeps it reported
 - Delete the Adaptrace document: only when the user says so explicitly. Before deleting, check with `backlinks` from `adaptrace graph --format json` which documents point to it, and show them. If any do, deleting it causes `validate` errors
 - Delete `backlog` and export it as a new task: the next `sync` creates a task with a new id in Backlog.md
-
-### Archived tasks (`archived`)
-
-This is not a problem, so you need not ask how to handle it. The Adaptrace document is not changed, and `sync` writes nothing. Show the Backlog.md file (`backlogPath`) and the `state` of the Adaptrace document. Only when the user says they want to change the document's `state` or body, show the diff and change it ("Rules for editing documents"). The next `sync` reports it as `archived` again, but the exit code stays 0.
 
 ### Duplicated `backlog.id` (`duplicate-link`)
 

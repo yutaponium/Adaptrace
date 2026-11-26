@@ -361,6 +361,10 @@ test("sync --resolve: per task, and usage errors", async () => {
     );
     expect(await run(args)).toBe(0);
     expect(String(log.mock.calls.at(-1)?.[0])).toContain("1 archived");
+    expect(await run([...args, "--resolve", "back-1=backlog"])).toBe(2);
+    expect(String(error.mock.calls.at(-1)?.[0])).toContain(
+      "archived in Backlog.md; there is nothing to resolve",
+    );
     // The same global side twice is fine.
     expect(
       await run([...args, "--resolve", "adaptrace", "--resolve", " adaptrace"]),

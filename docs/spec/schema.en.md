@@ -311,7 +311,7 @@ The current content on each side (the fields in the table above) is hashed and c
 
 If both sides have the same content and only `backlog.sync` is missing, only the record is written.
 If the task of a `backlog.id` is not in Backlog.md, it is reported. It is neither recreated nor deleted.
-If that task was archived in Backlog.md (it is in `archive/tasks/` or `archive/drafts/`), it is reported as `archived` instead of `missing`. Nothing is written on either side.
+If that task was archived in Backlog.md (it is in `archive/tasks/` or `archive/drafts/`), it is reported as `archived` instead of `missing`. Nothing is written on either side. If the Adaptrace document changed since the last sync, it gets `changed: true`; that change is not exported. If a task with the same id is also in `drafts/`, it is `missing`.
 If two or more Tasks have the same `backlog.id`, none of them is synced and it is reported. This tends to happen when a document is copied.
 
 The exit code is 1 if there is a conflict, a missing task, an unmapped `state`, a duplicate `backlog.id`, or an unreadable Backlog.md file. If there are only pending and archived tasks, it is 0.

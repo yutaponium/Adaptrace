@@ -1,20 +1,23 @@
 ---
 type: Decision
-title: Backlog.mdでアーカイブされたタスクは、syncが `archived` として知らせ、問題として扱わない
+title: Backlog.mdでアーカイブされたタスクは、`sync` が `archived` として知らせ、問題として扱わない
 state: accepted
-generated: { by: claude-code/claude-opus-5-5, at: 2026-11-26T22:30:44+09:00 }
+generated: { by: claude-code/claude-opus-5-5, at: 2026-11-26T22:32:48+09:00 }
 depends_on:
   - /decisions/adr-011-backlog-sync.md
   - /decisions/adr-045-sync-skill.md
 ---
 
-# Backlog.mdでアーカイブされたタスクは、syncが `archived` として知らせ、問題として扱わない
+# Backlog.mdでアーカイブされたタスクは、`sync` が `archived` として知らせ、問題として扱わない
 
 ## 決定
 
 - `backlog.id` のタスクが、Backlog.mdの `archive/tasks/` か `archive/drafts/` にあるときは、`sync` は `missing` ではなく `archived` として知らせる。計画には、アーカイブされたファイルのパス（`backlogPath`）を含める
 - `archived` は問題として扱わない。`archived` だけなら、終了コードは0にする
 - どちらの側にも書き込まない。Adaptraceの文書の `state` や `status` も変えない
+- 前回の同期の後にAdaptraceの文書が変わっていれば、`archived` に `changed: true` を付ける。その変更は書き出されないことを知らせるためである。問題としては扱わない。アーカイブの後に、PMが `state` を終わった値にするのは、ふつうの使い方だからである
+- 同じIDのタスクが `drafts/` にもあれば、アーカイブの写しが残っていても `missing` にする。アーカイブされたファイルが複数あれば、ディレクトリとファイル名の順で最初のものを示す
+- `--resolve` でアーカイブされたタスクを指定すると、アーカイブされていて、そろえるものがないことを示して、使い方の誤り（終了コード2）にする
 - `drafts/` に戻されたタスクと、ファイルが削除されたタスクは、これまでどおり `missing` にする
 - テキストの出力では、`ARCHIVED in Backlog.md` と表示し、最後の行に `N archived` を加える（1件以上のときだけ）
 

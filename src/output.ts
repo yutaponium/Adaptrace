@@ -291,6 +291,10 @@ export function formatSync(plan: SyncPlan, written: boolean): string {
       lines.push(`${label} ${a.adaptrace}  (${a.id})`);
     } else if (a.kind === "unmapped-state") {
       lines.push(`${label} ${a.adaptrace}  state '${a.state}'`);
+    } else if (a.kind === "archived") {
+      lines.push(
+        `${label} ${a.adaptrace} <-> ${a.backlogPath} (${a.id})${a.changed ? "  [changed in Adaptrace; not exported]" : ""}`,
+      );
     } else if (a.kind === "duplicate-link") {
       lines.push(
         `${label} ${a.adaptrace}  (${a.id}, also ${a.others.join(", ")})`,

@@ -395,7 +395,25 @@ test("a task archived in Backlog.md is reported as archived, not missing", async
   expect(p.actions[0]).toMatchObject({
     id: "BACK-7",
     backlogPath: "archive/tasks/back-7 - Write-docs.md",
+    changed: false,
   });
+  // Changed in Adaptrace after archiving: flagged, still not a problem.
+  const docs = join(dir, ".adaptrace/tasks/back-7.md");
+  await writeFile(
+    docs,
+    (await readFile(docs, "utf8")).replace("state: to_do", "state: done"),
+  );
+  expect((await plan()).plan.actions[0]).toMatchObject({
+    kind: "archived",
+    changed: true,
+  });
+  // A copy back in drafts/ wins over the archived one: missing again.
+  await mkdir(join(dir, "backlog/drafts"), { recursive: true });
+  await writeFile(
+    join(dir, "backlog/drafts/back-7 - Write-docs.md"),
+    "---\nid: BACK-7\ntitle: Write docs\nstatus: To Do\n---\n",
+  );
+  expect(kinds((await plan()).plan)[0]).toBe("missing tasks/back-7.md");
   // Nothing is written for them, and no new id reuses theirs.
   await put(".adaptrace/tasks/new.md", "---\ntype: Task\ntitle: New\n---\n");
   const next = (await plan()).plan.actions.find((a) => a.kind === "export-new");

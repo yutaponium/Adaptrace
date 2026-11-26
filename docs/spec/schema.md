@@ -309,10 +309,10 @@ sources:
 
 両側の内容が同じで、`backlog.sync` だけがないときは、記録だけします。
 `backlog.id` のタスクがBacklog.mdにないときは知らせ、作り直しも削除もしません。
-そのタスクがBacklog.mdでアーカイブされている（`archive/tasks/` か `archive/drafts/` にある）ときは、`missing` ではなく `archived` として知らせます。どちらの側にも書き込みません。
+そのタスクがBacklog.mdでアーカイブされている（`archive/tasks/` か `archive/drafts/` にある）ときは、`missing` ではなく `archived` として知らせます。どちらの側にも書き込みません。前回の同期の後にAdaptraceの文書が変わっていれば、`changed: true` を付けます。その変更は書き出されません。同じIDのタスクが `drafts/` にもあれば、`missing` です。
 同じ `backlog.id` を持つTaskが2つ以上あるときは、どれも同期せずに知らせます。文書をコピーしたときに起きやすい状態です。
 
-衝突、見つからないタスク、対応しない `state`、重複した `backlog.id`、読めないBacklog.mdのファイルのどれかがあると、終了コードは1です。pendingとarchivedだけなら0です。
+衝突、見つからないタスク、対応しない `state`、重複した `backlog.id`、読めないBacklog.mdのファイルのどれかがあると、終了コードは1です。`pending` と `archived` だけなら0です。
 
 ## カンバン（`adaptrace board [bundle]`）
 

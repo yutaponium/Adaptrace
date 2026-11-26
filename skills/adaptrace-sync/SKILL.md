@@ -82,7 +82,8 @@ Adaptraceのskillに共通の決まり。
    - 項目の名前は、`title`、`state`、`tags`、`dependencies`（`depends_on` のうちタスクへのもの）、`body`、`fields` である。`body` は本文で、先頭の見出し行（`# <題>`）も含む。題を変えて見出しも変えると、`body` も変わったと出る。`fields` は、`assignee`、`priority` など、Adaptraceに対応する項目がないキーである。どのキーが違うかは計画に出ないので、Backlog.mdのファイルのキーと、Adaptraceの文書の `backlog.fields` を比べて示す
    - `import` と `export` は、Adaptraceの文書とBacklog.mdのファイルを読み、変わった項目の前後の値を示す。`import-new` と `export-new` は、題、ステータス、担当（`assignee`）、ラベルを示す
    - `errors` があれば、ファイルと内容を示す。読めないBacklog.mdのファイルや、`task_prefix` の誤りである。Backlog.mdの側で直すよう案内する
-3. 問題がなければ、手順3に進む
+   - `archived` は問題ではないので、扱いを尋ねなくてよい。Adaptraceの文書は変えず、`sync` も何も書き込まない。Backlog.mdのファイル（`backlogPath`）と、Adaptraceの文書の `state` を示す。`changed` が `true` なら、前回の同期の後にAdaptraceの文書が変わっている。その変更はBacklog.mdに書き出されないことを伝える。Backlog.mdの側に反映したいときは、利用者に、Backlog.mdでタスクをアーカイブから戻すよう案内する。Adaptraceの文書の `state` や本文を変えたいと利用者が言ったときだけ、差分を示して変える（手順2の「文書を編集するときの決まり」）。`sync` は、次も `archived` として知らせるが、終了コードは0のままである。
+3. 問題がなければ、手順3に進む。`pending` と `archived` は問題ではない
 
 ## 2. 問題の扱いを決める
 
@@ -122,10 +123,6 @@ Backlog.mdの `backlog/drafts/` に、同じIDのタスクがあるかを確認�
 - Adaptraceの文書を残す：変更しない。`sync` は、このタスクを毎回知らせ、終了コードは1になる。ライフサイクルのキー `status` を `deprecated` にしても、知らせ続ける
 - Adaptraceの文書を削除する：利用者が明示したときだけにする。削除する前に、`adaptrace graph --format json` の `backlinks` で、その文書を指している文書を確認して示す。指している文書があれば、削除すると `validate` のエラーになる
 - `backlog` を削除して、新しいタスクとして書き出す：次の `sync` で、新しいIDのタスクがBacklog.mdにできる
-
-### アーカイブされたタスク（`archived`）
-
-問題ではないので、扱いを尋ねなくてよい。Adaptraceの文書は変えず、`sync` も何も書き込まない。Backlog.mdのファイル（`backlogPath`）と、Adaptraceの文書の `state` を示す。Adaptraceの文書の `state` や本文を変えたいと利用者が言ったときだけ、差分を示して変える（「文書を編集するときの決まり」）。`sync` は、次も `archived` として知らせるが、終了コードは0のままである。
 
 ### 重複した `backlog.id`（`duplicate-link`）
 
