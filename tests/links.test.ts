@@ -70,3 +70,49 @@ test("definitions inside code are not definitions", () => {
   const body = "[a]\n\n```\n[a]: /a.md\n```\n`[a]: /b.md`";
   expect(extractLinks(body)).toEqual([]);
 });
+
+test("reads links that follow each other or a bracketed word", () => {
+  const defs = "\n\n[1]: /a.md\n[2]: /b.md";
+  const targets = (line: string) =>
+    extractLinks(line + defs).map((l) => l.target);
+  expect(targets("[a][1][b][2]")).toEqual(["/a.md", "/b.md"]);
+  expect(targets("[a][1][b](/c.md)")).toEqual(["/a.md", "/c.md"]);
+  expect(targets("[WIP][design](/d.md)")).toEqual(["/d.md"]);
+  expect(targets("See [1]: the first. And [2][]: the second.")).toEqual([
+    "/a.md",
+    "/b.md",
+  ]);
+  expect(targets("![img][1] [x][2]")).toEqual(["/b.md"]);
+});
+
+test("labels may contain inline code", () => {
+  const body = "See [`validate`].\n\n[`validate`]: /spec.md";
+  expect(extractLinks(body).map((l) => l.target)).toEqual(["/spec.md"]);
+});
+
+test("footnotes and task boxes are not links", () => {
+  const body = "- [x] done\n\nNote[^1].\n\n[^1]: TBD\n[x]: /x.md";
+  expect(extractLinks(body)).toEqual([]);
+});
+
+test("definitions in a blockquote, on two lines, or with ')' in the target", () => {
+  const body = [
+    "[q][1] [n][2] [p][3]",
+    "",
+    "> [1]: /q.md",
+    "",
+    "[2]:",
+    "  /n.md",
+    "[3]: ./guide_(v2).md",
+  ].join("\n");
+  expect(extractLinks(body).map((l) => l.target)).toEqual([
+    "/q.md",
+    "/n.md",
+    "./guide_(v2).md",
+  ]);
+});
+
+test("a definition cannot interrupt a paragraph", () => {
+  const body = "text\n[a]: /x.md\n\nsee [a]";
+  expect(extractLinks(body)).toEqual([]);
+});

@@ -11,16 +11,18 @@ const INLINE_CODE = /`[^`]*`/g;
 // A link destination: <...> (may contain spaces) or a run without spaces.
 const DEST = String.raw`(?:<([^<>\n]*)>|([^\s<>)]+))`;
 const TITLE = String.raw`(?:\s+(?:"[^"]*"|'[^']*'|\([^)]*\)))?`;
-// [text](target), [text][label], [label][] or [label], but not images
-// (and not the [label] that follows an image's alt text).
+// One bracketed span, optionally followed by an inline destination or a
+// second bracketed label. Images ("!" before "[") are matched to skip them.
 const LINK = new RegExp(
-  String.raw`(?<![!\]])\[([^\]]*)\](?:\(\s*${DEST}${TITLE}\s*\)|\[([^\]]*)\])?`,
+  String.raw`(!?)\[([^\]]*)\](?:\(\s*${DEST}${TITLE}\s*\)|(\[([^\]]*)\]))?`,
   "g",
 );
-// A link reference definition: [label]: target "title"
-const DEFINITION = new RegExp(
-  String.raw`^ {0,3}\[([^\]]+)\]:\s*${DEST}${TITLE}\s*$`,
-);
+// A link reference definition: [label]: target "title". The target may be on
+// the next line. Blockquote markers before it are allowed.
+const QUOTE = /^ {0,3}(?:> ?)+/;
+const DEFINITION =
+  /^ {0,3}\[([^\]]+)\]:(?:\s*(?:<([^<>\n]*)>|(\S+))(?:\s+(?:"[^"]*"|'[^']*'|\([^)]*\)))?)?\s*$/;
+const TASK_BOX = /^\s*(?:[-*+]|\d+[.)])\s+$/;
 const SCHEME = /^[a-z][a-z0-9+.-]*:/i;
 
 // Calls `visit` for each body line outside fenced code blocks. A fence closes
@@ -51,35 +53,101 @@ function normalizeLabel(label: string): string {
   return label.trim().replace(/\s+/g, " ").toLowerCase();
 }
 
-// Markdown links in the body, skipping fenced code blocks and inline code.
-// Reads inline links and reference-style links; a reference link is reported
-// on the line where it is used, with the target of its definition.
-export function extractLinks(body: string, firstLine = 1): BodyLink[] {
+// Replaces inline code with spaces of the same length, so that links inside it
+// are not read but positions in the line stay the same.
+function maskInlineCode(line: string): string {
+  return line.replace(INLINE_CODE, (code) => " ".repeat(code.length));
+}
+
+interface ProseLine {
+  raw: string;
+  index: number;
+}
+
+// Link reference definitions, by normalized label. A definition starts a block
+// (it cannot interrupt a paragraph), and the first one for a label wins.
+// Footnote definitions ("[^1]: ...") are not link definitions.
+function readDefinitions(lines: ProseLine[]) {
   const definitions = new Map<string, string>();
-  const prose: { line: string; index: number }[] = [];
-  forEachProseLine(body, (raw, index) => {
-    const line = raw.replace(INLINE_CODE, "");
-    const def = DEFINITION.exec(line);
-    if (def) {
-      const label = normalizeLabel(def[1] ?? "");
-      const target = def[2] ?? def[3] ?? "";
-      // The first definition of a label wins (CommonMark).
-      if (label && !definitions.has(label)) definitions.set(label, target);
-    } else {
-      prose.push({ line, index });
+  const used = new Set<number>();
+  let blockStart = true;
+  for (let n = 0; n < lines.length; n++) {
+    const { raw, index } = lines[n] as ProseLine;
+    const prev = lines[n - 1];
+    const line = raw.replace(QUOTE, "");
+    if (prev !== undefined && prev.index !== index - 1) blockStart = true;
+    const def = blockStart ? DEFINITION.exec(line) : null;
+    const label = def ? normalizeLabel(def[1] ?? "") : "";
+    if (def && label && !label.startsWith("^")) {
+      let target = def[2] ?? def[3];
+      used.add(index);
+      const next = lines[n + 1];
+      if (target === undefined && next?.index === index + 1) {
+        // The destination is on the next line.
+        const dest = /^\s*(?:<([^<>\n]*)>|(\S+))/.exec(
+          next.raw.replace(QUOTE, ""),
+        );
+        target = dest?.[1] ?? dest?.[2];
+        if (target !== undefined) {
+          used.add(next.index);
+          n++;
+        }
+      }
+      if (target && !definitions.has(label)) definitions.set(label, target);
+      continue;
     }
-  });
+    blockStart = line.trim() === "" || /^#{1,6}(\s|$)/.test(line.trim());
+  }
+  return { definitions, used };
+}
+
+// Markdown links in the body, skipping fenced code blocks and inline code.
+// Reads inline links and reference-style links ([text][label], [label][] and
+// [label]); a reference link is reported on the line where it is used, with
+// the target of its definition.
+export function extractLinks(body: string, firstLine = 1): BodyLink[] {
+  const lines: ProseLine[] = [];
+  forEachProseLine(body, (raw, index) => lines.push({ raw, index }));
+  const { definitions, used } = readDefinitions(lines);
   const links: BodyLink[] = [];
-  for (const { line, index } of prose) {
-    for (const match of line.matchAll(LINK)) {
-      const [, text = "", angle, bare, ref] = match;
+  for (const { raw, index } of lines) {
+    if (used.has(index)) continue;
+    const line = maskInlineCode(raw);
+    const find = new RegExp(LINK.source, "g");
+    for (let m = find.exec(line); m !== null; m = find.exec(line)) {
+      const [whole, bang = "", , angle, bare, second, ref] = m;
+      const start = m.index;
+      // Labels are read from the raw line, so inline code in a label counts.
+      const text = raw.slice(
+        start + bang.length + 1,
+        start + whole.indexOf("]"),
+      );
+      const lookup = (label: string) => {
+        const key = normalizeLabel(label);
+        return key.startsWith("^") ? undefined : definitions.get(key);
+      };
       let target: string | undefined;
       if (angle !== undefined || bare !== undefined) target = angle ?? bare;
-      else if (ref !== undefined && ref.trim() !== "")
-        target = definitions.get(normalizeLabel(ref));
-      // [label][] and [label]; "[label]:" is not a link.
-      else if (!line.slice(match.index + match[0].length).startsWith(":"))
-        target = definitions.get(normalizeLabel(text));
+      else if (second !== undefined && ref?.trim()) {
+        target = lookup(
+          raw.slice(
+            start + whole.length - second.length + 1,
+            start + whole.length - 1,
+          ),
+        );
+        // "[a][b](c)" with b undefined: "[b](c)" may still be a link.
+        if (target === undefined && !bang)
+          find.lastIndex = start + whole.length - second.length;
+      } else if (
+        !(
+          second === undefined &&
+          /^[ xX]$/.test(text) &&
+          TASK_BOX.test(line.slice(0, start))
+        )
+      ) {
+        target = lookup(text);
+      }
+      if (bang) continue;
       if (target) links.push({ target, line: firstLine + index });
     }
   }
