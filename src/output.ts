@@ -1241,7 +1241,7 @@ export function formatCoverage(
     } else {
       for (const i of work) {
         lines.push(
-          `  ${i.done ? "done    " : "not done"}  ${doc(i.title, i.path)}  ${state(i)}${i.owner ? `  ${w(i.owner)}` : ""}${i.due ? `  due ${w(i.due)}` : ""}${i.late ? " (after the milestone)" : ""}`,
+          `  ${i.done ? "done    " : "not done"}  ${doc(i.title, i.path)}${i.done ? "" : `  ${state(i)}`}${i.owner ? `  ${w(i.owner)}` : ""}${i.due ? `  due ${w(i.due)}` : ""}${i.late ? " (after the milestone)" : ""}`,
         );
       }
     }

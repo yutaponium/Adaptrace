@@ -151,7 +151,7 @@ async function bundleOf(files: Record<string, string>) {
   }
 }
 
-test("another milestone's work does not count", async () => {
+test("only a milestone that delivers a waited requirement counts", async () => {
   const b = await bundleOf({
     "m1.md": "type: Milestone\ndepends_on: [/rx.md, /t1.md]",
     "m2.md": "type: Milestone\nsatisfies: [/rx.md, /x.md]\ndepends_on: /t3.md",
@@ -165,15 +165,16 @@ test("another milestone's work does not count", async () => {
     "t4.md": "type: Task\nstate: done\nsatisfies: /rx.md",
   });
   const report = coverage(b.bundle, b.graph, { milestone: "m1.md" });
-  // m2 is another release: not in the scope, not counted, and what else it
-  // satisfies (x) is not shown. rs (not shown) counts all its work.
+  // m1 waits for rx, part of which m2 delivers: m2 counts, and its work is
+  // left. Its own work is not walked into, and what else it satisfies (x)
+  // is not shown. rs (not shown) counts all its work.
   expect(report.requirements.map((r) => [r.path, r.status])).toEqual([
     ["r1.md", "covered"],
-    ["rx.md", "covered"],
+    ["rx.md", "open"],
   ]);
   const rx = report.requirements.find((r) => r.path === "rx.md");
   expect(rx?.satisfiers.map((s) => [s.path, s.done, s.counted])).toEqual([
-    ["m2.md", false, false],
+    ["m2.md", false, true],
     ["t4.md", true, true],
   ]);
   expect(report.scope?.map((i) => i.path)).toEqual(["rx.md", "t1.md", "t4.md"]);
@@ -256,9 +257,27 @@ test("a milestone does not satisfy what it waits for by itself", async () => {
       ["req-b.md", "open"],
     ]);
   }
-  // rx is satisfied only by another release (m3): uncovered for m2.
+  // m2 waits for rx, which another release (m3, done) delivers: it counts.
   const m2 = coverage(b.bundle, b.graph, { milestone: "m2.md" });
   expect(m2.requirements.map((r) => [r.path, r.status])).toEqual([
-    ["rx.md", "uncovered"],
+    ["rx.md", "covered"],
+  ]);
+  expect(
+    m2.requirements[0]?.satisfiers.map((s) => [s.path, s.done, s.counted]),
+  ).toEqual([["m3.md", true, true]]);
+});
+
+test("a requirement met by a Decision does not hold a milestone back", async () => {
+  const b = await bundleOf({
+    "m.md": "type: Milestone\nsatisfies: /x.md\ndepends_on: [/t.md, /r.md]",
+    "d.md": "type: Decision\nsatisfies: /r.md",
+    "r.md": "type: Requirement",
+    "x.md": "type: Requirement",
+    "t.md": "type: Task\nstate: done",
+  });
+  const report = coverage(b.bundle, b.graph);
+  expect(report.requirements.map((r) => [r.path, r.status])).toEqual([
+    ["r.md", "covered"],
+    ["x.md", "covered"],
   ]);
 });

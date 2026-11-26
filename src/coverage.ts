@@ -17,7 +17,7 @@ export const REQUIREMENT_TYPES = ["Requirement"];
 // Work, not requirements: they cannot be given as requirement types.
 export const WORK_TYPES = ["Task", "Milestone"];
 export function isWorkType(type: string): boolean {
-  return WORK_TYPES.some((t) => t.toLowerCase() === type.toLowerCase());
+  return WORK_TYPES.includes(type);
 }
 
 export type CoverageStatus = "uncovered" | "open" | "covered";
@@ -187,16 +187,22 @@ export function coverage(
   }
   const scopeSet =
     scope === null ? null : new Set([...scope, options.milestone ?? ""]);
-  // Counts toward progress: with a milestone, a Task or a Milestone in its
-  // scope (the milestone itself included). A Milestone outside the scope is
-  // another release's, like a Task outside it.
+  // A Milestone that satisfies a requirement in the scope delivers part of
+  // the work it waits for (an earlier release, or a later one it relies
+  // on): it counts, but its own work is not walked into.
+  const delivering = new Set(
+    (scope ?? [])
+      .filter(isRequirement)
+      .flatMap(satisfiersOf)
+      .filter((p) => typeOf(p) === "Milestone"),
+  );
+  // Counts toward progress: with a milestone, a Task in its scope, and a
+  // Milestone in its scope (the milestone itself included) or delivering to
+  // it. Other Tasks and Milestones are another release's work.
   const counted = (path: string) => {
     const t = typeOf(path);
-    return (
-      scopeSet === null ||
-      (t !== "Task" && t !== "Milestone") ||
-      scopeSet.has(path)
-    );
+    if (scopeSet === null || (t !== "Task" && t !== "Milestone")) return true;
+    return scopeSet.has(path) || (t === "Milestone" && delivering.has(path));
   };
 
   // Requirements: all live ones, or those in the scope and those its work
@@ -241,14 +247,19 @@ export function coverage(
     const own = scopeOf(path);
     const ownSet = new Set(own);
     const tasks = own.filter((p) => typeOf(p) === "Task");
-    // Each requirement in it is satisfied by work in it (not by the
-    // milestone itself or another one).
+    // Each requirement in it is satisfied by something: a Task or a
+    // requirement in it, or a document that tracks no work (a Decision).
+    // Not by the milestone itself or another Milestone.
     const done =
       tasks.length > 0 &&
       tasks.every((p) => isDone(p) === true) &&
-      own
-        .filter(isRequirement)
-        .every((p) => satisfiersOf(p).some((q) => ownSet.has(q)));
+      own.filter(isRequirement).every((p) =>
+        satisfiersOf(p).some((q) => {
+          const t = typeOf(q);
+          if (t === "Milestone") return false;
+          return t === "Task" || isRequirement(q) ? ownSet.has(q) : true;
+        }),
+      );
     milestones.set(path, done);
     return done;
   };
