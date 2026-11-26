@@ -26,6 +26,7 @@
 - マイルストーンの判定を支援するskill `adaptrace-milestone` を追加した。材料を示し、扱いを利用者と決め、マイルストーンの計画だけを変える（2026-11-26、ADR-041）
 - リスクの見直しを支援するskill `adaptrace-risk` を追加した。1件ずつ扱いを利用者と決め、`verified` と `stale_after` に記録する（2026-11-26、ADR-043）
 - `sync --resolve <タスク>=<側>` で、Backlog.mdとの衝突をタスクごとにそろえられるようにした（2026-11-26）。Backlog.mdとの同期を支援するskill `adaptrace-sync` を追加した。衝突などの扱いを利用者と決めてから書き込む（2026-11-26、ADR-045）。Backlog.mdでアーカイブされたタスクを、`sync` が `archived` として知らせ、問題として扱わないようにした（2026-11-26、ADR-046）
+- v1.1.0をリリースした。skill 4つ（`adaptrace-change-decision`、`adaptrace-milestone`、`adaptrace-risk`、`adaptrace-sync`）と、`coverage` を加えた（2026-11-26）
 
 ## 次にやること
 

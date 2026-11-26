@@ -303,7 +303,7 @@ adaptrace sync --resolve tasks/design.md=adaptrace --resolve back-7=backlog --wr
 `--resolve` でも、`--write` を付けなければ確認だけです。
 選ばなかった側の変更は失われます。必要な変更は、そろえた後で手で戻してください。
 
-Claude Codeを使っている場合は、skill `adaptrace-sync` が、衝突ごとに両側の内容を並べて示し、どちらにそろえるかを一緒に決めます。両方の変更を残すときは、Adaptraceの文書に書いてから、Adaptraceの側にそろえます。このskillは、v1.0.0の次のリリースから使えます。skillの入手方法は、[既存のリポジトリに導入するガイド](adoption.md#claude-codeに取り込みを手伝ってもらう) と同じです。プラグインでインストールした場合は、すべてのskillがそろっています。フォルダをコピーする場合は、コマンドの `adaptrace-adopt` を `adaptrace-sync` に置き換えてください。
+Claude Codeを使っている場合は、skill `adaptrace-sync` が、衝突ごとに両側の内容を並べて示し、どちらにそろえるかを一緒に決めます。両方の変更を残すときは、Adaptraceの文書に書いてから、Adaptraceの側にそろえます。このskillは、v1.1.0から使えます。skillの入手方法は、[既存のリポジトリに導入するガイド](adoption.md#claude-codeに取り込みを手伝ってもらう) と同じです。プラグインでインストールした場合は、すべてのskillがそろっています。フォルダをコピーする場合は、コマンドの `adaptrace-adopt` を `adaptrace-sync` に置き換えてください。
 
 片方向だけにしたいときは、`--direction import`（取り込むだけ）か `--direction export`（書き出すだけ）を付けます。
 

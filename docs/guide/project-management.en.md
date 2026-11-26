@@ -240,9 +240,9 @@ Before a milestone, check the requirements in its scope and the work left with `
 adaptrace coverage --milestone milestones/release.md
 ```
 
-A requirement that no work satisfies is shown as `uncovered`, and one whose work is not done as `open`. Then the work the milestone waits for is listed with owners and due dates. Work due after the milestone is marked `(after the milestone)`. `coverage` is available from the release after v1.0.0.
+A requirement that no work satisfies is shown as `uncovered`, and one whose work is not done as `open`. Then the work the milestone waits for is listed with owners and due dates. Work due after the milestone is marked `(after the milestone)`. `coverage` is available from v1.1.0.
 
-If you use Claude Code, the skill `adaptrace-milestone` gathers the material for the judgment and lets you decide how to handle what is left in a conversation. It also shows open change requests and out-of-date documents that touch the scope, and writes changes such as moving work to the next milestone or changing a due date after you approve them. This skill is also available from the release after v1.0.0. You get the skill the same way as in [the guide to adopting Adaptrace in an existing repository](adoption.en.md#have-claude-code-help-you-bring-in-files). If you installed the plugin, you already have all the skills. If you copy the folder, replace `adaptrace-adopt` in the command with `adaptrace-milestone`.
+If you use Claude Code, the skill `adaptrace-milestone` gathers the material for the judgment and lets you decide how to handle what is left in a conversation. It also shows open change requests and out-of-date documents that touch the scope, and writes changes such as moving work to the next milestone or changing a due date after you approve them. This skill is also available from v1.1.0. You get the skill the same way as in [the guide to adopting Adaptrace in an existing repository](adoption.en.md#have-claude-code-help-you-bring-in-files). If you installed the plugin, you already have all the skills. If you copy the folder, replace `adaptrace-adopt` in the command with `adaptrace-milestone`.
 
 ### Regular risk reviews
 
@@ -265,7 +265,7 @@ After the review, set `stale_after` to the next review date. If you changed the 
 
 If the risk is linked to a decision with `depends_on`, it also appears in `stale` when the decision changes.
 
-If you use Claude Code, the skill `adaptrace-risk` lets you review the risks past their review date one at a time. It decides with you whether to update the assessment, create a mitigation task or close the risk, and when to review it next, and records them after you approve. For a risk whose content did not change, it records `verified` without changing `generated`. This skill is available from the release after v1.0.0. You get the skill the same way as in [the guide to adopting Adaptrace in an existing repository](adoption.en.md#have-claude-code-help-you-bring-in-files). If you installed the plugin, you already have all the skills. If you copy the folder, replace `adaptrace-adopt` in the command with `adaptrace-risk`.
+If you use Claude Code, the skill `adaptrace-risk` lets you review the risks past their review date one at a time. It decides with you whether to update the assessment, create a mitigation task or close the risk, and when to review it next, and records them after you approve. For a risk whose content did not change, it records `verified` without changing `generated`. This skill is available from v1.1.0. You get the skill the same way as in [the guide to adopting Adaptrace in an existing repository](adoption.en.md#have-claude-code-help-you-bring-in-files). If you installed the plugin, you already have all the skills. If you copy the folder, replace `adaptrace-adopt` in the command with `adaptrace-risk`.
 
 ## Replacing a decision
 
@@ -395,7 +395,7 @@ adaptrace sync --write    # actually writes
 - When the same task has changed on both sides, it does not overwrite either. It reports a conflict. Use `--resolve adaptrace` or `--resolve backlog` to make both sides match one of them. You can also give it per task, as in `--resolve tasks/design.md=backlog`.
 
 Developers move tasks in Backlog.md. Before the regular meeting, the PM brings them in with `sync` and checks `stale` and `board`.
-If you use Claude Code, the skill `adaptrace-sync` syncs for you. It shows the `sync` plan item by item, decides with you how to handle conflicts and other problems task by task, and writes after your approval. This skill is available from the release after v1.0.0. You get the skill the same way as in [the guide to adopting Adaptrace in an existing repository](adoption.en.md#have-claude-code-help-you-bring-in-files). If you installed the plugin, you already have all the skills. If you copy the folder, replace `adaptrace-adopt` in the command with `adaptrace-sync`.
+If you use Claude Code, the skill `adaptrace-sync` syncs for you. It shows the `sync` plan item by item, decides with you how to handle conflicts and other problems task by task, and writes after your approval. This skill is available from v1.1.0. You get the skill the same way as in [the guide to adopting Adaptrace in an existing repository](adoption.en.md#have-claude-code-help-you-bring-in-files). If you installed the plugin, you already have all the skills. If you copy the folder, replace `adaptrace-adopt` in the command with `adaptrace-sync`.
 With this flow, everyone can use the tool they are used to.
 
 [Using Adaptrace with Backlog.md](backlog-md.en.md) explains everything from installation to working with both, with screenshots.

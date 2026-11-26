@@ -4,6 +4,15 @@
 
 ## [Unreleased]
 
+## [1.1.0] - 2026-11-26
+
+プロジェクト管理の作業を支援するskillを4つ追加したリリース。変更要求の判断の記録、マイルストーンの判定、リスクの見直し、Backlog.mdとの同期を、Claude Codeと対話しながら進められる。要件の充足を示す `coverage` を追加した。
+
+### Changed
+
+- `adaptrace sync --resolve adaptrace --resolve backlog` のように、全体の指定に両方の側を指定すると、使い方の誤り（終了コード2）になった。これまでは、後の値を使っていた。同じ側を繰り返すのは、これまでどおり使える
+- `adaptrace sync`：Backlog.mdでアーカイブされたタスクは、`archived` として知らせ、終了コードを0にした。これまでは `missing` として、終了コード1にしていた（ADR-046）
+
 ### Added
 
 - `adaptrace sync`：Backlog.mdでアーカイブされたタスク（`archive/tasks/`、`archive/drafts/`）を、`missing` ではなく `archived` として知らせるようにした（ADR-046）。問題として扱わないので、`archived` だけなら終了コードは0。前回の同期の後にAdaptraceの文書が変わっていれば `changed: true` を付け、書き出されないことを示す。テキストの出力は `ARCHIVED in Backlog.md` で、最後の行に `N archived` を加える。MCPの `sync_plan` の結果にも `archived` が出る
@@ -141,5 +150,6 @@ v0.5 から v0.7 の機能をまとめたリリース。0.5.0 と 0.6.0 は切�
 - スキーマの仕様（`docs/spec/schema.md`）
 - リポジトリの土台（AGENTS.md、CLAUDE.md、TypeScript と Bun の雛形、CI、コントリビュートの文書）
 
-[Unreleased]: https://github.com/yutaponium/Adaptrace/compare/v1.0.0...HEAD
+[Unreleased]: https://github.com/yutaponium/Adaptrace/compare/v1.1.0...HEAD
+[1.1.0]: https://github.com/yutaponium/Adaptrace/compare/v1.0.0...v1.1.0
 [1.0.0]: https://github.com/yutaponium/Adaptrace/releases/tag/v1.0.0

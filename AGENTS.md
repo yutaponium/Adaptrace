@@ -10,7 +10,7 @@ Claude Codeは `CLAUDE.md` からこのファイルを読み込む。
 
 Adaptraceは、要件・意思決定・タスク・リスクとその依存関係を、
 OKF（Open Knowledge Format）準拠のMarkdownで管理するCLIとMCPサーバー。
-v1.0.0をリリースした。データの形式とコマンドは、Semantic Versioningに従って変える。機能の範囲は `README.md` の「ロードマップ」と「やらないこと」に従う。
+v1.1.0をリリースした。データの形式とコマンドは、Semantic Versioningに従って変える。機能の範囲は `README.md` の「ロードマップ」と「やらないこと」に従う。
 
 ## 守る設計原則
 
