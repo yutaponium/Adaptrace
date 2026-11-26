@@ -376,6 +376,9 @@ Starts from `requirements/mfa.md` and reaches 16 more documents. 17 documents in
 ## 4. Once approved, update from upstream
 
 Once the change request is approved, set it to `state: approved` and update the starting documents.
+
+If you use Claude Code, the skill `adaptrace-change-decision` records the decision to approve, reject or defer. It changes `state` and writes the date, who decided and the reason in the body of the change request. It also shows the undecided change requests that overlapped and the next steps. It can record the decisions on several change requests together. You get the skill the same way as in [the guide to adopting Adaptrace in an existing repository](adoption.en.md#have-claude-code-help-you-bring-in-files). If you installed the plugin, you already have all the skills. If you copy the folder, replace `adaptrace-adopt` in the command with `adaptrace-change-decision`.
+
 In each starting document, add the change request to `derived_from`, and set `generated.at` to the current date and time.
 
 ```yaml

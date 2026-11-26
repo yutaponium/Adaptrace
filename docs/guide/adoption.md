@@ -198,7 +198,7 @@ adaptrace extract meetings/2026-11-20-review.md --llm "claude -p"
 skillは、Claude Codeに作業の手順を教えるファイルです。
 
 1. skillをインストールします。Claude Codeのプラグインとしてインストールする方法と、フォルダをコピーする方法があります
-   - **プラグイン（おすすめ）**：Claude Codeで次の2つを実行します。Adaptraceの7つのskillが、まとめてインストールされます。skillの名前には、`adaptrace:` が付きます（例：`/adaptrace:adaptrace-adopt`）
+   - **プラグイン（おすすめ）**：Claude Codeで次の2つを実行します。Adaptraceの8つのskillが、まとめてインストールされます。skillの名前には、`adaptrace:` が付きます（例：`/adaptrace:adaptrace-adopt`）
 
      ```text
      /plugin marketplace add yutaponium/Adaptrace

@@ -376,13 +376,13 @@ copilot mcp add adaptrace -- adaptrace mcp .adaptrace
 
 ## skillの追加
 
-Adaptraceには、作業の手順をAIエージェントに教えるskillが7つあります。skillは、オープンな標準「[Agent Skills](https://agentskills.io/)」の形式です。
+Adaptraceには、作業の手順をAIエージェントに教えるskillが8つあります。skillは、オープンな標準「[Agent Skills](https://agentskills.io/)」の形式です。
 
 > **skillの試験は、Claude Codeでだけ実行しています。** ほかのエージェントでの動作は、確認していません。skillには、Claude Codeの機能を前提にした指示も含まれます（選択肢で尋ねるツールなど）。
 
 ### Claude Code
 
-Claude Codeのプラグインとして、7つのskillをまとめてインストールできます。
+Claude Codeのプラグインとして、8つのskillをまとめてインストールできます。
 
 ```text
 /plugin marketplace add yutaponium/Adaptrace
@@ -419,6 +419,7 @@ cp -r ~/tools/adaptrace/skills/adaptrace-* .agents/skills/
 |---|---|---|
 | 既存のファイルを取り込み、依存関係を張る。使い方は、[既存のリポジトリに導入するガイド](docs/guide/adoption.md#claude-codeに取り込みを手伝ってもらう) にある | `adaptrace-adopt`（[skills/adaptrace-adopt/](skills/adaptrace-adopt/SKILL.md)） | [adaptrace-adopt.en.md](docs/skills/adaptrace-adopt.en.md) |
 | メールなどで受けた依頼を、変更要求として受け付ける | `adaptrace-change-request`（[skills/adaptrace-change-request/](skills/adaptrace-change-request/SKILL.md)） | [adaptrace-change-request.en.md](docs/skills/adaptrace-change-request.en.md) |
+| 変更要求の承認、却下、保留の判断を記録し、重なっていた変更要求と次の手順を示す | `adaptrace-change-decision`（[skills/adaptrace-change-decision/](skills/adaptrace-change-decision/SKILL.md)） | [adaptrace-change-decision.en.md](docs/skills/adaptrace-change-decision.en.md) |
 | 承認された変更要求の影響を受ける文書を、上流から順に見直す | `adaptrace-review`（[skills/adaptrace-review/](skills/adaptrace-review/SKILL.md)） | [adaptrace-review.en.md](docs/skills/adaptrace-review.en.md) |
 | 定例の会議の前に状況をまとめ、議題の案を作る | `adaptrace-weekly`（[skills/adaptrace-weekly/](skills/adaptrace-weekly/SKILL.md)） | [adaptrace-weekly.en.md](docs/skills/adaptrace-weekly.en.md) |
 | 会議の議事録から文書を作り、決まったことを既存の文書に記録する | `adaptrace-minutes`（[skills/adaptrace-minutes/](skills/adaptrace-minutes/SKILL.md)） | [adaptrace-minutes.en.md](docs/skills/adaptrace-minutes.en.md) |

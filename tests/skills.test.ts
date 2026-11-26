@@ -77,6 +77,18 @@ const SKILLS = [
     ],
   },
   {
+    name: "adaptrace-change-decision",
+    date: "2026-11-26T10:00:00+09:00",
+    inputs: [
+      ".adaptrace/change-requests/cr-002-sms.md",
+      ".adaptrace/change-requests/cr-005-voice.md",
+    ],
+    failures: [
+      "FAIL  CR-004 uses the bundle's value for rejection (declined)",
+      "FAIL  CR-002 keeps its body and has a 判断 section",
+    ],
+  },
+  {
     name: "adaptrace-health",
     date: "2026-11-26T10:00:00+09:00",
     inputs: [".adaptrace/tasks/data-migration.md"],
@@ -245,6 +257,58 @@ for (const skill of SKILLS) {
           const old = join(dest, ".adaptrace/decisions/adr-0003-batch.md");
           const text = await Bun.file(old).text();
           await Bun.write(old, text.replace("state: accepted\n", ""));
+          expect(run()).toContain("FAIL  no other document changed");
+        } finally {
+          await rm(parent, { recursive: true, force: true });
+        }
+      });
+    }
+    if (skill.name === "adaptrace-change-decision") {
+      test("a changed key or document fails, the decisions do not", async () => {
+        const parent = await mkdtemp(join(tmpdir(), "adaptrace-skill-"));
+        try {
+          const dest = join(parent, "repo");
+          expect(
+            Bun.spawnSync(["sh", join(dir, "setup.sh"), dest]).exitCode,
+          ).toBe(0);
+          await cp(join(dir, "expected/.adaptrace"), join(dest, ".adaptrace"), {
+            recursive: true,
+          });
+          const run = () =>
+            Bun.spawnSync([
+              process.execPath,
+              join(dir, "check.ts"),
+              dest,
+            ]).stdout.toString();
+          expect(run()).toContain("ok    no other document changed");
+          // The origin: the review adds derived_from, not this skill.
+          const req = join(dest, ".adaptrace/requirements/req-1-mfa.md");
+          const original = await Bun.file(req).text();
+          await Bun.write(
+            req,
+            original.replace(
+              "owner: sato\n",
+              "owner: sato\nderived_from: /change-requests/cr-002-sms.md\n",
+            ),
+          );
+          expect(run()).toContain("FAIL  no other document changed");
+          await Bun.write(req, original);
+          // A key of a decided request other than state and generated.
+          const cr = join(dest, ".adaptrace/change-requests/cr-002-sms.md");
+          const text = await Bun.file(cr).text();
+          await Bun.write(
+            cr,
+            text.replace(
+              "2026-11-18T09:30:00+09:00",
+              "2026-11-26T10:00:00+09:00",
+            ),
+          );
+          expect(run()).toContain("FAIL  no other document changed");
+          // The body as received must stay in front of the new section.
+          await Bun.write(
+            cr,
+            text.replace("メールが届かない会員がいるので、", ""),
+          );
           expect(run()).toContain("FAIL  no other document changed");
         } finally {
           await rm(parent, { recursive: true, force: true });
