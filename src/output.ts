@@ -1184,7 +1184,7 @@ export function formatCoverage(
           : r.satisfiers
               .map(
                 (s) =>
-                  `${doc(s.title, s.path, true)}${s.type ? ` ${w(s.type)}` : ""}${progress(s) === "" ? "" : ` (${progress(s)})`}${s.counted ? "" : " (outside the milestone)"}`,
+                  `${doc(s.title, s.path, true)}${s.type ? ` ${w(s.type)}` : ""}${progress(s) === "" ? "" : ` (${progress(s).replace(/^\((.*)\)$/, "$1")})`}${s.counted ? "" : " (outside the milestone)"}`,
               )
               .join("<br>");
       lines.push(

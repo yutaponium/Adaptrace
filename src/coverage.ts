@@ -3,8 +3,8 @@
 // requirements in its scope: what it waits for through depends_on and blocks,
 // followed on through Tasks and Milestones and through the work that
 // satisfies a requirement in it, and the requirements that work (and the
-// milestone itself) satisfies. Only Tasks and Milestones in the scope, and
-// Milestones that deliver a requirement it waits for, count. It is computed from the
+// milestone itself) satisfies. A requirement it waits for counts all its
+// work; another shown one counts only the work in the scope. It is computed from the
 // dependencies, not kept as a separate table (docs/guide/pmbok.md), and
 // writes nothing.
 import { waitPairs } from "./board";
@@ -34,9 +34,9 @@ export interface Satisfier {
   // A Task or a Milestone: whether the state is a done one. A requirement:
   // whether it is covered. Other types track no work: null.
   done: boolean | null;
-  // Whether it counts toward the status: with a milestone, a Task or a
-  // Milestone outside its scope does not, unless the Milestone delivers a
-  // requirement the milestone waits for. Without a milestone: true.
+  // Whether it counts toward this requirement's status: with a milestone, a
+  // Task or a Milestone outside its scope does not, unless the milestone
+  // waits for the requirement. Without a milestone: true.
   counted: boolean;
 }
 
@@ -228,23 +228,17 @@ export function coverage(
   }
   paths.sort();
 
-  // A Milestone that satisfies a requirement the milestone waits for (in the
-  // scope) delivers part of it, as an earlier or a later release: it counts,
-  // judged by its own state, and its work is not walked into.
-  const delivering = new Set(
-    (scope ?? [])
-      .filter(isRequirement)
-      .flatMap(satisfiersOf)
-      .filter((p) => typeOf(p) === "Milestone"),
-  );
-  // Counts toward progress: with a milestone, a Task in its scope, and a
-  // Milestone in its scope (the milestone itself included) or delivering a
-  // requirement it waits for. Other Tasks and Milestones are another
-  // release's work.
-  const counted = (path: string) => {
+  // Counts toward a requirement's progress, with a milestone: for a
+  // requirement it waits for (in its scope), everything that satisfies it
+  // (it needs the requirement done in full, whichever release does the
+  // work); for one shown because the scope's work satisfies it, only the
+  // Tasks and Milestones in the scope. Documents that track no work always
+  // count. Without a milestone: everything.
+  const waited = new Set((scope ?? []).filter(isRequirement));
+  const countedFor = (requirement: string, path: string) => {
     const t = typeOf(path);
     if (scopeSet === null || (t !== "Task" && t !== "Milestone")) return true;
-    return scopeSet.has(path) || (t === "Milestone" && delivering.has(path));
+    return waited.has(requirement) || scopeSet.has(path);
   };
 
   // Whether a satisfier is done: a Task or a Milestone by its state; a
@@ -267,7 +261,9 @@ export function coverage(
     if (known !== undefined) return known;
     if (visiting.has(key)) return "open";
     visiting.add(key);
-    const list = satisfiersOf(path).filter((p) => !scoped || counted(p));
+    const list = satisfiersOf(path).filter(
+      (p) => !scoped || countedFor(path, p),
+    );
     const status: CoverageStatus =
       list.length === 0
         ? "uncovered"
@@ -291,7 +287,7 @@ export function coverage(
           ? statusOf(p, scoped && shown?.has(p) === true)
           : null,
         done: satisfied(p),
-        counted: counted(p),
+        counted: countedFor(path, p),
       }),
     );
     return {

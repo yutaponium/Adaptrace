@@ -242,7 +242,7 @@ test("done work is not late", async () => {
   ]);
 });
 
-test("another release's milestone and tasks stay out of the milestone", async () => {
+test("another release's work counts only for a requirement the milestone waits for", async () => {
   const b = await bundleOf({
     "m1.md":
       "type: Milestone\ndue: 2026-12-25\ndepends_on: [/r1.md, /t1.md, /m0.md]",
@@ -256,10 +256,17 @@ test("another release's milestone and tasks stay out of the milestone", async ()
     "t6.md": "type: Task\nstate: to_do",
   });
   const report = coverage(b.bundle, b.graph, { milestone: "m1.md" });
-  // t5 is m2's work; m2 satisfies r2, which m1 does not wait for.
+  // m1 waits for r1: t5 (m2's work) counts, though it is not in m1's scope.
+  // r2 is shown because t1 satisfies it: m2 does not count there.
   expect(report.requirements.map((r) => [r.path, r.status])).toEqual([
-    ["r1.md", "covered"],
+    ["r1.md", "open"],
     ["r2.md", "covered"],
+  ]);
+  expect(
+    report.requirements[0]?.satisfiers.map((s) => [s.path, s.counted]),
+  ).toEqual([
+    ["t1.md", true],
+    ["t5.md", true],
   ]);
   expect(
     report.requirements[1]?.satisfiers.map((s) => [s.path, s.counted]),
