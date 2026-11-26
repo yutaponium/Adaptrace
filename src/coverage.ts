@@ -59,7 +59,8 @@ export interface ScopeItem {
   owner: string | null;
   due: string | null;
   done: boolean | null;
-  // A Task not done yet, due after the milestone (both dates readable).
+  // A Task or a Milestone not done yet, due after the milestone (both
+  // dates readable).
   late: boolean;
 }
 
@@ -314,9 +315,8 @@ export function coverage(
             owner: people(fm(path)?.owner),
             due,
             done: isDone(path),
-            // Only work not done yet can be late.
+            // Only work (a Task or a Milestone) not done yet can be late.
             late:
-              typeOf(path) === "Task" &&
               isDone(path) === false &&
               milestoneDay !== null &&
               dueDay !== null &&
