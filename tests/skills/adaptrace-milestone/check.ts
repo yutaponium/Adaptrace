@@ -97,10 +97,11 @@ if (existsSync(join(repo, ".git"))) {
     return r.stdout.toString();
   };
   const ALLOWED: Record<string, RegExp> = {
-    [R1]: /^(depends_on|blocks):|^\s*- /,
-    [R2]: /^(depends_on|blocks):|^\s*- /,
-    // The task may lose a blocks that pointed at the year-end release.
-    "tasks/sms-send.md": /^blocks:|^\s*- /,
+    // generated is checked above (should): changing it is a warning.
+    [R1]: /^(depends_on|blocks|generated):|^\s*- /,
+    [R2]: /^(depends_on|blocks|generated):|^\s*- /,
+    // The task may move a blocks that pointed at the year-end release.
+    "tasks/sms-send.md": /^(blocks|generated):|^\s*- /,
   };
   const changed = git([
     "diff",

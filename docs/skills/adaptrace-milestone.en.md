@@ -64,19 +64,20 @@ Rules shared by the Adaptrace skills.
 
 ## 1. Confirm the milestone
 
-1. `adaptrace list --type Milestone --format json --columns state,due`: the list of milestones
-2. Find in the list the milestone the user named. If you cannot find it, ask instead of guessing
-3. Read the milestone's body. Check its due date (`due`) and `state`. Without `state`, it is not done yet
-4. `adaptrace list --type Task --format json --columns state`: check the `state` values that mean a Task or a Milestone is done. The default of `coverage` is `done`, and its JSON shows the list in `done`. If a value other than `done` (such as `completed`) means done, add `--done <value,...>` to `coverage` from here on. If you are unsure, ask
-5. `adaptrace list --type "Change Request" --format json --columns state`: check the `state` values of the change requests, for step 2.2. Use the type name the bundle uses
+1. `adaptrace list --format json --columns type,state`: the list of documents. Check here the type names (`Milestone`, `Task`, `Change Request` and so on) and the `state` values each type uses. A document whose `state` is an empty string (`""`) has no `state`
+2. `adaptrace list --type Milestone --format json --columns state,due`: the list of milestones
+3. Find in the list the milestone the user named. If you cannot find it, ask instead of guessing
+4. Read the milestone's body. Check its due date (`due`) and `state`. Without `state`, it is not done yet
+5. Of the `state` values of Tasks and Milestones checked in step 1.1, decide which mean done. The default of `coverage` is `done`. If another value clearly means done by its name (such as `completed`), add `--done <value,...>` to `coverage` from here on. If you are unsure about a value, ask the user
+6. Sort the `state` values of the change requests checked in step 1.1 into undecided (submitted, under review and so on) and settled (approved, rejected and so on), for step 2.2. Ask the user about values whose names do not tell
 
 ## 2. Gather the material
 
 1. `adaptrace coverage --milestone <milestone> --format json`
    - `requirements`: the requirements in the scope and their status (`uncovered`, `open`, `covered`). They are the requirements the milestone waits for directly, and those the work in the scope satisfies with `satisfies`. A satisfier with `counted: false` is another release's work and is not counted. A document that is not work, such as a Decision, has `done: null` and counts as satisfying the requirement if it exists
-   - `scope`: the documents in the scope. Tasks and Milestones with `done: false` are the work left. Documents with `done: null` (requirements, decisions) are not work and do not go in the list of work. Work with `late: true` is not done and is due after the milestone
+   - `scope`: the documents in the scope: what the milestone waits for, what is reached from there through what it waits for, and the work that satisfies a requirement. Decisions and the like that the work depends on are in it too, but the walk does not go past them. Tasks and Milestones with `done: false` are the work left. Documents with `done: null` (requirements, decisions) are not work and do not go in the list of work. Work with `late: true` is not done and is due after the milestone
 2. `adaptrace conflicts --format json`: take the open change requests from `requests`. A change request whose `reach` (impact range) shares even one document with the `scope` or the `requirements` of `coverage`, or includes the milestone itself, touches this milestone. Change requests without `changes` (`unlinked`) cannot be judged, so write them in the report. This skill does not use `pairs` (overlaps between change requests)
-   - If the values checked in step 1.5 include a settled value that is not among the defaults of `conflicts` (such as `declined`), add `--settled`. The defaults are `approved`, `accepted`, `rejected`, `deferred`, `implemented`, `closed` and `done`. `--settled` replaces the defaults, so list every value you use
+   - If the values sorted as settled in step 1.6 include one that is not among the defaults of `conflicts` (such as `declined`), add `--settled`. If there are no settled values, or all are defaults, do not add it. The defaults are `approved`, `accepted`, `rejected`, `deferred`, `implemented`, `closed` and `done`. `--settled` replaces the defaults, so list every value you use
 3. `adaptrace stale --format json`: the documents in `stale` that are in the `scope` or the `requirements`. Report also the documents in `unknown` (no known date) that are in the scope
 4. Note the work in the `scope` that is not done and whose due date is before the date from step 0, as work past its due date. Compare the date of `due` with the date part of the date and time from step 0
 
@@ -92,7 +93,7 @@ Show it in this table. Do not write a recommended judgment. For a category with 
 | Open change requests that touch the scope | Change request | Overlapping documents |
 | Out-of-date documents | Document | What it is older than |
 
-When one piece of work falls in several categories, show it in each. Show the counts per category. The number of days until the milestone's due date is its due date minus today's date.
+Take the owner and due date of work from `owner` and `due` in `scope`. For work not in `scope` (with `counted: false`), read its document. When one piece of work falls in several categories, show it in each. Show the counts per category. The number of days until the milestone's due date is its due date minus today's date.
 
 After that, ask whether to decide how to handle each item. If the user wants only the judgment, skip steps 4 and 5 and report in step 6. In that case, say that no document was changed.
 
@@ -103,7 +104,7 @@ For each item, show these choices and ask. You may read the body and add a recom
 | Handling | When it fits | Change |
 |---|---|---|
 | Keep as is | It is expected to finish by the due date. Accept it as a risk. For a requirement lacking work, the user plans to create tasks | No change |
-| Move the work to another milestone | It will not finish in this release | Remove the work from this milestone's `depends_on`. If the work's `blocks` points to this milestone, remove that too. Add the work to the target milestone's `depends_on` |
+| Move the work to another milestone | It will not finish in this release | If the milestone waited for the work with `depends_on`, remove it from this milestone's `depends_on` and add it to the target milestone's `depends_on`. If the work pointed to this milestone with `blocks`, change that `blocks` value to the target milestone, to keep the original form |
 | Change a due date | The due date of the work or the milestone can move | Change `due` of the work or the milestone |
 | Take a requirement out of the scope | It was decided not to satisfy it in this release | If the milestone points to the requirement directly with `depends_on`, remove it. If the requirement was agreed with the customer, guide the user to take it in as a change request first (skill `adaptrace-change-request`) |
 | Decide the change request first | An open change request touches the scope | No change. Guide the user to the skill `adaptrace-change-decision` |
@@ -119,7 +120,7 @@ For each item, show these choices and ask. You may read the body and add a recom
 1. Show the changes decided in step 4 as a diff per document, and write them after approval
    - Change only the keys decided. Do not change `generated`
    - Even if `depends_on` ends up with one value, follow the existing form (a list). If it becomes empty, remove the key. Put an added value at the end of the list
-2. When every item is settled and the user judges that the work in the scope is done, ask whether to set the milestone's `state` to a done value. Use the value checked in step 1.4
+2. When every item is settled and the user judges that the work in the scope is done, ask whether to set the milestone's `state` to a done value. Use the value decided in step 1.5. If none was decided, ask
 3. Ask whether to record this in `log.md`. You may ask together with the diff in item 1 of this step. If so, write one line `* **Update**: <description>` for the whole session under today's date heading (`## YYYY-MM-DD`). In the description, write the milestone and the handling that changed something
 4. Run `adaptrace validate`. If there are more errors than at step 0, explain the cause and show a diff that fixes them
 5. Run `adaptrace coverage --milestone <milestone> --format json` again, and check the state after the changes. Run it for the milestone the work moved to as well, and check that the moved work is in its scope
