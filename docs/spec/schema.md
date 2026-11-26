@@ -491,6 +491,22 @@ LLMの答えの形：
 - `--jobs` と `--timeout` は、`assess` と同じです
 - LLMの判定は、協議の材料です。決定ではありません。何も書き込みません
 
+## 要件の充足（`adaptrace coverage [bundle]`）
+
+要件ごとに、満たす文書（`satisfies` で要件を指す文書）と、その進み具合を示します（[ADR-040](../../.adaptrace/decisions/adr-040-coverage.md)）。要求事項トレーサビリティ・マトリックスに当たる表を、依存関係から計算します。何も書き込みません。終了コードは0です。
+
+| 状況 | 内容 |
+| --- | --- |
+| `uncovered` | `status: deprecated` でない文書のうち、要件を `satisfies` で指すものがない |
+| `open` | 要件を満たすTaskのうち、終わっていないものがある |
+| `covered` | それ以外 |
+
+- 要件は、`type: Requirement` の文書です。`--type` で別の型にできます。`status: deprecated` の要件と、`deprecated` の満たす文書は含めません
+- 進み具合を持つのはTaskだけです。Taskは、`state` が `done`（`--done` で変えられる。大文字と小文字は区別しない）なら終わったとみなします。Task以外の満たす文書（Decisionなど）は、あれば満たしているとみなします。JSONの `done` は `null` です
+- `--milestone <文書>` を付けると、マイルストーンの範囲だけを示します。範囲は、マイルストーンが待っている文書（`depends_on` と `blocks`。`board` と同じ向き）を連鎖でたどった文書と、それらが `satisfies` で満たす要件です。`status: deprecated` の文書は範囲に含めず、その先もたどりません
+- `--milestone` のときは、範囲のTaskも示します（JSONでは `scope`。近い順）。担当者（`owner`）、期日（`due`）、終わったか、期日がマイルストーンの `due` より後か（`late`）を示します
+- `--format` は `text`（既定）、`markdown`、`json` です。`markdown` での文書の示し方は `board` と同じで、`--link-base` でリンクにします
+
 ## 協議の会議の準備（`adaptrace meeting <変更要求>...`）
 
 まとめて協議する変更要求について、会議の準備の材料を示します（[ADR-025](../../.adaptrace/decisions/adr-025-meeting.md)）。日程調整と招待の送信はしません。連絡先は扱わず、名前と役割だけを示します。
@@ -530,6 +546,7 @@ stdioのMCPサーバーとして起動します（[ADR-012](../../.adaptrace/dec
 | `health` | `adaptrace health --format json` と同じ |
 | `progress` | `adaptrace progress --format json` と同じ。`request`（変更要求）を受け取る |
 | `conflicts` | `adaptrace conflicts --format json` と同じ。`settled`（決着した `state` の値）を受け取る |
+| `coverage` | `adaptrace coverage --format json` と同じ。`milestone`、`types`（要件の型）、`done`（終わったTaskの `state` の値）を受け取る |
 | `meeting_context` | `meeting` の材料（参加者、変更要求、重なり、ベースライン）と、議題・招集の文案・`Meeting` の下書きを作る手順（`instructions`）。`requests` と `audience` を受け取る。顧客向けでは、社内の検討の詳細を返さない |
 | `conflicts_context` | `conflicts` の内容に、組ごとに読む文書のパス（`materials`）、パスごとの全文（`texts`、1回ずつ）、判定の手順（`instructions`）を加えたもの。判定はエージェントが行う |
 | `estimate_context` | `estimate --format json` の内容に、変更要求の全文（`requestContent`）、届く文書の全文（`contents`）、見積もりの手順を加えたもの。`documents`（起点）と `request` を受け取る |

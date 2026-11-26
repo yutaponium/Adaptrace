@@ -19,6 +19,7 @@ import {
   conflictsContext,
   SETTLED_STATES,
 } from "./conflicts";
+import { coverage, DONE_STATES } from "./coverage";
 import { validateAll } from "./drift";
 import { estimate, estimateContext } from "./estimate";
 import { extractContext } from "./extract";
@@ -523,6 +524,39 @@ export function createServer(options: McpOptions): McpServer {
     async () => {
       const bundle = await open();
       return json(healthToJson(health(bundle, buildGraph(bundle))));
+    },
+  );
+
+  server.registerTool(
+    "coverage",
+    {
+      title: "Requirement coverage",
+      description:
+        "For each requirement (type Requirement unless types is given), the live documents that satisfy it with their state, and its status: uncovered (nothing satisfies it), open (a Task that satisfies it is not done) or covered. With milestone, only the milestone's scope: what it waits for through depends_on and blocks, followed on, and the requirements those documents satisfy; scope lists that work with owner, due and late (due after the milestone). Nothing is written.",
+      inputSchema: {
+        milestone: z.string().optional(),
+        types: z.array(z.string()).min(1).optional(),
+        done: z
+          .array(z.string())
+          .min(1)
+          .optional()
+          .describe(
+            `state values that mean a Task is done, in any case (default ${DONE_STATES.join(", ")})`,
+          ),
+      },
+      annotations: READ_ONLY,
+    },
+    async ({ milestone, types, done }) => {
+      const bundle = await open();
+      let found: string | undefined;
+      if (milestone !== undefined) {
+        const path = findConcept(bundle, milestone);
+        if (path === null) return fail(`'${milestone}' is not a document`);
+        found = path;
+      }
+      return json(
+        coverage(bundle, buildGraph(bundle), { milestone: found, types, done }),
+      );
     },
   );
 

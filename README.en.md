@@ -252,6 +252,9 @@ adaptrace health
 # Pairs of open change requests whose reach overlaps (material for discussing whether they conflict)
 adaptrace conflicts
 
+# For each requirement, what satisfies it and how far that work is (--milestone narrows to a milestone's scope and shows the work left)
+adaptrace coverage --milestone milestones/release.md
+
 # Prepare a meeting about overlapping change requests (participants, agenda, a Meeting draft; with --llm, an invitation too)
 adaptrace meeting change-requests/cr-001-sms.md change-requests/cr-002-email.md
 

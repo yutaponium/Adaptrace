@@ -22,6 +22,7 @@ import {
   judgePairs,
   SETTLED_STATES,
 } from "./conflicts";
+import { coverage, DONE_STATES } from "./coverage";
 import { validateAll } from "./drift";
 import { estimate, estimateContext, size } from "./estimate";
 import { extract, extractContext, writeDrafts } from "./extract";
@@ -54,6 +55,7 @@ import {
   formatAssess,
   formatBoard,
   formatConflicts,
+  formatCoverage,
   formatEstimate,
   formatExtract,
   formatHealth,
@@ -119,6 +121,10 @@ Commands:
   conflicts [bundle]  Change requests not yet decided whose changes reach the same documents
                       (they name what they change in changes); with --llm, whether each
                       pair conflicts, duplicates, is compatible or is unclear
+  coverage [bundle]   For each Requirement, the live documents that satisfy it and whether
+                      the Tasks among them are done (uncovered, open, covered); with
+                      --milestone, only its scope: what it waits for through depends_on and
+                      blocks, followed on, and the requirements those documents satisfy
   list [bundle]       A table of documents (a register or a log): --type, --state, --status
                       filter; --columns picks the frontmatter keys; deprecated ones are
                       left out unless --status is given
@@ -131,7 +137,7 @@ Options:
                       graph: mermaid | json (default mermaid)
                       board, estimate, progress: text | markdown | json (default text)
                       list: text | markdown | csv | json (default text)
-                      conflicts, meeting: text | markdown | json (default text)
+                      conflicts, meeting, coverage: text | markdown | json (default text)
   --backlog <dir>     sync, board, estimate, mcp: the Backlog.md directory (default ${DEFAULT_BACKLOG})
   --direction <dir>   sync: both | import | export (default both)
   --write             sync: write the changes instead of only showing them
@@ -139,10 +145,14 @@ Options:
                       migrate-dates: write generated into the documents
   --resolve <side>    sync: settle conflicts with adaptrace | backlog
   --references        graph: include body links as untyped edges
-  --link-base <url>   board, estimate, progress, list, conflicts, meeting --format markdown: link titles to <url> + path
+  --link-base <url>   board, estimate, progress, list, conflicts, meeting, coverage --format markdown: link titles to <url> + path
   --request <doc>     estimate: the change request, given to the LLM as the reason; without
                       documents, the change starts from what it names in changes
   --type <type>       list: only documents of this type (exact match)
+                      coverage: the type of the requirements (default Requirement)
+  --milestone <doc>   coverage: only the requirements and work in the milestone's scope
+  --done <states>     coverage: comma-separated state values that mean a Task is done, in
+                      any case (default done)
   --state <state>     list: only documents in this state
   --status <status>   list: only documents with this status (draft | stable | deprecated)
   --columns <keys>    list: comma-separated frontmatter keys ("generated.by" reads a nested
@@ -264,6 +274,8 @@ export async function run(args: string[]): Promise<number> {
         columns: { type: "string" },
         sort: { type: "string" },
         settled: { type: "string" },
+        milestone: { type: "string" },
+        done: { type: "string" },
         audience: { type: "string" },
         jobs: { type: "string" },
         help: { type: "boolean", short: "h" },
@@ -302,14 +314,22 @@ export async function run(args: string[]): Promise<number> {
     if (command !== "conflicts" && values.settled !== undefined) {
       throw new UsageError("--settled is only for conflicts");
     }
+    if (command !== "coverage") {
+      for (const name of ["milestone", "done"] as const) {
+        if (values[name] !== undefined) {
+          throw new UsageError(`--${name} is only for coverage`);
+        }
+      }
+    }
+    if (
+      command !== "list" &&
+      command !== "coverage" &&
+      values.type !== undefined
+    ) {
+      throw new UsageError("--type is only for list and coverage");
+    }
     if (command !== "list") {
-      for (const name of [
-        "type",
-        "state",
-        "status",
-        "columns",
-        "sort",
-      ] as const) {
+      for (const name of ["state", "status", "columns", "sort"] as const) {
         if (values[name] !== undefined) {
           throw new UsageError(`--${name} is only for list`);
         }
@@ -699,6 +719,41 @@ export async function run(args: string[]): Promise<number> {
         format === "json"
           ? JSON.stringify({ columns }, null, 2)
           : formatBoard(columns, format === "markdown", values["link-base"]),
+      );
+      return 0;
+    }
+    if (command === "coverage") {
+      const format = pickFormat(values.format, ["text", "markdown", "json"]);
+      const done =
+        values.done === undefined
+          ? DONE_STATES
+          : values.done
+              .split(",")
+              .map((v) => v.trim())
+              .filter((v) => v !== "");
+      if (done.length === 0) {
+        throw new UsageError("--done needs at least one state value");
+      }
+      const bundle = await openBundle(bundleDir);
+      let milestone: string | undefined;
+      if (values.milestone !== undefined) {
+        const found = findConcept(bundle, values.milestone);
+        if (found === null) {
+          throw new UsageError(
+            `'${values.milestone}' is not a document in ${bundle.root}`,
+          );
+        }
+        milestone = found;
+      }
+      const report = coverage(bundle, buildGraph(bundle), {
+        milestone,
+        types: values.type === undefined ? undefined : [values.type],
+        done,
+      });
+      console.log(
+        format === "json"
+          ? JSON.stringify(report, null, 2)
+          : formatCoverage(report, format === "markdown", values["link-base"]),
       );
       return 0;
     }

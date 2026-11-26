@@ -41,6 +41,7 @@ test("lists the read and propose tools, all marked read-only", async () => {
     "board",
     "conflicts",
     "conflicts_context",
+    "coverage",
     "estimate_context",
     "extract_context",
     "graph",
@@ -81,6 +82,11 @@ test("read tools return the same data as the CLI", async () => {
   expect((await call("graph")).value.edges.length).toBeGreaterThan(0);
   expect((await call("stale")).value).toHaveProperty("stale");
   expect((await call("health")).value).toEqual([]);
+  const covered = (await call("coverage")).value;
+  expect(covered.requirements.map((r: { path: string }) => r.path)).toContain(
+    "requirements/security-mfa.md",
+  );
+  expect((await call("coverage", { milestone: "nope.md" })).isError).toBe(true);
   expect((await call("board")).value.columns[0].state).toBe("in_progress");
   expect((await call("read_document", { path: "nope.md" })).isError).toBe(true);
 });

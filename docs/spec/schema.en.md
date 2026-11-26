@@ -493,6 +493,22 @@ With `--llm <command>` or `ADAPTRACE_LLM`, the LLM judges for each overlapping p
 - `--jobs` and `--timeout` are the same as in `assess`
 - The LLM's judgment is material for discussion. It is not a decision. Nothing is written
 
+## Requirement coverage (`adaptrace coverage [bundle]`)
+
+For each requirement, shows the documents that satisfy it (the documents that point to it with `satisfies`) and their progress ([ADR-040](../../.adaptrace/decisions/adr-040-coverage.md)). It computes the table that a requirements traceability matrix would hold from the dependencies. It writes nothing. The exit code is 0.
+
+| Status | Meaning |
+| --- | --- |
+| `uncovered` | No document without `status: deprecated` points to the requirement with `satisfies` |
+| `open` | A Task that satisfies the requirement is not done |
+| `covered` | The others |
+
+- Requirements are documents with `type: Requirement`. `--type` picks another type. Requirements with `status: deprecated` and deprecated documents that satisfy them are left out
+- Only Tasks have progress. A Task is done when its `state` is `done` (change it with `--done`; case does not matter). A document of another type that satisfies a requirement (such as a Decision) counts as satisfying it if it exists. In JSON its `done` is `null`
+- With `--milestone <document>`, only the milestone's scope is shown. The scope is the documents the milestone waits for (`depends_on` and `blocks`, in the same direction as `board`), followed on, and the requirements those documents satisfy with `satisfies`. Documents with `status: deprecated` are not in the scope, and the walk does not go past them
+- With `--milestone`, the Tasks in the scope are shown too (`scope` in JSON, nearest first), with the owner (`owner`), the due date (`due`), whether each is done, and whether its due date is after the milestone's `due` (`late`)
+- `--format` is `text` (default), `markdown` or `json`. In `markdown`, documents are shown as in `board`, and `--link-base` makes them links
+
 ## Preparing a discussion meeting (`adaptrace meeting <change request>...`)
 
 For change requests to discuss together, shows material for preparing the meeting ([ADR-025](../../.adaptrace/decisions/adr-025-meeting.md)). It does not schedule or send invitations. It does not handle contact details. It shows only names and roles.
@@ -532,6 +548,7 @@ No tool writes to files. Each call reads the bundle from disk again.
 | `health` | Same as `adaptrace health --format json` |
 | `progress` | Same as `adaptrace progress --format json`. Takes `request` (the change request) |
 | `conflicts` | Same as `adaptrace conflicts --format json`. Takes `settled` (the settled `state` values) |
+| `coverage` | Same as `adaptrace coverage --format json`. Takes `milestone`, `types` (the requirement types) and `done` (the `state` values of a finished Task) |
 | `meeting_context` | The `meeting` material (participants, change requests, overlaps, baselines), and the steps (`instructions`) for writing the agenda, the invitation text and the `Meeting` draft. Takes `requests` and `audience`. For the customer, details of the internal discussion are not returned |
 | `conflicts_context` | The content of `conflicts`, plus the paths of the documents to read for each pair (`materials`), the full text per path (`texts`, once each) and the judgment steps (`instructions`). The agent makes the judgment |
 | `estimate_context` | The content of `estimate --format json`, plus the full text of the change request (`requestContent`), the full text of the reached documents (`contents`) and the estimating steps. Takes `documents` (the starting documents) and `request` |

@@ -121,6 +121,7 @@ Name the type after the entry, such as `Issue`, `Assumption` or `Lesson`.
 The links from requirements to acceptance criteria, the WBS and tests are exactly what Adaptrace's dependencies hold.
 If you manage them as a separate table, the table drifts away from the dependencies.
 If you need a table, output a diagram with `adaptrace graph`, or data with `adaptrace graph --format json`.
+To make a table of what satisfies each requirement and how far that work is, use `adaptrace coverage --format markdown`. A requirement that nothing satisfies is shown as `uncovered`. With `--milestone`, it narrows to that milestone's scope and also shows the work left.
 
 ### Put a stand-in document for Excel and MS Project files
 
