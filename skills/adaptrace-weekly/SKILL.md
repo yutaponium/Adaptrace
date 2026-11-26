@@ -28,7 +28,7 @@ Adaptraceのskillに共通の決まり。
   1. 実行方法が `bun <パス>/src/cli.ts` なら、仕様は `<パス>/docs/spec/schema.md`、ガイドは `<パス>/docs/guide/` にある
   2. `bun add -g` でインストールした `adaptrace` コマンドなら、Bunの既定では `~/.bun/install/global/node_modules/adaptrace/docs/` にある
   3. このskillをClaude Codeのプラグインとしてインストールした場合は、`${CLAUDE_PLUGIN_ROOT}/docs/` にある（仕様は `spec/schema.md`、ガイドは `guide/`）
-  4. どれもないか、読めなければ、`adaptrace --version` で版を確かめ、 `https://github.com/yutaponium/Adaptrace/tree/v<版>/docs` を読む。それも読めなければ、推測せずに利用者に尋ねる
+  4. どれもないか、読めなければ、`adaptrace --version` で版を確認し、 `https://github.com/yutaponium/Adaptrace/tree/v<版>/docs` を読む。それも読めなければ、推測せずに利用者に尋ねる
   - 型、キー、`state` の値の決まりに迷ったら、文書を書く前に仕様を読む
 - **`generated.by`**：skillの手順に `by` の決まりがあれば、それに従う（例：見直しの記録は、判断した人にする）。決まりがなければ、エージェントが書いた文書は `<エージェント>/<モデルのID>` にする（例：`claude-code/claude-opus-5-5`）。モデルのIDは、表示名ではなく、APIで使う識別子である。分からなければ、`<エージェント>` だけにする（例：`claude-code`）。利用者が自分の名前を希望したら、`human:<ID>` にする
 - **日時**：`generated.at` などの日時は、タイムゾーン付きのISO 8601で書く（例：`2026-11-26T10:00:00+09:00`）。GNUのdateなら、`date --iso-8601=seconds` で取得できる
