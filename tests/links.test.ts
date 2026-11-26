@@ -32,3 +32,41 @@ test("ignores URLs, fragments and paths outside the bundle", () => {
   expect(resolvePath("#section", "t.md")).toBeNull();
   expect(resolvePath("../../outside.md", "tasks/t.md")).toBeNull();
 });
+
+test("reads angle-bracket targets that contain spaces", () => {
+  const body = '[a](<my file.md>) and [b](</b.md> "t")';
+  expect(extractLinks(body).map((l) => l.target)).toEqual([
+    "my file.md",
+    "/b.md",
+  ]);
+});
+
+test("reads reference-style links on the line where they are used", () => {
+  const body = [
+    "Full [a][1], collapsed [B][] and shortcut [c].",
+    "Unknown [x][9] and [plain text] are not links. ![img][1] is an image.",
+    "",
+    "[1]: /a.md",
+    '  [b]: <./my b.md> "title"',
+    "[C]: https://example.com/c",
+    "[1]: /ignored.md",
+    "```",
+    "[d][1]",
+    "```",
+  ].join("\n");
+  expect(extractLinks(body, 5)).toEqual([
+    { target: "/a.md", line: 5 },
+    { target: "./my b.md", line: 5 },
+    { target: "https://example.com/c", line: 5 },
+  ]);
+});
+
+test("reference labels ignore case and runs of whitespace", () => {
+  const body = "See [the  Spec][].\n\n[THE SPEC]: /spec.md";
+  expect(extractLinks(body).map((l) => l.target)).toEqual(["/spec.md"]);
+});
+
+test("definitions inside code are not definitions", () => {
+  const body = "[a]\n\n```\n[a]: /a.md\n```\n`[a]: /b.md`";
+  expect(extractLinks(body)).toEqual([]);
+});

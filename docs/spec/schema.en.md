@@ -79,7 +79,7 @@ The value is one path or a list of paths. Every key points from "the document th
 The exit code is 0 when there are no problems or only warnings, 1 when there are errors, and 2 for a wrong command or argument.
 
 Body links are checked in `index.md` and `log.md` as well as in concept documents.
-The current version reads only links of the form `[text](target)`. It does not yet read reference-style links (`[text][1]`).
+It reads links of the form `[text](target)` and reference-style links (`[text][1]`, `[text][]`, `[text]`). For a reference-style link, the target of its definition (`[1]: target`) is checked on the line where the link is used. A target that contains spaces is enclosed in `<...>` (`[text](<my file.md>)`).
 
 | Severity | Code | Content |
 | --- | --- | --- |
