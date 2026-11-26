@@ -187,11 +187,17 @@ export function coverage(
   }
   const scopeSet =
     scope === null ? null : new Set([...scope, options.milestone ?? ""]);
-  // Counts toward progress: with a milestone, a Task in its scope. Other
-  // documents count, but a Milestone outside the scope is another release's:
-  // its progress is not judged here (see satisfied).
-  const counted = (path: string) =>
-    scopeSet === null || typeOf(path) !== "Task" || scopeSet.has(path);
+  // Counts toward progress: with a milestone, a Task or a Milestone in its
+  // scope (the milestone itself included). A Milestone outside the scope is
+  // another release's, like a Task outside it.
+  const counted = (path: string) => {
+    const t = typeOf(path);
+    return (
+      scopeSet === null ||
+      (t !== "Task" && t !== "Milestone") ||
+      scopeSet.has(path)
+    );
+  };
 
   // Requirements: all live ones, or those in the scope and those its work
   // (Tasks and Milestones, the milestone itself included) satisfies.
@@ -218,9 +224,8 @@ export function coverage(
   paths.sort();
 
   // Whether a satisfier is done: a Task by its state; a requirement by being
-  // covered; a Milestone by its own scope having Tasks, all done, and no
-  // requirement with nothing to satisfy it (with a milestone given, another
-  // Milestone outside its scope is not judged: null); others track no work
+  // covered; a Milestone by its own scope having Tasks, all done, and every
+  // requirement in it satisfied by something in it; others track no work
   // (null). A cycle of requirements counts as not done.
   // With a milestone, a requirement that is shown counts only the work in the
   // scope ("scoped"); a requirement that satisfies one of them and is not
@@ -234,11 +239,16 @@ export function coverage(
     const known = milestones.get(path);
     if (known !== undefined) return known;
     const own = scopeOf(path);
+    const ownSet = new Set(own);
     const tasks = own.filter((p) => typeOf(p) === "Task");
+    // Each requirement in it is satisfied by work in it (not by the
+    // milestone itself or another one).
     const done =
       tasks.length > 0 &&
       tasks.every((p) => isDone(p) === true) &&
-      own.filter(isRequirement).every((p) => satisfiersOf(p).length > 0);
+      own
+        .filter(isRequirement)
+        .every((p) => satisfiersOf(p).some((q) => ownSet.has(q)));
     milestones.set(path, done);
     return done;
   };
@@ -246,11 +256,7 @@ export function coverage(
     if (isRequirement(path)) {
       return statusOf(path, scoped && shown?.has(path) === true) === "covered";
     }
-    if (typeOf(path) === "Milestone") {
-      return scopeSet !== null && !scopeSet.has(path)
-        ? null
-        : milestoneDone(path);
-    }
+    if (typeOf(path) === "Milestone") return milestoneDone(path);
     return isDone(path);
   };
   const statusOf = (path: string, scoped: boolean): CoverageStatus => {

@@ -165,16 +165,15 @@ test("another milestone's work does not count", async () => {
     "t4.md": "type: Task\nstate: done\nsatisfies: /rx.md",
   });
   const report = coverage(b.bundle, b.graph, { milestone: "m1.md" });
-  // m2 is another release: not in the scope, its progress not judged, and
-  // what else it satisfies (x) is not shown. rs (not shown) counts all its
-  // work.
+  // m2 is another release: not in the scope, not counted, and what else it
+  // satisfies (x) is not shown. rs (not shown) counts all its work.
   expect(report.requirements.map((r) => [r.path, r.status])).toEqual([
     ["r1.md", "covered"],
     ["rx.md", "covered"],
   ]);
   const rx = report.requirements.find((r) => r.path === "rx.md");
   expect(rx?.satisfiers.map((s) => [s.path, s.done, s.counted])).toEqual([
-    ["m2.md", null, true],
+    ["m2.md", false, false],
     ["t4.md", true, true],
   ]);
   expect(report.scope?.map((i) => i.path)).toEqual(["rx.md", "t1.md", "t4.md"]);
@@ -234,21 +233,32 @@ test("a milestone whose scope has a requirement nothing satisfies is not done", 
   ]);
 });
 
-test("a milestone that satisfies what it waits for gives one answer", async () => {
+test("a milestone does not satisfy what it waits for by itself", async () => {
   const b = await bundleOf({
     "m.md":
       "type: Milestone\nsatisfies: [/req-a.md, /req-b.md]\ndepends_on: [/t.md, /req-b.md]",
+    "m2.md": "type: Milestone\ndepends_on: /rx.md",
+    "m3.md": "type: Milestone\nsatisfies: /rx.md\ndepends_on: /t.md",
     "req-a.md": "type: Requirement",
     "req-b.md": "type: Requirement",
+    "rx.md": "type: Requirement",
     "t.md": "type: Task\nstate: done",
   });
+  // req-b has nothing in m's scope that satisfies it but m, so m is not
+  // done: the same answer with and without the milestone.
   for (const report of [
     coverage(b.bundle, b.graph),
     coverage(b.bundle, b.graph, { milestone: "m.md" }),
   ]) {
-    expect(report.requirements.map((r) => [r.path, r.status])).toEqual([
-      ["req-a.md", "covered"],
-      ["req-b.md", "covered"],
+    const rows = report.requirements.filter((r) => r.path.startsWith("req-"));
+    expect(rows.map((r) => [r.path, r.status])).toEqual([
+      ["req-a.md", "open"],
+      ["req-b.md", "open"],
     ]);
   }
+  // rx is satisfied only by another release (m3): uncovered for m2.
+  const m2 = coverage(b.bundle, b.graph, { milestone: "m2.md" });
+  expect(m2.requirements.map((r) => [r.path, r.status])).toEqual([
+    ["rx.md", "uncovered"],
+  ]);
 });
