@@ -27,7 +27,7 @@ They are all in the Adaptrace repository; "Shared conventions" below says where 
   - The risk documents being reviewed
   - A new Task document created as a mitigation, and one added line in that type's `index.md`
   - `log.md`: only add lines
-- Create a mitigation task only when the user decides its title, owner and due date. Do not fill them in by guessing.
+- Create a mitigation task only when the user decides its title. Write its owner and due date only when the user decides them. Do not fill them in by guessing.
 - Commit and push only when the user asks.
 - When you ask the user something, use a tool that asks with choices (AskUserQuestion) if one is available. If not, show numbered choices in text and wait for the answer.
 
