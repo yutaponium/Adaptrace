@@ -40,3 +40,4 @@
 * [ADR-038](adr-038-release-binaries.md) - CLIを1つの実行ファイルにして、タグを付けたときにGitHub Actionsで作り、Releaseに添付する
 * [ADR-039](adr-039-change-decision-skill.md) - 変更要求の判断は、skillが変更要求の文書に記録し、次の手順と影響を受ける変更要求を示す
 * [ADR-040](adr-040-coverage.md) - 要件の充足は、CLIの `coverage` で依存関係から計算し、マイルストーンの範囲は待っている文書をたどって決める
+* [ADR-041](adr-041-milestone-skill.md) - マイルストーンの判定は、skillが残っている作業と要件を示し、扱いを利用者と決めて、マイルストーンの計画だけを変える

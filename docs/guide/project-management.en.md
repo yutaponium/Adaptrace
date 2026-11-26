@@ -232,6 +232,18 @@ adaptrace board --format markdown --link-base https://github.com/<owner>/<repo>/
 
 If you use Claude Code, the skill `adaptrace-weekly` does all these checks together. A skill is a file that teaches Claude Code the steps of a task. The skills are written in Japanese. The skill puts overdue tasks, waiting tasks, documents that need review and the status of change requests into a table for each category, and suggests agenda items and next steps. You get the skill the same way as in [the guide to adopting Adaptrace in an existing repository](adoption.en.md#have-claude-code-help-you-bring-in-files). If you installed the plugin, you already have all the skills. If you copy the folder, replace `adaptrace-adopt` in the command with `adaptrace-weekly`.
 
+### Judging a milestone
+
+Before a milestone, check the requirements in its scope and the work left with `coverage`.
+
+```bash
+adaptrace coverage --milestone milestones/release-1.md
+```
+
+A requirement that no work satisfies is shown as `uncovered`, and one whose work is not done as `open`. Then the work the milestone waits for is listed with owners and due dates. Work due after the milestone is marked `(after the milestone)`. `coverage` is available from the release after v1.0.0.
+
+If you use Claude Code, the skill `adaptrace-milestone` gathers the material for the judgment and lets you decide how to handle what is left in a conversation. It also shows open change requests and out-of-date documents that touch the scope, and writes changes such as moving work to the next milestone or changing a due date after you approve them. This skill is also available from the release after v1.0.0. You get the skill the same way as `adaptrace-weekly` above.
+
 ### Regular risk reviews
 
 For a risk, write the next review date in `stale_after`. After that date, the risk appears in `stale`.

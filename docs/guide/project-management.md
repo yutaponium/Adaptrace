@@ -230,6 +230,18 @@ adaptrace board --format markdown --link-base https://github.com/<owner>/<repo>/
 
 Claude Codeを使っている場合は、skill `adaptrace-weekly` で、これらの確認をまとめて行えます。skillは、Claude Codeに作業の手順を教えるファイルです。期限を過ぎたタスク、待っているタスク、見直しが必要な文書、変更要求の状況を区分ごとの表にし、議題の案と次の一手を示します。skillの入手方法は、[既存のリポジトリに導入するガイド](adoption.md#claude-codeに取り込みを手伝ってもらう) と同じです。プラグインでインストールした場合は、すべてのskillがそろっています。フォルダをコピーする場合は、コマンドの `adaptrace-adopt` を `adaptrace-weekly` に置き換えてください。
 
+### マイルストーンの判定
+
+マイルストーンの前には、`coverage` で、範囲の要件と残っている作業を確認します。
+
+```bash
+adaptrace coverage --milestone milestones/release-1.md
+```
+
+満たす作業がない要件は `uncovered`、作業が終わっていない要件は `open` と示されます。続けて、マイルストーンが待っている作業を、担当者と期日とともに一覧にします。期日がマイルストーンより後の作業には、`(after the milestone)` が付きます。`coverage` は、v1.0.0の次のリリースから使えます。
+
+Claude Codeを使っている場合は、skill `adaptrace-milestone` で、判定の材料をまとめ、残っている事柄の扱いを対話しながら決められます。範囲に関わる未決の変更要求と古くなった文書も示し、作業を次のマイルストーンに移す、期日を変えるなどの変更を、承認を得てから書きます。このskillも、v1.0.0の次のリリースから使えます。skillの入手方法は、上の `adaptrace-weekly` と同じです。
+
 ### リスクの定期的な見直し
 
 リスクには、`stale_after` で次の見直し日を書いておきます。その日を過ぎると、`stale` に表示されます。

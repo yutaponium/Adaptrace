@@ -89,6 +89,18 @@ const SKILLS = [
     ],
   },
   {
+    name: "adaptrace-milestone",
+    date: "2026-11-26T10:00:00+09:00",
+    inputs: [
+      ".adaptrace/milestones/release-1.md",
+      ".adaptrace/tasks/sms-send.md",
+    ],
+    failures: [
+      "FAIL  the year-end release no longer waits for the SMS task",
+      "FAIL  the second release waits for the SMS task",
+    ],
+  },
+  {
     name: "adaptrace-health",
     date: "2026-11-26T10:00:00+09:00",
     inputs: [".adaptrace/tasks/data-migration.md"],
@@ -330,6 +342,53 @@ for (const skill of SKILLS) {
           await Bun.write(
             join(dest, ".adaptrace/decisions/cr-002-decision.md"),
             "---\ntype: Decision\n---\n\n# CR-002\n",
+          );
+          expect(run()).toContain("FAIL  no other document changed");
+        } finally {
+          await rm(parent, { recursive: true, force: true });
+        }
+      });
+    }
+    if (skill.name === "adaptrace-milestone") {
+      test("a changed key or a new task fails, the move does not", async () => {
+        const parent = await mkdtemp(join(tmpdir(), "adaptrace-skill-"));
+        try {
+          const dest = join(parent, "repo");
+          expect(
+            Bun.spawnSync(["sh", join(dir, "setup.sh"), dest]).exitCode,
+          ).toBe(0);
+          await cp(join(dir, "expected/.adaptrace"), join(dest, ".adaptrace"), {
+            recursive: true,
+          });
+          const run = () =>
+            Bun.spawnSync([
+              process.execPath,
+              join(dir, "check.ts"),
+              dest,
+            ]).stdout.toString();
+          expect(run()).toContain("ok    no other document changed");
+          // A task's due date is not the milestone's to change here.
+          const sms = join(dest, ".adaptrace/tasks/sms-send.md");
+          const original = await Bun.file(sms).text();
+          await Bun.write(
+            sms,
+            original.replace("due: 2027-01-15", "due: 2026-12-24"),
+          );
+          expect(run()).toContain("FAIL  no other document changed");
+          await Bun.write(sms, original);
+          // The milestone's other keys stay.
+          const release = join(dest, ".adaptrace/milestones/release-1.md");
+          const text = await Bun.file(release).text();
+          await Bun.write(
+            release,
+            text.replace("title: 年内リリース", "title: 年内"),
+          );
+          expect(run()).toContain("FAIL  no other document changed");
+          await Bun.write(release, text);
+          // No new task for the requirement with no work.
+          await Bun.write(
+            join(dest, ".adaptrace/tasks/session-timeout.md"),
+            "---\ntype: Task\n---\n\n# T\n",
           );
           expect(run()).toContain("FAIL  no other document changed");
         } finally {
