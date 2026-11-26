@@ -77,7 +77,9 @@ Adaptraceのskillに共通の決まり。
 | `duplicate-link` | 同じ `backlog.id` を持つTaskが2つ以上ある。文書をコピーしたときに起きやすい | 問題 |
 | `pending` | `--direction` で除外した側の変更 | 保留 |
 
-   - 変更には、タスク、Backlog.mdのファイル、変わった項目（`fields`）を示す。項目の名前は、`title`、`state`、`tags`、`dependencies`（`depends_on` のうちタスクへのもの）、`body`（本文）、`fields`（`assignee` など、対応する項目がないもの）である
+   - 表の列は、タスク（`adaptrace`）、ID（`id`）、Backlog.mdのファイル（`backlogPath`）、変わった項目（`fields`）にする。`kind` によって出ない値は、空欄にする
+   - 項目の名前は、`title`、`state`、`tags`、`dependencies`（`depends_on` のうちタスクへのもの）、`body`、`fields` である。`body` は本文で、先頭の見出し行（`# <題>`）も含む。題を変えて見出しも変えると、`body` も変わったと出る。`fields` は、`assignee`、`priority` など、Adaptraceに対応する項目がないキーである。どのキーが違うかは計画に出ないので、Backlog.mdのファイルのキーと、Adaptraceの文書の `backlog.fields` を比べて示す
+   - `import` と `export` は、Adaptraceの文書とBacklog.mdのファイルを読み、変わった項目の前後の値を示す。`import-new` と `export-new` は、題、ステータス、担当（`assignee`）、ラベルを示す
    - `errors` があれば、ファイルと内容を示す。読めないBacklog.mdのファイルや、`task_prefix` の誤りである。Backlog.mdの側で直すよう案内する
 3. 問題がなければ、手順3に進む
 
@@ -96,26 +98,27 @@ Adaptraceのskillに共通の決まり。
 |---|---|
 | Backlog.mdの側にそろえる | `--resolve <タスク>=backlog` を付ける。Adaptraceの側の変更は失われる |
 | Adaptraceの側にそろえる | `--resolve <タスク>=adaptrace` を付ける。Backlog.mdの側の変更は失われる |
-| 両方の変更を残す | Backlog.mdの側の変更のうち残すものを、Adaptraceの文書に書いてから、`--resolve <タスク>=adaptrace` を付ける。書く内容は、利用者と項目ごとに決める |
+| 両方の変更を残す | Backlog.mdの側の変更のうち残すものを、Adaptraceの文書に書いてから、`--resolve <タスク>=adaptrace` を付ける。書く内容は、利用者と項目ごとに決める。残せるのは、`title`、`state`、`tags`、`depends_on`、本文だけである。`fields` の項目（`assignee` など）は `backlog.fields` にあり、手で書き換えないので、この扱いでは残せない。`fields` の変更を残したいときは、Backlog.mdの側にそろえるか、同期した後にBacklog.mdの側で設定し直すよう案内する |
 | 今回はそろえない | `--resolve` を付けない。衝突のまま残り、次の `sync` でも知らせる |
 
-- `<タスク>` は、バンドルの中のパス（`tasks/manual.md`）か、Backlog.mdのID（`back-3`）で書く。タスクごとに `--resolve` を1つ付ける
+- `<タスク>` は、バンドルの中のパス（`tasks/manual.md`）か、Backlog.mdのID（`back-3`）で書く。IDの大文字と小文字は区別しない。タスクごとに `--resolve` を1つ付ける
 - 全体の `--resolve adaptrace` や `--resolve backlog` は、利用者がすべての衝突を同じ側にそろえると決めたときだけ使う
 
 ### 対応しない `state`（`unmapped-state`）
 
 `state` の値（`state`）と、Backlog.mdのステータスの一覧（手順0の4）を示し、扱いを尋ねる。
+文書を読み、`backlog` のキーがあるかを確認して示す。`backlog` がなければ、まだBacklog.mdにないタスクである。`state` を変えると `export-new` になり、Backlog.mdに新しいIDのタスクができる。このことを、扱いを尋ねるときに伝える。
 
-- Adaptraceの `state` を、ステータスに対応する値に変える：変える値は、利用者が決める。差分を示して、文書の `state` だけを変える
+- Adaptraceの `state` を、ステータスに対応する値に変える：変える値は、利用者が決める。文書の `state` だけを変える
 - Backlog.mdにステータスを追加する：利用者に、Backlog.mdの側で追加するよう案内する。このskillは `config.yml` を書き換えない。追加された後に、手順1からやり直す
 - 今回は書き出さない：そのまま残す。次の `sync` でも知らせる
 
 ### 見つからないタスク（`missing`）
 
-Backlog.mdの `backlog/archive/` と `backlog/drafts/` に、同じIDのタスクがあるかを確認して示す。`sync` は、アーカイブと下書きのタスクを変換しない。扱いを尋ねる。
+Backlog.mdの `backlog/archive/tasks/` と `backlog/drafts/` に、同じIDのタスクがあるかを確認して示す。`sync` は、アーカイブと下書きのタスクを変換しない。`backlog/completed/` のタスクは変換するので、`missing` にはならない。扱いを尋ねる。
 
 - Backlog.mdの側で戻す：利用者に、Backlog.mdの側で戻すよう案内する。戻された後に、手順1からやり直す
-- Adaptraceの文書を残す：変更しない。`sync` は、このタスクを毎回知らせ、終了コードは1になる。`status: deprecated` にしても、知らせ続ける
+- Adaptraceの文書を残す：変更しない。`sync` は、このタスクを毎回知らせ、終了コードは1になる。ライフサイクルのキー `status` を `deprecated` にしても、知らせ続ける
 - Adaptraceの文書を削除する：利用者が明示したときだけにする。削除する前に、`adaptrace graph --format json` の `backlinks` で、その文書を指している文書を確認して示す。指している文書があれば、削除すると `validate` のエラーになる
 - `backlog` を削除して、新しいタスクとして書き出す：次の `sync` で、新しいIDのタスクがBacklog.mdにできる
 
@@ -131,14 +134,16 @@ Backlog.mdの `backlog/archive/` と `backlog/drafts/` に、同じIDのタス�
 
 ## 3. 書く
 
-1. 手順2で決めた文書の編集があれば、文書ごとに差分を示し、承認を得てから書く
-2. 決めた `--resolve` を付けて、`--write` を付けずに `adaptrace sync --format json` を実行する。計画が、決めた扱いのとおりになっているかを確認する。手順2で「今回はそろえない」「残す」と決めたもののほかに、`conflict` が残っていないかを確認する
+1. 手順2で決めた文書の編集があれば、文書ごとに差分を示し、承認を得てから書く。利用者が選択肢で値を選んだだけでは、承認ではない。差分と一緒に、編集した後の `sync` の計画がどうなるか（`export-new` になる、衝突がAdaptraceの側にそろうなど）を示す
+2. 決めた `--resolve` を付けて、`--write` を付けずに `adaptrace sync --format json` を実行する。計画が、決めた扱いのとおりになっているかを確認する。扱いを決めたタスクの `kind` と `fields`、新しいIDが振られるタスクを確認する。手順2で「今回はそろえない」「残す」と決めたもののほかに、問題が残っていないかを確認する
 3. 実行するコマンドと、その計画（書き出す、取り込む、作るタスク）を示して、承認を得る
-4. `--write` を付けて実行する。`--resolve` の指定は、手順3の2と同じにする
-5. `log.md` に記録するかを、最後に1回だけ尋ねる。手順3の3と一緒に尋ねてよい。追加する場合は、今日の日付で見出し（`## YYYY-MM-DD`）を作り、その下に `* **Update**: <説明>` の形で、この同期全体を1行で書く。Backlog.mdから新しいタスクを取り込んだなら、`* **Creation**: <説明>` の行も書く
+4. `--write` を付けて実行する。`--resolve` の指定は、手順3の2と同じにする。残した問題があると、書き込んでも終了コードは1になる。書き込めたかは、出力の `written` が `true` であることと、`errors` で判断する
+   - `sync` は、書き込むタスクのフロントマターを、自分の書式で書き直す（1行の `{ ... }` や `[...]` を、複数行にするなど）。取り込んだタスクの `generated` は、`adaptrace/<版>` とUTCの日時になる。どれも `sync` の仕様なので、直さない
+   - Backlog.mdのファイル名は、題を変えても変わらない
+5. `log.md` に記録するかを、最後に1回だけ尋ねる。手順3の3と一緒に尋ねてよい。追加する場合は、今日の日付で見出し（`## YYYY-MM-DD`）を作り、その下に `* **Update**: <説明>` の形で、この同期全体を1行で書く。Backlog.mdから新しいタスクを取り込んだなら、`* **Creation**: <説明>` の行も、`Update` の行の下に書く。書く行は、書き込む前に示す
 6. `adaptrace sync --format json` をもう一度実行し、変更が残っていないこと、問題が利用者の決めたものだけであることを確認する
 7. `adaptrace validate` を実行する。手順0の時点より増えたエラーがあれば、原因を説明して、修正の差分を示す
-8. `adaptrace stale --format json` を実行する。取り込んだタスクは `generated` が新しくなるので、それに依存している文書が「依存先より古い」と出る。出た文書を報告に書く
+8. `adaptrace stale --format json` を実行する。取り込んだタスクは `generated` が新しくなるので、それに依存している文書が「依存先より古い」と出る。`state` だけを取り込んだ場合も出るので、出ても内容の見直しが要るとは限らない。出た文書と、取り込んだ項目を報告に書く
 
 ## 4. 報告する
 

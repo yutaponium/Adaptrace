@@ -82,7 +82,9 @@ Rules shared by the Adaptrace skills.
 | `duplicate-link` | Two or more Tasks have the same `backlog.id`. This often happens when a document is copied | Problem |
 | `pending` | A change on the side excluded by `--direction` | On hold |
 
-   - For changes, show the task, the Backlog.md file, and the fields that changed (`fields`). The field names are `title`, `state`, `tags`, `dependencies` (the `depends_on` to tasks), `body`, and `fields` (`assignee` and others with no counterpart)
+   - The table columns are the task (`adaptrace`), the id (`id`), the Backlog.md file (`backlogPath`) and the fields that changed (`fields`). Leave a cell empty when the `kind` has no such value
+   - The field names are `title`, `state`, `tags`, `dependencies` (the `depends_on` to tasks), `body` and `fields`. `body` is the body, including the heading line at the top (`# <title>`). If the title changed and the heading too, `body` shows as changed as well. `fields` are keys with no Adaptrace counterpart, such as `assignee` and `priority`. The plan does not say which key differs, so compare the keys in the Backlog.md file with `backlog.fields` in the Adaptrace document and show them
+   - For `import` and `export`, read the Adaptrace document and the Backlog.md file, and show the values before and after for the fields that changed. For `import-new` and `export-new`, show the title, status, assignee (`assignee`) and labels
    - If there are `errors`, show the file and the message. They are unreadable Backlog.md files or a wrong `task_prefix`. Tell the user to fix them on the Backlog.md side
 3. If there are no problems, go to step 3
 
@@ -101,26 +103,27 @@ For each problem, show the material and ask how to handle it. You may add a reco
 |---|---|
 | Keep the Backlog.md side | Add `--resolve <task>=backlog`. The changes on the Adaptrace side are lost |
 | Keep the Adaptrace side | Add `--resolve <task>=adaptrace`. The changes on the Backlog.md side are lost |
-| Keep the changes of both | Write the Backlog.md changes to keep into the Adaptrace document, then add `--resolve <task>=adaptrace`. Decide what to write with the user, field by field |
+| Keep the changes of both | Write the Backlog.md changes to keep into the Adaptrace document, then add `--resolve <task>=adaptrace`. Decide what to write with the user, field by field. Only `title`, `state`, `tags`, `depends_on` and the body can be kept. Items in `fields` (`assignee` and so on) are in `backlog.fields`, which is not edited by hand, so this handling cannot keep them. To keep a change in `fields`, keep the Backlog.md side, or tell the user to set it again on the Backlog.md side after the sync |
 | Do not settle it now | Add no `--resolve`. It stays a conflict and the next `sync` reports it again |
 
-- Write `<task>` as the path inside the bundle (`tasks/manual.md`) or the Backlog.md id (`back-3`). Add one `--resolve` per task
+- Write `<task>` as the path inside the bundle (`tasks/manual.md`) or the Backlog.md id (`back-3`). The id is not case-sensitive. Add one `--resolve` per task
 - Use the global `--resolve adaptrace` or `--resolve backlog` only when the user decides to settle every conflict to the same side
 
 ### State with no status (`unmapped-state`)
 
 Show the `state` value (`state`) and the list of Backlog.md statuses (step 0.4), and ask how to handle it.
+Read the document and show whether it has the `backlog` key. Without `backlog`, the task is not in Backlog.md yet. Changing `state` makes it `export-new`, and a task with a new id is created in Backlog.md. Say so when asking how to handle it.
 
-- Change the Adaptrace `state` to a value that matches a status: the user decides the value. Show the diff and change only the document's `state`
+- Change the Adaptrace `state` to a value that matches a status: the user decides the value. Change only the document's `state`
 - Add a status to Backlog.md: tell the user to add it on the Backlog.md side. This skill does not change `config.yml`. After it is added, start again from step 1
 - Do not export it now: leave it. The next `sync` reports it again
 
 ### Task not found (`missing`)
 
-Check whether a task with the same id is in Backlog.md's `backlog/archive/` or `backlog/drafts/`, and show it. `sync` does not convert archived or draft tasks. Ask how to handle it.
+Check whether a task with the same id is in Backlog.md's `backlog/archive/tasks/` or `backlog/drafts/`, and show it. `sync` does not convert archived or draft tasks. Tasks in `backlog/completed/` are converted, so they do not become `missing`. Ask how to handle it.
 
 - Restore it on the Backlog.md side: tell the user to restore it on the Backlog.md side. After that, start again from step 1
-- Keep the Adaptrace document: change nothing. `sync` reports this task every time, with exit code 1. Even `status: deprecated` keeps it reported
+- Keep the Adaptrace document: change nothing. `sync` reports this task every time, with exit code 1. Setting the lifecycle key `status` to `deprecated` still keeps it reported
 - Delete the Adaptrace document: only when the user says so explicitly. Before deleting, check with `backlinks` from `adaptrace graph --format json` which documents point to it, and show them. If any do, deleting it causes `validate` errors
 - Delete `backlog` and export it as a new task: the next `sync` creates a task with a new id in Backlog.md
 
@@ -136,14 +139,16 @@ Read the documents with the same id (`adaptrace` and `others`) and show how they
 
 ## 3. Write
 
-1. If step 2 decided edits to documents, show the diff for each document and write after approval
-2. Run `adaptrace sync --format json` with the decided `--resolve` and without `--write`. Check that the plan matches the decided handling. Check that no `conflict` remains other than those decided in step 2 as "do not settle it now" or "keep"
+1. If step 2 decided edits to documents, show the diff for each document and write after approval. The user choosing a value among choices is not approval. With the diff, show how the `sync` plan will look after the edit (it becomes `export-new`, the conflict is settled to the Adaptrace side, and so on)
+2. Run `adaptrace sync --format json` with the decided `--resolve` and without `--write`. Check that the plan matches the decided handling. Check the `kind` and `fields` of the tasks whose handling was decided, and the tasks that get a new id. Check that no problem remains other than those decided in step 2 as "do not settle it now" or "keep"
 3. Show the command to run and its plan (what is exported, imported and created) and get approval
-4. Run it with `--write`. Use the same `--resolve` as in step 3.2
-5. Ask once, at the end, whether to record it in `log.md`. You may ask together with step 3.3. If adding, create a heading with today's date (`## YYYY-MM-DD`) and under it write the whole sync in one line as `* **Update**: <description>`. If you imported new tasks from Backlog.md, also write a `* **Creation**: <description>` line
+4. Run it with `--write`. Use the same `--resolve` as in step 3.2. If problems were left, the exit code is 1 even after writing. Judge whether it wrote by `written` being `true` in the output, and by `errors`
+   - `sync` rewrites the frontmatter of the tasks it writes in its own style (a one-line `{ ... }` or `[...]` becomes several lines, and so on). Imported tasks get `generated` with `adaptrace/<version>` and a UTC time. These are how `sync` works; do not change them
+   - The Backlog.md file name does not change when the title changes
+5. Ask once, at the end, whether to record it in `log.md`. You may ask together with step 3.3. If adding, create a heading with today's date (`## YYYY-MM-DD`) and under it write the whole sync in one line as `* **Update**: <description>`. If you imported new tasks from Backlog.md, also write a `* **Creation**: <description>` line, below the `Update` line. Show the lines before writing them
 6. Run `adaptrace sync --format json` again and check that no changes are left and that the only problems are the ones the user decided to leave
 7. Run `adaptrace validate`. If there are more errors than at step 0, explain the cause and show a diff to fix them
-8. Run `adaptrace stale --format json`. Imported tasks get a newer `generated`, so documents that depend on them show as "older than a dependency". Write those documents in the report
+8. Run `adaptrace stale --format json`. Imported tasks get a newer `generated`, so documents that depend on them show as "older than a dependency". This happens even when only `state` was imported, so it does not always mean the content needs review. Write those documents and the imported fields in the report
 
 ## 4. Report
 
