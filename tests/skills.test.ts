@@ -385,6 +385,15 @@ for (const skill of SKILLS) {
           );
           expect(run()).toContain("FAIL  no other document changed");
           await Bun.write(release, text);
+          // A dependency that stays may not be dropped.
+          await Bun.write(
+            release,
+            text.replace("  - /requirements/req-2-session-timeout.md\n", ""),
+          );
+          expect(run()).toContain(
+            "FAIL  the year-end release keeps the rest of its work and REQ-2",
+          );
+          await Bun.write(release, text);
           // No new task for the requirement with no work.
           await Bun.write(
             join(dest, ".adaptrace/tasks/session-timeout.md"),

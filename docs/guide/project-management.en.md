@@ -237,7 +237,7 @@ If you use Claude Code, the skill `adaptrace-weekly` does all these checks toget
 Before a milestone, check the requirements in its scope and the work left with `coverage`.
 
 ```bash
-adaptrace coverage --milestone milestones/release-1.md
+adaptrace coverage --milestone milestones/release.md
 ```
 
 A requirement that no work satisfies is shown as `uncovered`, and one whose work is not done as `open`. Then the work the milestone waits for is listed with owners and due dates. Work due after the milestone is marked `(after the milestone)`. `coverage` is available from the release after v1.0.0.

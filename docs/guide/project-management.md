@@ -235,7 +235,7 @@ Claude Codeを使っている場合は、skill `adaptrace-weekly` で、これ�
 マイルストーンの前には、`coverage` で、範囲の要件と残っている作業を確認します。
 
 ```bash
-adaptrace coverage --milestone milestones/release-1.md
+adaptrace coverage --milestone milestones/release.md
 ```
 
 満たす作業がない要件は `uncovered`、作業が終わっていない要件は `open` と示されます。続けて、マイルストーンが待っている作業を、担当者と期日とともに一覧にします。期日がマイルストーンより後の作業には、`(after the milestone)` が付きます。`coverage` は、v1.0.0の次のリリースから使えます。

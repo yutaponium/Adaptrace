@@ -2,7 +2,7 @@
 type: Decision
 title: マイルストーンの判定は、skillが残っている作業と要件を示し、扱いを利用者と決めて、マイルストーンの計画だけを変える
 state: accepted
-generated: { by: claude-code/claude-opus-5-5, at: 2026-11-26T18:41:37+09:00 }
+generated: { by: claude-code/claude-opus-5-5, at: 2026-11-26T18:49:02+09:00 }
 depends_on:
   - /decisions/adr-026-adopt-skill.md
   - /decisions/adr-040-coverage.md
@@ -21,12 +21,12 @@ depends_on:
 - 達成できるかの判断は、人が行う。skillは、材料と、項目ごとの扱いの選択肢を示す
 - 項目ごとの扱いは、次から利用者と決める
   - そのままにする（リスクとして受け入れる）
-  - 作業を別のマイルストーンに移す：このマイルストーンの `depends_on`（または、作業の `blocks`）から外し、移す先のマイルストーンの `depends_on` に追加する
+  - 作業を別のマイルストーンに移す：このマイルストーンの `depends_on`（または、作業の `blocks`）から外し、移す先のマイルストーンの `depends_on` に追加する。要件を満たす作業を移すと、要件の一部をこのリリースで満たさないことになるので、利用者に確認する
   - 期日を変える：マイルストーンか、作業の `due`
   - 要件を範囲から外す：マイルストーンが要件を直接 `depends_on` で指していれば、外す。顧客と合意した要件なら、変更要求として受け付けるよう案内する（skill `adaptrace-change-request`）
   - 未決の変更要求を、マイルストーンの前に判断する：skill `adaptrace-change-decision` を案内する
   - マイルストーンを終わったことにする：すべて終わっていれば、`state` を終わった値にする
-- skillが書き換えるのは、マイルストーンの文書（`due`、`depends_on`、`blocks`、`state`）と、作業の文書の `due` と `blocks` だけにする。要件、判断、変更要求の文書は変えない。新しい文書は作らない。作業が足りない要件は、報告に書く
+- skillが書き換えるのは、マイルストーンの文書（`due`、`depends_on`、`blocks`、`state`）と、作業の文書の `due` と `blocks` と、`log.md`（行の追加だけ）にする。要件、判断、変更要求の文書は変えない。新しい文書は作らない。作業が足りない要件は、報告に書く
 - 依存関係のキーや `due`、`state` だけを変えるときは、`generated` を変えない（ADR-032と同じ）
 - 書き込みは、差分を示して承認を得てから行う
 

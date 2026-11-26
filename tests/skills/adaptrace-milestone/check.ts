@@ -50,6 +50,23 @@ check(
     list(fm("tasks/sms-send.md").blocks).includes(`/${R2}`),
   "the second release waits for the SMS task",
 );
+// What stays in each milestone: nothing else was moved or dropped.
+const keeps = (path: string, paths: string[]) =>
+  paths.every((p) => list(fm(path).depends_on).includes(p));
+check(
+  "must",
+  keeps(R1, [
+    "/tasks/login-mfa.md",
+    "/tasks/manual.md",
+    "/requirements/req-2-session-timeout.md",
+  ]) && list(fm(R1).depends_on).length === 3,
+  `the year-end release keeps the rest of its work and REQ-2 (depends_on: ${list(fm(R1).depends_on).join(", ")})`,
+);
+check(
+  "must",
+  keeps(R2, ["/tasks/audit-log.md"]),
+  "the second release keeps its own work",
+);
 check(
   "must",
   String(fm(R1).due) === "2026-12-25" && fm(R1).state === undefined,
