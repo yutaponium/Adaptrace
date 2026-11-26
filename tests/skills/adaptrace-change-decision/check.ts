@@ -105,9 +105,19 @@ for (const d of DECIDED) {
 if (existsSync(join(repo, ".git"))) {
   let gitFailed = false;
   const git = (args: string[]) => {
-    const r = Bun.spawnSync(["git", "-c", "core.quotePath=false", ...args], {
-      cwd: repo,
-    });
+    const r = Bun.spawnSync(
+      [
+        "git",
+        "-c",
+        "core.quotePath=false",
+        "-c",
+        "core.excludesFile=/dev/null",
+        ...args,
+      ],
+      {
+        cwd: repo,
+      },
+    );
     if (r.exitCode !== 0) gitFailed = true;
     return r.stdout.toString();
   };

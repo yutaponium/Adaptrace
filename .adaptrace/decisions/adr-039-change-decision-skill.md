@@ -2,7 +2,7 @@
 type: Decision
 title: 変更要求の判断は、skillが変更要求の文書に記録し、次の手順と影響を受ける変更要求を示す
 state: accepted
-generated: { by: claude-code/claude-opus-5-5, at: 2026-11-26T16:41:22+09:00 }
+generated: { by: claude-code/claude-opus-5-5, at: 2026-11-26T17:02:25+09:00 }
 depends_on:
   - /decisions/adr-023-changes-key.md
   - /decisions/adr-026-adopt-skill.md
@@ -33,7 +33,7 @@ depends_on:
 - 変更管理の流れのうち、受付（ADR-027）、協議（ADR-025）、見直し（ADR-028）はskillかCLIで支援しているが、判断の記録は手作業だった。判断の理由が残らないと、後から経緯を追えない
 - 判断の記録を変更要求の文書に置けば、受け付けた依頼と、その結末を1か所で読める。新しいキー（判断の日時など）は追加しない。スキーマを変えずに済み、`state` と本文で表せるため
 - 起点の更新を `adaptrace-review` に任せれば、承認から見直しの完了までの手順が1つのskillにまとまり、二重に実装しない
-- 計算や判定（影響範囲、重なり）は既存のCLI（`list`、`conflicts`、`impact`、`progress`）で行い、skillには手順と判断の基準だけを書く（ADR-026）
+- 計算や判定（影響範囲、重なり）は既存のCLI（`list`、`conflicts`、`graph`、`impact`、`validate`）で行い、skillには手順と判断の基準だけを書く（ADR-026）
 
 ## 検討した他の案
 

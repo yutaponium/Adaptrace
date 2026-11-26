@@ -84,15 +84,15 @@ Each project decides the list of `state` values. There is no configuration file 
 2. Decide the value for each decision
    - If the existing values include one for approval, rejection or deferral, use it (example: if `declined` is used for rejection, do not use `rejected`)
    - If there is no such value, recommend `approved` (approval), `rejected` (rejection) and `deferred` (deferral), and get the user's confirmation. They are the default values that `conflicts` treats as settled. Even when the user asked you to follow the existing values and there is no such value, recommend these three and get confirmation. The existing values and the recommended values may be mixed
-3. Once the values are decided, decide the list of settled values to pass to `conflicts`. The defaults of `conflicts` are `approved`, `accepted`, `rejected`, `deferred`, `implemented`, `closed` and `done`. If the settled values used by the existing change requests, or the values decided this time, include even one value that is not a default, add `--settled <value,...>` to `conflicts` in step 3. `--settled` replaces the defaults, so list the defaults, the existing settled values and the values decided this time
+3. Once the values are decided, decide the list of settled values to pass to `conflicts`. The defaults of `conflicts` are `approved`, `accepted`, `rejected`, `deferred`, `implemented`, `closed` and `done`. The list is the defaults, minus the values you sorted as undecided in step 2.1, plus the existing settled values and the values decided this time. If the list differs from the defaults, add `--settled <value,...>` to `conflicts` in step 3. `--settled` replaces the defaults, so list every value in the list
 
 ## 3. Before writing, check overlaps and the review status
 
 Run the following **before writing any document**. A change request whose decision is recorded gets a settled value and drops out of `conflicts`.
 
 1. `adaptrace conflicts --format json` (with the `--settled` decided in step 2.3): from `pairs`, take the pairs that include a change request you decide this time. Each pair has `a`, `b`, `sharedTargets` (the starting documents both point to with `changes`) and `overlap` (the documents in both impact ranges). If the other request is not one you decide this time, it stays undecided after the decision. Note the pair, `sharedTargets` and `overlap`
-   - When you re-decide a change request that already has a settled value, run `conflicts` again with a `--settled` that leaves out that request's current value. With a settled value, it is not a subject of `conflicts`. From that result, use only the pairs that include the request you re-decide and whose other side is undecided or decided this time. If the other side's `state` is one of the settled values decided in step 2.3, do not use that pair
-2. In `backlinks` of `adaptrace graph --format json`, look at the key of each change request's path. If there is an item whose `kind` is `derived_from`, from any document, it counts. If there are any, the review has already started. Do not change the body or `generated` of that change request in step 4
+   - When you re-decide change requests that already have settled values, run `conflicts` again with a `--settled` that leaves out the current values of all the requests you re-decide. With a settled value, a request is not a subject of `conflicts`. From that result, take the pairs that include a request you re-decide. If the other side is not decided this time and its `state` is in the list of step 2.3, it is already settled, so do not use that pair
+2. In `backlinks` of `adaptrace graph --format json`, look at the key of each change request's path. If there is an item whose `kind` is `derived_from`, from any document, it counts. If there are any, the review has already started. Do not change the body or `generated` of that change request in step 4. If you re-decide that change request as rejected or deferred, note the documents that point to it with `derived_from`, and report them in step 6
 3. For each change request you approve, check that it has `changes`. Without `changes` there is no starting document, and the review cannot start with `adaptrace-review`; write that in the report. If `changes` points to a document that does not exist, `validate` in step 0 already shows it as an error. The values of `changes` start with `/`. Remove the leading `/` when you pass them to a command
 
 ## 4. Update the change request documents
@@ -130,8 +130,8 @@ generated: { by: human:sato, at: <date and time from step 0> }   # the user who 
 
 ## 5. Record
 
-1. Ask whether to record this in `log.md`. You may ask together with the diffs of step 4. If you did not change the body of a change request in step 4, tell the user that `log.md` is the only record of that decision before you ask
-2. If so, write one line `* **Update**: <description>` under the date heading of today (the day of the work) (`## YYYY-MM-DD`). In the description, write the meeting, its date and the decision on each change request. Follow the existing lines, not the example below, for how numbers are written (such as spaces around them) (example: "Recorded the decisions of the change control meeting on November 26: approved cr-011, rejected cr-012"). For a change request whose body you did not change in step 4, write the reason here too
+1. Ask whether to record this in `log.md`. You may ask together with the diffs of step 4. If you did not change the body of a change request in step 4, always record its decision in `log.md`, because `log.md` is the only record of that decision. In that case too, show the diff and get approval
+2. If you record it, write one line `* **Update**: <description>` under the date heading of today (the day of the work) (`## YYYY-MM-DD`). In the description, write the meeting, its date and the decision on each change request. Follow the existing lines, not the example below, for how numbers are written (such as spaces around them) (example: "Recorded the decisions of the change control meeting on November 26: approved cr-011, rejected cr-012"). For a change request whose body you did not change in step 4, write the reason here too
 3. Run `adaptrace validate`. If there are more errors than at step 0, explain the cause and show a diff that fixes them. Do not undo what you wrote while you wait for approval of the fix. `validate` does not check the `state` values or the content of the "判断" heading; those are as confirmed in the diffs of step 4
 
 ## 6. Report
@@ -147,6 +147,10 @@ Report the following together. Report in the conversation, not in a file.
   - If one overlapped an approved change request: the approval changes the overlapping documents, so that change request needs its estimate and judgment redone
   - If one overlapped a rejected change request: that overlap no longer needs attention
   - If one overlapped a deferred change request: it drops out of the overlap check for now, but when the deferred change request is reconsidered, check the overlap again
-- Pairs of change requests decided this time: if an approved change request and a deferred one overlapped, report that when the deferred change request is reconsidered, its starting documents will already have changed. A pair with a rejected change request need not be reported
+- Pairs of change requests decided this time
+  - Two approved change requests: both change the same documents. The review needs to apply both changes together
+  - An approved and a deferred change request: when the deferred change request is reconsidered, the documents that overlapped (the starting documents for `sharedTargets`, or the documents in the impact range if only `overlap`) will already have been changed by the approval
+  - A pair with a rejected change request: need not be reported
+- When you re-decided a change request whose review had started as rejected or deferred: the documents noted in step 3.2 that point to it with `derived_from`. People decide whether to undo the changes applied
 - People contact the requesters (`requested_by`) of the rejected or deferred change requests. If the user wants, show a draft message in the conversation
 - Errors and warnings from `validate` that increased since step 0
