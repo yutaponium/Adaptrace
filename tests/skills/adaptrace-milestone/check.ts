@@ -44,7 +44,7 @@ check(
   "must",
   !list(fm(R1).depends_on).includes(SMS) &&
     !list(fm("tasks/sms-send.md").blocks).includes(`/${R1}`),
-  "the year-end release no longer waits for the SMS task",
+  "the first release no longer waits for the SMS task",
 );
 check(
   "must",
@@ -62,7 +62,7 @@ check(
     "/tasks/manual.md",
     "/requirements/req-2-session-timeout.md",
   ]) && list(fm(R1).depends_on).length === 3,
-  `the year-end release keeps the rest of its work and REQ-2 (depends_on: ${list(fm(R1).depends_on).join(", ")})`,
+  `the first release keeps the rest of its work and REQ-2 (depends_on: ${list(fm(R1).depends_on).join(", ")})`,
 );
 // Nothing is added beyond the move: release-2 waits for its own work and
 // the SMS task (by depends_on, or by the task's blocks), and no other blocks.
@@ -82,17 +82,21 @@ check(
 );
 // The due date it had: in a test repository, the one setup.sh rendered (git
 // test-base); in expected/ and failing/, the one for 2026-11-26.
-const dueBefore = existsSync(join(repo, ".git"))
-  ? (/^due: (.*)$/m.exec(
-      Bun.spawnSync(["git", "show", `test-base:.adaptrace/${R1}`], {
-        cwd: repo,
-      }).stdout.toString(),
-    )?.[1] ?? "")
-  : "2026-12-25";
+let dueBefore = "2026-12-25";
+if (existsSync(join(repo, ".git"))) {
+  const base = Bun.spawnSync(["git", "show", `test-base:.adaptrace/${R1}`], {
+    cwd: repo,
+  });
+  if (base.exitCode !== 0) {
+    console.log("FAIL  git failed: no test-base?");
+    process.exit(1);
+  }
+  dueBefore = /^due: (.*)$/m.exec(base.stdout.toString())?.[1] ?? "";
+}
 check(
   "must",
   String(fm(R1).due) === dueBefore && fm(R1).state === undefined,
-  `the year-end release keeps its due date and has no state added (due: ${String(fm(R1).due)}, state: ${String(fm(R1).state)})`,
+  `the first release keeps its due date and has no state added (due: ${String(fm(R1).due)}, state: ${String(fm(R1).state)})`,
 );
 const ORIGINAL = "human:sato 2026-11-01T10:00:00+09:00";
 check(

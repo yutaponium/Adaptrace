@@ -15,7 +15,7 @@ mkdir -p "$dest"
 cp -R "$here/repo/." "$dest/"
 # Due dates relative to today (ADAPTRACE_TEST_DAY to fix the day): what is
 # late or past due depends on it. expected/ is rendered for 2026-11-26.
-bun "$here/../render-dates.ts" "$dest" ${ADAPTRACE_TEST_DAY:-}
+bun "$here/../render-dates.ts" "$dest" ${ADAPTRACE_TEST_DAY:+"$ADAPTRACE_TEST_DAY"}
 cd "$dest"
 # Not the maintainer's git templates or global ignore file.
 git init -q --template=

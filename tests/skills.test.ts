@@ -96,7 +96,7 @@ const SKILLS = [
       ".adaptrace/tasks/sms-send.md",
     ],
     failures: [
-      "FAIL  the year-end release no longer waits for the SMS task",
+      "FAIL  the first release no longer waits for the SMS task",
       "FAIL  the second release waits for the SMS task",
     ],
   },
@@ -394,7 +394,7 @@ for (const skill of SKILLS) {
             text.replace("  - /requirements/req-2-session-timeout.md\n", ""),
           );
           expect(run()).toContain(
-            "FAIL  the year-end release keeps the rest of its work and REQ-2",
+            "FAIL  the first release keeps the rest of its work and REQ-2",
           );
           await Bun.write(release, text);
           // No new task for the requirement with no work.
