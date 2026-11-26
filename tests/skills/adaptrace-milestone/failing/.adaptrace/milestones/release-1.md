@@ -1,6 +1,6 @@
 ---
 type: Milestone
-title: 年内リリース
+title: 第1期リリース
 due: 2026-12-25
 depends_on:
   - /tasks/login-mfa.md
@@ -10,6 +10,6 @@ depends_on:
 generated: { by: human:sato, at: 2026-11-01T10:00:00+09:00 }
 ---
 
-# 年内リリース
+# 第1期リリース
 
-会員サイトの多要素認証を、年内にリリースする。
+会員サイトの多要素認証を、第1期としてリリースする。
