@@ -2,6 +2,7 @@
 
 ## 2026-11-26
 
+* **Creation**: skillの試験の必要度を判断して確認を取る方針を [ADR-042](/decisions/adr-042-skill-test-judgement.md) として記録した（[ADR-026](/decisions/adr-026-adopt-skill.md) の一部を置き換える）
 * **Creation**: マイルストーンの判定を支援するskillの方針を [ADR-041](/decisions/adr-041-milestone-skill.md) として記録した
 * **Creation**: 要件の充足を示す `coverage` の方針を [ADR-040](/decisions/adr-040-coverage.md) として記録した
 * **Creation**: 変更要求の判断を記録するskillの方針を [ADR-039](/decisions/adr-039-change-decision-skill.md) として記録した
