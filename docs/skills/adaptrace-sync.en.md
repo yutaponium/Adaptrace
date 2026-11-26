@@ -78,7 +78,8 @@ Rules shared by the Adaptrace skills.
 | `link` | Both sides have the same content; only the link record is written | Change |
 | `conflict` | Both sides changed since the last sync | Problem |
 | `unmapped-state` | Backlog.md has no status for the `state`, so it cannot be exported | Problem |
-| `missing` | The task with the `backlog.id` is not in Backlog.md. It was deleted or moved to the archive | Problem |
+| `missing` | The task with the `backlog.id` is not in Backlog.md. It was deleted or moved back to drafts (`drafts/`) | Problem |
+| `archived` | The task with the `backlog.id` was archived in Backlog.md (`archive/tasks/` or `archive/drafts/`). Nothing is written | Notice |
 | `duplicate-link` | Two or more Tasks have the same `backlog.id`. This often happens when a document is copied | Problem |
 | `pending` | A change on the side excluded by `--direction` | On hold |
 
@@ -120,12 +121,16 @@ Read the document and show whether it has the `backlog` key. Without `backlog`, 
 
 ### Task not found (`missing`)
 
-Check whether a task with the same id is in Backlog.md's `backlog/archive/tasks/`, `backlog/archive/drafts/` or `backlog/drafts/`, and show it. `sync` does not convert archived or draft tasks. Tasks in `backlog/completed/` are converted, so they do not become `missing`. Ask how to handle it.
+Check whether a task with the same id is in Backlog.md's `backlog/drafts/`, and show it. `sync` does not convert draft tasks. Archived tasks are `archived`, and tasks in `backlog/completed/` are converted, so neither becomes `missing`. Ask how to handle it.
 
 - Restore it on the Backlog.md side: tell the user to restore it on the Backlog.md side. After that, start again from step 1
 - Keep the Adaptrace document: change nothing. `sync` reports this task every time, with exit code 1. Setting the lifecycle key `status` to `deprecated` still keeps it reported
 - Delete the Adaptrace document: only when the user says so explicitly. Before deleting, check with `backlinks` from `adaptrace graph --format json` which documents point to it, and show them. If any do, deleting it causes `validate` errors
 - Delete `backlog` and export it as a new task: the next `sync` creates a task with a new id in Backlog.md
+
+### Archived tasks (`archived`)
+
+This is not a problem, so you need not ask how to handle it. The Adaptrace document is not changed, and `sync` writes nothing. Show the Backlog.md file (`backlogPath`) and the `state` of the Adaptrace document. Only when the user says they want to change the document's `state` or body, show the diff and change it ("Rules for editing documents"). The next `sync` reports it as `archived` again, but the exit code stays 0.
 
 ### Duplicated `backlog.id` (`duplicate-link`)
 
@@ -157,6 +162,7 @@ Report the following together. Report in the conversation; do not write it to a 
 - The tasks exported and imported. The tasks newly created and the ids assigned
 - For each conflict, the side kept and the changes lost
 - The problems left (conflicts not settled, tasks not found and so on), and that `sync` reports them again
+- The tasks archived in Backlog.md (`archived`)
 - What the user does on the Backlog.md side (adding a status, restoring a task and so on)
 - Tasks newly imported from Backlog.md. They have no link to requirements (`satisfies`), so the PM adds it if needed
 - Documents that depend on imported tasks and show in `stale`. Whether they need review can be checked with the skill `adaptrace-review`

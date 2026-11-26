@@ -45,3 +45,4 @@
 * [ADR-043](adr-043-risk-skill.md) - リスクの見直しは、skillが見直しの対象を1件ずつ示し、評価、対応策、次の見直し日を利用者と決めて記録する
 * [ADR-044](adr-044-review-order.md) - 重い指摘があるうちはClaudeのレビューだけを繰り返し、なくなってからGeminiのレビューを実行する
 * [ADR-045](adr-045-sync-skill.md) - Backlog.mdとの同期は、skillが `sync` の計画を項目ごとに示し、衝突や問題の扱いを利用者と決めてから書き込む
+* [ADR-046](adr-046-sync-archived.md) - Backlog.mdでアーカイブされたタスクは、syncが `archived` として知らせ、問題として扱わない

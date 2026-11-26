@@ -279,7 +279,7 @@ test("coverage: --milestone must be a live Milestone, --type not empty", async (
 });
 
 test("sync --resolve: per task, and usage errors", async () => {
-  captureLog();
+  const log = captureLog();
   const error = spyOn(console, "error").mockImplementation(() => {});
   const parent = await mkdtemp(join(tmpdir(), "adaptrace-cli-sync-"));
   const { mkdir, readFile, writeFile } = await import("node:fs/promises");
@@ -352,6 +352,15 @@ test("sync --resolve: per task, and usage errors", async () => {
     expect(
       await run([...args, "--resolve", "adaptrace", "--resolve", "backlog"]),
     ).toBe(2);
+    // A task archived in Backlog.md is reported but is not a problem.
+    await mkdir(join(parent, "backlog/archive/tasks"), { recursive: true });
+    const { rename } = await import("node:fs/promises");
+    await rename(
+      join(parent, backlogFile),
+      join(parent, "backlog/archive/tasks/back-1 - A.md"),
+    );
+    expect(await run(args)).toBe(0);
+    expect(String(log.mock.calls.at(-1)?.[0])).toContain("1 archived");
     // The same global side twice is fine.
     expect(
       await run([...args, "--resolve", "adaptrace", "--resolve", " adaptrace"]),

@@ -73,7 +73,8 @@ Adaptraceのskillに共通の決まり。
 | `link` | 両側の内容が同じで、対応づけの記録だけを書く | 変更 |
 | `conflict` | 前回の同期の後に、両側で変わった | 問題 |
 | `unmapped-state` | `state` に対応するステータスがBacklog.mdにないので、書き出せない | 問題 |
-| `missing` | `backlog.id` のタスクがBacklog.mdにない。削除されたか、アーカイブに移された | 問題 |
+| `missing` | `backlog.id` のタスクがBacklog.mdにない。削除されたか、下書き（`drafts/`）に戻された | 問題 |
+| `archived` | `backlog.id` のタスクが、Backlog.mdでアーカイブされた（`archive/tasks/` か `archive/drafts/`）。何も書き込まない | 知らせ |
 | `duplicate-link` | 同じ `backlog.id` を持つTaskが2つ以上ある。文書をコピーしたときに起きやすい | 問題 |
 | `pending` | `--direction` で除外した側の変更 | 保留 |
 
@@ -115,12 +116,16 @@ Adaptraceのskillに共通の決まり。
 
 ### 見つからないタスク（`missing`）
 
-Backlog.mdの `backlog/archive/tasks/`、`backlog/archive/drafts/`、`backlog/drafts/` に、同じIDのタスクがあるかを確認して示す。`sync` は、アーカイブと下書きのタスクを変換しない。`backlog/completed/` のタスクは変換するので、`missing` にはならない。扱いを尋ねる。
+Backlog.mdの `backlog/drafts/` に、同じIDのタスクがあるかを確認して示す。`sync` は、下書きのタスクを変換しない。アーカイブされたタスクは `archived`、`backlog/completed/` のタスクは変換の対象なので、どちらも `missing` にはならない。扱いを尋ねる。
 
 - Backlog.mdの側で戻す：利用者に、Backlog.mdの側で戻すよう案内する。戻された後に、手順1からやり直す
 - Adaptraceの文書を残す：変更しない。`sync` は、このタスクを毎回知らせ、終了コードは1になる。ライフサイクルのキー `status` を `deprecated` にしても、知らせ続ける
 - Adaptraceの文書を削除する：利用者が明示したときだけにする。削除する前に、`adaptrace graph --format json` の `backlinks` で、その文書を指している文書を確認して示す。指している文書があれば、削除すると `validate` のエラーになる
 - `backlog` を削除して、新しいタスクとして書き出す：次の `sync` で、新しいIDのタスクがBacklog.mdにできる
+
+### アーカイブされたタスク（`archived`）
+
+問題ではないので、扱いを尋ねなくてよい。Adaptraceの文書は変えず、`sync` も何も書き込まない。Backlog.mdのファイル（`backlogPath`）と、Adaptraceの文書の `state` を示す。Adaptraceの文書の `state` や本文を変えたいと利用者が言ったときだけ、差分を示して変える（「文書を編集するときの決まり」）。`sync` は、次も `archived` として知らせるが、終了コードは0のままである。
 
 ### 重複した `backlog.id`（`duplicate-link`）
 
@@ -152,6 +157,7 @@ Backlog.mdの `backlog/archive/tasks/`、`backlog/archive/drafts/`、`backlog/dr
 - 書き出したタスクと、取り込んだタスク。新しく作ったタスクと、振られたID
 - 衝突ごとに、そろえた側と、失われた変更
 - 残した問題（そろえなかった衝突、見つからないタスクなど）と、`sync` が次も知らせること
+- Backlog.mdでアーカイブされたタスク（`archived`）
 - Backlog.mdの側で、利用者が行うこと（ステータスの追加、タスクを戻すなど）
 - Backlog.mdから新しく取り込んだタスク。要件とのつながり（`satisfies`）がないので、必要ならPMが追加する
 - 取り込んだタスクに依存していて、`stale` に出た文書。見直しが要るかは、skill `adaptrace-review` で確認できる

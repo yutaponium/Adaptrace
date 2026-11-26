@@ -48,6 +48,8 @@ export interface Backlog {
   tasks: Map<string, BacklogTask>; // by normalized id
   // Normalized ids in drafts and archives, which new ids must not reuse.
   reservedIds: Set<string>;
+  // Archived tasks (archive/tasks, archive/drafts): normalized id -> path.
+  archived: Map<string, string>;
   errors: { path: string; message: string }[];
 }
 
@@ -112,6 +114,7 @@ export async function loadBacklog(root: string): Promise<Backlog> {
     config,
     tasks: new Map(),
     reservedIds: new Set(),
+    archived: new Map(),
     errors: [],
   };
   for (const dir of RESERVED_DIRS) {
@@ -122,7 +125,11 @@ export async function loadBacklog(root: string): Promise<Backlog> {
         await readFile(posix.join(root, dir, name), "utf8"),
       );
       const id = parsed.ok ? parsed.frontmatter?.id : undefined;
-      if (typeof id === "string") backlog.reservedIds.add(normalizeId(id));
+      if (typeof id !== "string") continue;
+      backlog.reservedIds.add(normalizeId(id));
+      if (dir.startsWith("archive/")) {
+        backlog.archived.set(normalizeId(id), `${dir}/${name}`);
+      }
     }
   }
   for (const dir of TASK_DIRS) {
@@ -354,6 +361,7 @@ export type SyncAction =
       fields: string[];
     }
   | { kind: "missing"; adaptrace: string; id: string }
+  | { kind: "archived"; adaptrace: string; id: string; backlogPath: string }
   | { kind: "duplicate-link"; adaptrace: string; id: string; others: string[] }
   | {
       kind: "pending";
@@ -699,6 +707,20 @@ export function planSync(
       continue;
     }
     const task = backlog.tasks.get(normalizeId(link.id));
+    // Archived in Backlog.md: reported, but not a problem.
+    const archivedPath =
+      task === undefined
+        ? backlog.archived.get(normalizeId(link.id))
+        : undefined;
+    if (archivedPath !== undefined) {
+      plan.actions.push({
+        kind: "archived",
+        adaptrace: concept.path,
+        id: link.id,
+        backlogPath: archivedPath,
+      });
+      continue;
+    }
     if (task === undefined) {
       plan.actions.push({
         kind: "missing",

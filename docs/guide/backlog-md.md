@@ -340,5 +340,6 @@ adaptrace board --format markdown
 - **取り込むと、`generated` が更新されます。** Backlog.mdから取り込んだタスクは、`generated.by` が `adaptrace/0.7.0` のような値に、`generated.at` が取り込んだ日時になります。そのため、そのタスクに `depends_on` している後続のタスクが、`stale` に「依存先より古い」と表示されます。後続のタスクを見直す必要がなければ、その文書に `verified: { by, at }` を今の日時で追加すると、表示が消えます
 - **削除は伝わりません。** Backlog.mdでタスクのファイルを削除すると、`sync` は `MISSING in Backlog.md` と知らせます。Adaptrace側の文書は削除しません。不要になったら、Adaptraceの文書も手で削除するか、`status: deprecated` にします
 - **下書きとアーカイブは変換しません。** 対象は `backlog/tasks/` と `backlog/completed/` のタスクです。`backlog/drafts/` と `backlog/archive/` のタスクは変換しません。ただし、そのIDは新しいタスクに使いません
+- **アーカイブしたタスクは、`ARCHIVED in Backlog.md` と表示されます。** Adaptrace側の文書は変えません。問題ではないので、終了コードは0のままです。Adaptraceの文書は、経緯としてそのまま残せます
 - **IDの接頭辞は、英字・数字・`.`・`_`・`-` だけにします。** `backlog/config.yml` の `task_prefix` がこの条件に合わないと、新しいタスクを書き出しません
 - **`status` に進み具合を書かないでください。** Adaptraceの `status` は、ライフサイクル（`draft`、`stable`、`deprecated`）だけに使います。Backlog.mdの `status` に当たるのは、Adaptraceの `state` です

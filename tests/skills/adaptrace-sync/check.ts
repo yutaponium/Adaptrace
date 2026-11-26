@@ -50,7 +50,7 @@ const plan = planSync(bundle, backlog, { generatedBy: "check" });
 const left = plan.actions.map((a) => `${a.kind} ${a.adaptrace}`);
 check(
   "must",
-  left.join() === "missing tasks/legacy-import.md" && plan.errors.length === 0,
+  left.join() === "archived tasks/legacy-import.md" && plan.errors.length === 0,
   `sync has nothing left but the archived task (${left.join(", ") || "none"})`,
 );
 
