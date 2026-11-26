@@ -151,10 +151,11 @@ async function bundleOf(files: Record<string, string>) {
   }
 }
 
-test("another milestone's work does not count; nested requirements outside the scope count all their work", async () => {
+test("another milestone's work counts only for a requirement the milestone waits for", async () => {
   const b = await bundleOf({
     "m1.md": "type: Milestone\ndepends_on: [/rx.md, /t1.md]",
     "m2.md": "type: Milestone\nsatisfies: /rx.md\ndepends_on: /t3.md",
+    "m3.md": "type: Milestone\nsatisfies: /r1.md\ndepends_on: /t5.md",
     "rx.md": "type: Requirement",
     "r1.md": "type: Requirement",
     "rs.md": "type: Requirement\nsatisfies: /r1.md",
@@ -162,20 +163,25 @@ test("another milestone's work does not count; nested requirements outside the s
     "t2.md": "type: Task\nstate: done\nsatisfies: /rs.md",
     "t3.md": "type: Task\nstate: to_do",
     "t4.md": "type: Task\nstate: done\nsatisfies: /rx.md",
+    "t5.md": "type: Task\nstate: to_do",
   });
   const report = coverage(b.bundle, b.graph, { milestone: "m1.md" });
-  expect(report.requirements.map((r) => [r.path, r.status])).toEqual([
-    ["r1.md", "covered"],
-    ["rx.md", "covered"],
-  ]);
-  const rx = report.requirements.find((r) => r.path === "rx.md");
-  expect(rx?.satisfiers.map((s) => [s.path, s.counted])).toEqual([
-    ["m2.md", false],
+  const row = (path: string) =>
+    report.requirements.find((r) => r.path === path);
+  // m1 waits for rx: all its work is in m1's scope, m2 included.
+  expect(row("rx.md")?.status).toBe("open");
+  expect(row("rx.md")?.satisfiers.map((s) => [s.path, s.counted])).toEqual([
+    ["m2.md", true],
     ["t4.md", true],
   ]);
-  // Without the milestone, m2's work is left.
-  const all = coverage(b.bundle, b.graph);
-  expect(all.requirements.find((r) => r.path === "rx.md")?.status).toBe("open");
+  // r1 is shown because t1 satisfies it. m3 is another milestone's work and
+  // does not count; rs (not shown) counts all its work.
+  expect(row("r1.md")?.status).toBe("covered");
+  expect(row("r1.md")?.satisfiers.map((s) => [s.path, s.counted])).toEqual([
+    ["m3.md", false],
+    ["rs.md", true],
+    ["t1.md", true],
+  ]);
 });
 
 test("a milestone with no tasks in its scope is not done", async () => {
@@ -213,4 +219,18 @@ test("a shown requirement has one status, and owners may be a list", async () =>
     "covered",
   );
   expect(report.scope?.[0]?.owner).toBe("sato, kato");
+});
+
+test("a milestone that satisfies a requirement in the scope joins the scope", async () => {
+  const b = await bundleOf({
+    "m0.md": "type: Milestone\nsatisfies: /r.md\ndepends_on: /t.md",
+    "m1.md": "type: Milestone\ndepends_on: /r.md",
+    "r.md": "type: Requirement",
+    "t.md": "type: Task\nstate: done",
+  });
+  const report = coverage(b.bundle, b.graph, { milestone: "m1.md" });
+  expect(report.requirements.map((r) => [r.path, r.status])).toEqual([
+    ["r.md", "covered"],
+  ]);
+  expect(report.scope?.map((i) => i.path)).toEqual(["r.md", "m0.md", "t.md"]);
 });

@@ -503,7 +503,7 @@ For each requirement, shows the documents that satisfy it (the documents that po
 | `open` | One of the documents that count is not done |
 | `covered` | The others |
 
-- Requirements are documents with `type: Requirement`. `--type` picks another type. Requirements with `status: deprecated` and deprecated documents that satisfy them are left out
+- Requirements are documents with `type: Requirement`. `--type` picks another type. `Task` and `Milestone` are work, so they cannot be requirement types. Requirements with `status: deprecated` and deprecated documents that satisfy them are left out
 - Whether a document that satisfies a requirement is done depends on its type. In JSON it is `done`
   - Task: done when its `state` is `done`. Change the value with `--done`. Case does not matter
   - A document of a requirement type: done when that requirement is `covered`. Its status is shown in `status` in JSON
@@ -511,7 +511,7 @@ For each requirement, shows the documents that satisfy it (the documents that po
   - Others (such as a Decision): satisfy the requirement if they exist. `done` is `null`
 - With `--milestone <document>`, only the milestone's scope is shown. The document is a `type: Milestone` document without `status: deprecated`
   - The scope starts from the documents the milestone waits for (`depends_on` and `blocks`) and is followed nearest first. The direction is the same as in `board`
-  - From a Task or a Milestone, the walk follows what it waits for. From a requirement, it follows the Tasks and requirements that satisfy it
+  - From a Task or a Milestone, the walk follows what it waits for. From a requirement, it follows the Tasks, Milestones and requirements that satisfy it
   - Other documents (such as decisions) are in the scope, but the walk does not go past them. Documents with `status: deprecated` are not in the scope, and the walk does not go past them
   - The requirements shown are the requirements in the scope, and those that the Tasks and Milestones in the scope satisfy with `satisfies`. Requirements the milestone itself satisfies are included
   - Tasks and Milestones outside the scope do not count. Their `counted` in JSON is `false`. A requirement shown gets its status from the work in the scope only. When a requirement that is not shown satisfies one that is, all of its work counts to decide whether it is `covered`

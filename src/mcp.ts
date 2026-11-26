@@ -19,7 +19,7 @@ import {
   conflictsContext,
   SETTLED_STATES,
 } from "./conflicts";
-import { coverage, DONE_STATES } from "./coverage";
+import { coverage, DONE_STATES, WORK_TYPES } from "./coverage";
 import { validateAll } from "./drift";
 import { estimate, estimateContext } from "./estimate";
 import { extractContext } from "./extract";
@@ -532,10 +532,21 @@ export function createServer(options: McpOptions): McpServer {
     {
       title: "Requirement coverage",
       description:
-        "For each requirement (type Requirement unless types is given), the live documents that satisfy it, and its status: uncovered (nothing that counts satisfies it), open (one of them is not done: a Task not done, a requirement not covered (status), a Milestone with work left) or covered. With milestone, only the milestone's scope: what it waits for through depends_on and blocks, followed on through Tasks and Milestones and through the Tasks and requirements that satisfy a requirement in it, and the requirements that work (and the milestone) satisfies. Only Tasks in the scope count (counted false for the others). scope lists the documents in it, nearest first, with owner, due, late (due after the milestone) and, for Tasks, done. Nothing is written.",
+        "For each requirement (type Requirement unless types is given), the live documents that satisfy it, and its status: uncovered (nothing that counts satisfies it), open (one of them is not done: a Task not done, a requirement not covered (status), a Milestone with work left) or covered. With milestone, only the milestone's scope: what it waits for through depends_on and blocks, followed on through Tasks and Milestones and through the Tasks, Milestones and requirements that satisfy a requirement in it, and the requirements that work (and the milestone) satisfies. Only Tasks and Milestones in the scope count (counted false for the others). scope lists the documents in it, nearest first, with owner, due, late (due after the milestone) and, for Tasks, done. Nothing is written.",
       inputSchema: {
         milestone: z.string().optional(),
-        types: z.array(z.string().trim().min(1)).min(1).optional(),
+        types: z
+          .array(
+            z
+              .string()
+              .trim()
+              .min(1)
+              .refine((t) => !WORK_TYPES.includes(t), {
+                message: "Tasks and Milestones are work, not requirements",
+              }),
+          )
+          .min(1)
+          .optional(),
         done: z
           .array(z.string().trim().min(1))
           .min(1)

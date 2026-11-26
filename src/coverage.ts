@@ -14,6 +14,8 @@ import type { Graph } from "./graph";
 // settled (docs/STATUS.md), so it can be changed with --done.
 export const DONE_STATES = ["done"];
 export const REQUIREMENT_TYPES = ["Requirement"];
+// Work, not requirements: they cannot be given as requirement types.
+export const WORK_TYPES = ["Task", "Milestone"];
 
 export type CoverageStatus = "uncovered" | "open" | "covered";
 
@@ -137,7 +139,8 @@ export function coverage(
   }
   // A milestone's scope, nearest first: the live documents it waits for.
   // From a Task or a Milestone, what it waits for in turn; from a requirement,
-  // the Tasks and requirements that satisfy it (the work it needs). Other
+  // the Tasks, Milestones and requirements that satisfy it (the work it
+  // needs). Other
   // documents, such as a Decision the work depends on, are in the scope, but
   // the walk does not go past them.
   const scopeOf = (root: string): string[] => {
@@ -152,9 +155,12 @@ export function coverage(
           t === "Task" || t === "Milestone"
             ? [...(waits.get(path) ?? [])].sort()
             : isRequirement(path)
-              ? satisfiersOf(path).filter(
-                  (p) => typeOf(p) === "Task" || isRequirement(p),
-                )
+              ? satisfiersOf(path).filter((p) => {
+                  const pt = typeOf(p);
+                  return (
+                    pt === "Task" || pt === "Milestone" || isRequirement(p)
+                  );
+                })
               : [];
         for (const p of onward) {
           if (seen.has(p) || !live(p)) continue;

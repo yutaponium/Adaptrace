@@ -275,4 +275,5 @@ test("coverage: --milestone must be a live Milestone, --type not empty", async (
     "is not a live Milestone",
   );
   expect(await run(["coverage", COVERAGE, "--type", " "])).toBe(2);
+  expect(await run(["coverage", COVERAGE, "--type", "Task"])).toBe(2);
 });
