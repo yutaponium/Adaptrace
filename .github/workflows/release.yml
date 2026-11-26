@@ -21,19 +21,24 @@ permissions:
 env:
   TAG: ${{ inputs.tag || github.ref_name }}
 
+# A tag push and a manual run for the same tag must not create two Releases.
+concurrency:
+  group: release-${{ inputs.tag || github.ref_name }}
+
 jobs:
   build:
     strategy:
       fail-fast: false
       matrix:
         include:
-          # Run on the matching OS where it matters: macOS binaries must be
-          # signed (ad hoc) to run on Apple silicon, which Bun does on macOS.
-          - { os: ubuntu-latest, target: linux-x64, run: true }
-          - { os: ubuntu-latest, target: linux-arm64, run: false }
-          - { os: macos-latest, target: darwin-arm64, run: true }
-          - { os: macos-latest, target: darwin-x64, run: false }
-          - { os: windows-latest, target: windows-x64, run: true }
+          # Each binary is built on its own platform and run there before it
+          # is attached. macOS binaries must be signed (ad hoc) to run on Apple
+          # silicon, which Bun does on macOS.
+          - { os: ubuntu-latest, target: linux-x64 }
+          - { os: ubuntu-24.04-arm, target: linux-arm64 }
+          - { os: macos-latest, target: darwin-arm64 }
+          - { os: macos-15-intel, target: darwin-x64 }
+          - { os: windows-latest, target: windows-x64 }
     runs-on: ${{ matrix.os }}
     defaults:
       run:
@@ -41,7 +46,7 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          ref: ${{ env.TAG }}
+          ref: refs/tags/${{ env.TAG }}
       # The build scripts come from the workflow's own commit, so that binaries
       # can also be attached to a tag made before the scripts existed.
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -64,29 +69,38 @@ jobs:
         run: |
           exe=adaptrace
           case "${{ matrix.target }}" in windows-*) exe=adaptrace.exe ;; esac
-          mkdir -p dist/pkg
+          # The archive holds one folder, so extracting it does not overwrite
+          # files such as LICENSE in the current folder.
+          dir="dist/adaptrace-$TAG-${{ matrix.target }}"
+          mkdir -p "$dir"
           bun build --compile --minify --target="bun-${{ matrix.target }}" \
-            src/cli.ts --outfile "dist/pkg/$exe" --metafile=dist/meta.json
-          cp LICENSE dist/pkg/
-          bun .release-tools/scripts/licenses.ts dist/meta.json dist/pkg/THIRD_PARTY_LICENSES.md
+            src/cli.ts --outfile "$dir/$exe" --metafile=dist/meta.json
+          cp LICENSE "$dir/"
+          # The runtime is bundled too: add Bun's license for this version.
+          curl -fsSL -o dist/BUN_LICENSE.md \
+            "https://raw.githubusercontent.com/oven-sh/bun/bun-v$(bun --version | tr -d '\r')/LICENSE.md"
+          bun .release-tools/scripts/licenses.ts dist/meta.json dist/BUN_LICENSE.md \
+            "$dir/THIRD_PARTY_LICENSES.md"
+          echo "DIR=$dir" >> "$GITHUB_ENV"
           echo "EXE=$exe" >> "$GITHUB_ENV"
       - name: Smoke test
-        if: matrix.run
         run: |
-          [ "$(dist/pkg/$EXE --version | tr -d '\r')" = "${TAG#v}" ]
-          dist/pkg/$EXE validate .adaptrace
+          [ "$("$DIR/$EXE" --version | tr -d '\r')" = "${TAG#v}" ]
+          "$DIR/$EXE" validate .adaptrace
       - name: Package
         run: |
-          name="adaptrace-$TAG-${{ matrix.target }}"
-          cd dist/pkg
+          name="$(basename "$DIR")"
+          cd dist
           case "${{ matrix.target }}" in
-            windows-*) 7z a -tzip "../$name.zip" . > /dev/null ;;
-            *) tar -czf "../$name.tar.gz" . ;;
+            windows-*) 7z a -tzip "$name.zip" "$name" > /dev/null ;;
+            *) tar -czf "$name.tar.gz" "$name" ;;
           esac
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: ${{ matrix.target }}
-          path: dist/adaptrace-*
+          path: |
+            dist/adaptrace-*.tar.gz
+            dist/adaptrace-*.zip
           if-no-files-found: error
 
   release:
@@ -109,7 +123,13 @@ jobs:
           cat SHA256SUMS
       - name: Attach to the Release
         run: |
-          if ! gh release view "$TAG" > /dev/null 2>&1; then
+          # Create a draft only when the Release does not exist; any other
+          # error stops the job.
+          if ! out="$(gh release view "$TAG" 2>&1 > /dev/null)"; then
+            if [ "$out" != "release not found" ]; then
+              echo "$out"
+              exit 1
+            fi
             gh release create "$TAG" --draft --verify-tag --title "$TAG" \
               --notes "See CHANGELOG.md for the changes in this version."
           fi

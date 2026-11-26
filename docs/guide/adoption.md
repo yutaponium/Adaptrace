@@ -38,13 +38,17 @@ adaptrace --version
 
 **実行ファイルをダウンロードする**（Bunが要りません）
 
-[Releases](https://github.com/yutaponium/Adaptrace/releases) から、使う環境のファイル（`adaptrace-<版>-<環境>.tar.gz`、Windowsは `.zip`）をダウンロードし、展開した `adaptrace` をPATHの通ったフォルダに置きます。環境は、`linux-x64`、`linux-arm64`、`darwin-arm64`（Apple silicon）、`darwin-x64`（Intel Mac）、`windows-x64` です。ファイルが正しいかは、同じページの `SHA256SUMS` で確認できます。実行ファイルには署名がありません。macOSで開けないときは `xattr -d com.apple.quarantine adaptrace` を実行し、Windowsで警告が出たときは「詳細情報」から実行します。
+[Releases](https://github.com/yutaponium/Adaptrace/releases) から、使う環境のファイル（`adaptrace-<版>-<環境>.tar.gz`、Windowsは `.zip`）をダウンロードします。環境は、`linux-x64`、`linux-arm64`、`darwin-arm64`（Apple silicon）、`darwin-x64`（Intel Mac）、`windows-x64` です。ファイルが正しいかは、同じページの `SHA256SUMS` で確認できます。
+
+展開すると、同じ名前のフォルダができます。中の `adaptrace`（Windowsは `adaptrace.exe`）を、PATHの通ったフォルダに置きます。
 
 ```bash
 tar -xzf adaptrace-v1.0.0-linux-x64.tar.gz
-sudo mv adaptrace /usr/local/bin/
+sudo mv adaptrace-v1.0.0-linux-x64/adaptrace /usr/local/bin/
 adaptrace --version
 ```
+
+実行ファイルには署名がありません。macOSでは、移動する前に `xattr -d com.apple.quarantine adaptrace-v1.0.0-darwin-arm64/adaptrace` を実行します。ブラウザーでダウンロードしたファイルは、そのままでは開けないためです。Windowsで警告が出たときは、「詳細情報」から実行します。
 
 **リポジトリをcloneする**
 

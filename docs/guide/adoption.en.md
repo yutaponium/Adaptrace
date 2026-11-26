@@ -40,13 +40,17 @@ This gives you the `adaptrace` command. Adaptrace is not published on npm, so it
 
 **Download an executable** (no Bun needed)
 
-From [Releases](https://github.com/yutaponium/Adaptrace/releases), download the file for your platform (`adaptrace-<version>-<platform>.tar.gz`, or `.zip` for Windows). Extract it and put `adaptrace` in a folder on your PATH. The platforms are `linux-x64`, `linux-arm64`, `darwin-arm64` (Apple silicon), `darwin-x64` (Intel Mac) and `windows-x64`. You can check the file with `SHA256SUMS` on the same page. The executables are not signed. If macOS will not open it, run `xattr -d com.apple.quarantine adaptrace`. If Windows shows a warning, choose "More info" and run it.
+From [Releases](https://github.com/yutaponium/Adaptrace/releases), download the file for your platform (`adaptrace-<version>-<platform>.tar.gz`, or `.zip` for Windows). The platforms are `linux-x64`, `linux-arm64`, `darwin-arm64` (Apple silicon), `darwin-x64` (Intel Mac) and `windows-x64`. You can check the file with `SHA256SUMS` on the same page.
+
+Extracting it creates a folder with the same name. Put the `adaptrace` inside (`adaptrace.exe` on Windows) in a folder on your PATH.
 
 ```bash
 tar -xzf adaptrace-v1.0.0-linux-x64.tar.gz
-sudo mv adaptrace /usr/local/bin/
+sudo mv adaptrace-v1.0.0-linux-x64/adaptrace /usr/local/bin/
 adaptrace --version
 ```
+
+The executables are not signed. On macOS, run `xattr -d com.apple.quarantine adaptrace-v1.0.0-darwin-arm64/adaptrace` before you move it, because a file downloaded with a browser does not open as it is. If Windows shows a warning, choose "More info" and run it.
 
 **Clone the repository**
 
