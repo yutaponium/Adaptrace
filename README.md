@@ -380,7 +380,7 @@ copilot mcp add adaptrace -- adaptrace mcp .adaptrace
 
 ## skillの追加
 
-Adaptraceには、作業の手順をAIエージェントに教えるskillが10あります。`adaptrace-change-decision`、`adaptrace-milestone`、`adaptrace-risk` は、v1.0.0の次のリリースから使えます。skillは、オープンな標準「[Agent Skills](https://agentskills.io/)」の形式です。
+Adaptraceには、作業の手順をAIエージェントに教えるskillが11あります。`adaptrace-change-decision`、`adaptrace-milestone`、`adaptrace-risk`、`adaptrace-sync` は、v1.0.0の次のリリースから使えます。skillは、オープンな標準「[Agent Skills](https://agentskills.io/)」の形式です。
 
 > **skillの試験は、Claude Codeでだけ実行しています。** ほかのエージェントでの動作は、確認していません。skillには、Claude Codeの機能を前提にした指示も含まれます（選択肢で尋ねるツールなど）。
 
@@ -430,6 +430,7 @@ cp -r ~/tools/adaptrace/skills/adaptrace-* .agents/skills/
 | 判断を新しい判断に置き換え、古い判断に依存していた文書を整理する | `adaptrace-supersede`（[skills/adaptrace-supersede/](skills/adaptrace-supersede/SKILL.md)） | [adaptrace-supersede.en.md](docs/skills/adaptrace-supersede.en.md) |
 | マイルストーンの前に、残っている作業と要件、関わる変更要求を示し、扱いを決める | `adaptrace-milestone`（[skills/adaptrace-milestone/](skills/adaptrace-milestone/SKILL.md)） | [adaptrace-milestone.en.md](docs/skills/adaptrace-milestone.en.md) |
 | 見直し時期を過ぎたリスクを1件ずつ見直し、評価、対応策のタスク、次の見直し日を記録する | `adaptrace-risk`（[skills/adaptrace-risk/](skills/adaptrace-risk/SKILL.md)） | [adaptrace-risk.en.md](docs/skills/adaptrace-risk.en.md) |
+| Backlog.mdと同期する。衝突などの扱いを、タスクごとに利用者と決めてから書き込む | `adaptrace-sync`（[skills/adaptrace-sync/](skills/adaptrace-sync/SKILL.md)） | [adaptrace-sync.en.md](docs/skills/adaptrace-sync.en.md) |
 | 依存関係のヘルスチェックを行い、廃止した文書への依存、冗長な依存、孤立した文書、デッドロックなどを整理する | `adaptrace-health`（[skills/adaptrace-health/](skills/adaptrace-health/SKILL.md)） | [adaptrace-health.en.md](docs/skills/adaptrace-health.en.md) |
 
 ## ロードマップ

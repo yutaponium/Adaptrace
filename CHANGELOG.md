@@ -6,6 +6,7 @@
 
 ### Added
 
+- Claude Codeのskill `adaptrace-sync`（`skills/adaptrace-sync/`、ADR-045）：Backlog.mdとの同期で、`sync` の計画を変更と問題に分けて示し、衝突、対応しない `state`、見つからないタスク、重複した `backlog.id` の扱いを、タスクごとに利用者と決めてから書き込む。Backlog.mdのファイルは、`sync --write` のほかでは書き換えない
 - `adaptrace sync --resolve <タスク>=<側>`：Backlog.mdとの衝突を、タスクごとにそろえられるようにした。タスクは、バンドルの中のパスか、Backlog.mdのIDで指定する。何回でも指定でき、全体の `--resolve adaptrace|backlog` より優先する。Backlog.mdのタスクと対応付いていないタスクや、同じタスクに別々の側を指定すると、終了コード2。全体の指定に `--resolve adaptrace --resolve backlog` と両方の側を指定した場合も、これまでは後の値を使っていたが、終了コード2にした
 - Claude Codeのskill `adaptrace-risk`（`skills/adaptrace-risk/`、ADR-043）：見直し時期を過ぎたリスクと、依存先が更新されたリスクを、1件ずつ利用者と見直す。評価の更新、対応策のタスクの作成、リスクを閉じるかどうか、次の見直し日を決め、`verified` と `stale_after` に記録する。閉じたリスクは `stale_after` を削除する。書き込みは承認を得てから行う
 - Claude Codeのskill `adaptrace-milestone`（`skills/adaptrace-milestone/`、ADR-041）：マイルストーンの前に、範囲の要件の状況、終わっていない作業、期日に間に合わない作業、範囲に関わる未決の変更要求、古くなった文書を示す。作業を別のマイルストーンに移す、期日を変えるなどの扱いを項目ごとに利用者と決め、マイルストーンの計画（`due`、`depends_on`、`blocks`、`state`）と作業の `due`・`blocks` だけを変える。書き込みは承認を得てから行う

@@ -68,7 +68,7 @@ bun src/cli.ts mcp                  # MCP サーバー（stdio）
 .adaptrace/      Adaptrace 自身の要件・意思決定・タスク（OKF。自分たちで使いながら作る：ADR-005）
 docs/            STATUS.md、仕様（spec/）、ガイド（guide/）、skillの英語の参考訳（skills/）
 examples/        コピーして使うバンドルのテンプレート（pmbok/）
-skills/          利用者に配布するClaude Codeのskill（adaptrace-adopt/、adaptrace-change-request/、adaptrace-change-decision/、adaptrace-review/、adaptrace-weekly/、adaptrace-minutes/、adaptrace-supersede/、adaptrace-health/、adaptrace-milestone/、adaptrace-risk/）
+skills/          利用者に配布するClaude Codeのskill（adaptrace-adopt/、adaptrace-change-request/、adaptrace-change-decision/、adaptrace-review/、adaptrace-weekly/、adaptrace-minutes/、adaptrace-supersede/、adaptrace-health/、adaptrace-milestone/、adaptrace-risk/、adaptrace-sync/）
 src/             CLI とコア
 scripts/         リリースのビルドで使うスクリプト（依存パッケージのライセンスの一覧など）
 tests/           テスト。fixtures/ に検証用の OKF バンドル、skills/ にskillの試験

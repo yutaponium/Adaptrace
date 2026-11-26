@@ -393,6 +393,7 @@ adaptrace sync --write    # 実際に書き込む
 - 両側で同じタスクが変わったときは、上書きせずに衝突として知らせます。`--resolve adaptrace` か `--resolve backlog` で、どちらかにそろえます。タスクごとに `--resolve tasks/design.md=backlog` のように指定することもできます
 
 開発者はBacklog.mdでタスクを動かします。PMは定例の前に `sync` で取り込み、`stale` と `board` を確認します。
+Claude Codeを使っている場合は、skill `adaptrace-sync` で同期できます。`sync` の計画を項目ごとに示し、衝突などの扱いをタスクごとに利用者と決め、承認を得てから書き込みます。このskillは、v1.0.0の次のリリースから使えます。skillの入手方法は、[既存のリポジトリに導入するガイド](adoption.md#claude-codeに取り込みを手伝ってもらう) と同じです。プラグインでインストールした場合は、すべてのskillがそろっています。フォルダをコピーする場合は、コマンドの `adaptrace-adopt` を `adaptrace-sync` に置き換えてください。
 この流れにすると、それぞれが慣れたツールを使えます。
 
 インストールから併用の流れまでは、[Backlog.mdと併用する](backlog-md.md) で画面付きで説明しています。

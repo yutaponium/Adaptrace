@@ -111,6 +111,22 @@ const SKILLS = [
     ],
   },
   {
+    name: "adaptrace-sync",
+    date: "2026-11-26T10:00:00+09:00",
+    inputs: [
+      ".adaptrace/tasks/manual.md",
+      "backlog/config.yml",
+      "backlog/tasks/back-4 - 操作マニュアルを書く.md",
+    ],
+    failures: [
+      "FAIL  sync has nothing left but the archived task",
+      "FAIL  the manual task follows Backlog.md (In Progress, @tanaka)",
+      "FAIL  the audit log task keeps the retention period and is in progress on both sides",
+      "FAIL  the session timeout task is to_do and exported",
+      "FAIL  the archived task's document is kept",
+    ],
+  },
+  {
     name: "adaptrace-health",
     date: "2026-11-26T10:00:00+09:00",
     inputs: [".adaptrace/tasks/data-migration.md"],
@@ -413,6 +429,46 @@ for (const skill of SKILLS) {
             "---\ntype: Task\n---\n\n# T\n",
           );
           expect(run()).toContain("FAIL  no other document changed");
+        } finally {
+          await rm(parent, { recursive: true, force: true });
+        }
+      });
+    }
+    if (skill.name === "adaptrace-sync") {
+      test("a changed Backlog.md file fails, the expected result does not", async () => {
+        const parent = await mkdtemp(join(tmpdir(), "adaptrace-skill-"));
+        try {
+          const dest = join(parent, "repo");
+          expect(
+            Bun.spawnSync(["sh", join(dir, "setup.sh"), dest]).exitCode,
+          ).toBe(0);
+          for (const d of [".adaptrace", "backlog"]) {
+            await rm(join(dest, d), { recursive: true, force: true });
+            await cp(join(dir, "expected", d), join(dest, d), {
+              recursive: true,
+            });
+          }
+          const run = () =>
+            Bun.spawnSync([
+              process.execPath,
+              join(dir, "check.ts"),
+              dest,
+            ]).stdout.toString();
+          expect(run()).toContain("ok    no other file changed");
+          await appendFile(
+            join(dest, "backlog/config.yml"),
+            'statuses: ["To Do", "Waiting", "In Progress", "Done"]\n',
+          );
+          expect(run()).toContain(
+            "FAIL  no other file changed (backlog/config.yml)",
+          );
+          await cp(
+            join(dir, "expected/backlog/config.yml"),
+            join(dest, "backlog/config.yml"),
+          );
+          // A file left by the runner outside the expected new ones.
+          await writeFile(join(dest, ".adaptrace/tasks/note.md"), "# memo\n");
+          expect(run()).toContain(".adaptrace/tasks/note.md (new)");
         } finally {
           await rm(parent, { recursive: true, force: true });
         }
