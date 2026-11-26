@@ -6,8 +6,8 @@ import { join } from "node:path";
 import { loadBundle } from "../../../src/bundle";
 import { buildGraph } from "../../../src/graph";
 import { lastUpdated } from "../../../src/history";
-import { resourceStates } from "../../../src/resource";
 import { stale } from "../../../src/impact";
+import { resourceStates } from "../../../src/resource";
 import { validate } from "../../../src/validate";
 
 const [repo, dialogPath] = process.argv.slice(2);
@@ -38,10 +38,6 @@ const list = (v: unknown) =>
   (Array.isArray(v) ? v : v === undefined || v === null ? [] : [v]).map(String);
 const read = (path: string) =>
   existsSync(join(root, path)) ? readFileSync(join(root, path), "utf8") : "";
-const gen = (path: string) => {
-  const g = (fm(path).generated ?? {}) as { at?: unknown; by?: unknown };
-  return { at: String(g.at), by: String(g.by) };
-};
 // The time a value means, or NaN.
 const time = (v: unknown) =>
   new Date(v instanceof Date ? v.toISOString() : String(v)).getTime();
@@ -81,10 +77,11 @@ check(
 
 // Kept as it was: reviewed, not changed.
 const IDP = "risks/idp-lock-in.md";
+const rawVerified: unknown = fm(IDP).verified;
 const verified = list(
-  (Array.isArray(fm(IDP).verified) ? fm(IDP).verified : [fm(IDP).verified])
-    .filter((v) => v !== undefined)
-    .map((v) => (v as { by?: unknown }).by),
+  (Array.isArray(rawVerified) ? rawVerified : [rawVerified])
+    .filter((v: unknown) => v !== undefined)
+    .map((v: unknown) => (v as { by?: unknown }).by),
 );
 const idpGenerated = /^generated: (.*)$/m.exec(read(IDP))?.[1] ?? "";
 check(
