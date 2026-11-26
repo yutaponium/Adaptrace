@@ -32,6 +32,7 @@
 - [x] skillの候補（2026-11-26に4つ追加。ADR-026の使い分けに従い、既存の機能を組み合わせて対話しながら進める作業）。作ったら、`tests/skills/` に試験も置く
   - 済：既存のファイルの取り込み（`adaptrace-adopt`、ADR-026）、変更要求の受付（`adaptrace-change-request`、ADR-027）、見直しの実施（`adaptrace-review`、ADR-028）、定例の会議の準備（`adaptrace-weekly`、ADR-030）、議事録の取り込み（`adaptrace-minutes`、ADR-031）、判断の置き換え（`adaptrace-supersede`、ADR-032）、バンドルのヘルスチェック（`health` とskill `adaptrace-health`、ADR-033、ADR-034）、変更要求の判断の記録（`adaptrace-change-decision`、ADR-039）、マイルストーンの判定（`coverage` とskill `adaptrace-milestone`、ADR-040、ADR-041）、リスクの見直し（`adaptrace-risk`、ADR-043）、Backlog.mdとの同期（`sync --resolve <タスク>=<側>` とskill `adaptrace-sync`、ADR-045）
   - `state` を書き換えるskillは、`state` の値の一覧が未確定なので、バンドルで使っている値にそろえる（`adaptrace-change-request` と同じ方針）
+- [ ] CLIの改善の候補：Backlog.mdでアーカイブされたタスクの扱い。今は、Adaptraceの文書を残すと、`sync` が毎回 `missing` と知らせ、終了コードは1になる。`status: deprecated` にしても同じ。`backlog/archive/` に同じIDのタスクがあれば、`missing` と分けて知らせる（終了コード0）か、Adaptraceの側で終わったことにするかを検討する。skill `adaptrace-sync` は、今は扱いを利用者と決めるだけにしている（ADR-045）
 
 ## 未確定事項
 
