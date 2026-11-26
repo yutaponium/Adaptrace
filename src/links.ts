@@ -9,16 +9,18 @@ export interface BodyLink {
 const FENCE = /^ {0,3}(`{3,}|~{3,})/;
 const INLINE_CODE = /`[^`]*`/g;
 // A link destination: <...> (may contain spaces), or a run without spaces
-// that may hold balanced parentheses one level deep.
-const DEST = String.raw`(?:<([^<>\n]*)>|((?:[^\s<>()]|\([^\s<>()]*\))+))`;
+// that does not start with "<" and may hold balanced parentheses one level
+// deep.
+const DEST = String.raw`(?:<([^<>\n]*)>|((?!<)(?:[^\s()]|\([^\s()]*\))+))`;
 const TITLE = String.raw`(?:\s+(?:"[^"]*"|'[^']*'|\([^)]*\)))?`;
 // Link text may hold one level of brackets, as in a linked image [![b](i)](t).
-const TEXT = String.raw`\[((?:[^\[\]]|\[[^\[\]]*\])*)\]`;
+// A "[" escaped with a backslash does not open a link.
+const TEXT = String.raw`(?<!\\)\[((?:[^\[\]]|\[[^\[\]]*\])*)\]`;
 // One bracketed span, optionally followed by an inline destination (possibly
 // empty) or a second bracketed label. Images ("!" first) are matched to skip
 // them.
 const LINK = new RegExp(
-  String.raw`(!?)${TEXT}(?:(\(\s*(?:${DEST}${TITLE})?\s*\))|(\[([^\[\]]*)\]))?`,
+  String.raw`(!?)${TEXT}(?:(\(\s*(?:${DEST}${TITLE}\s*)?\))|(\[([^\[\]]*)\]))?`,
   "g",
 );
 // A link reference definition: [label]: target "title". The target may be on
@@ -26,17 +28,20 @@ const LINK = new RegExp(
 // allowed.
 const QUOTE = /^ {0,3}(?:> ?)+/;
 const DEFINITION = new RegExp(
-  String.raw`^ {0,3}\[([^\]]+)\]:(?:\s*(?:<([^<>\n]*)>|(\S+))${TITLE})?\s*$`,
+  String.raw`^ {0,3}\[([^\]]+)\]:(?:\s*${DEST}${TITLE})?\s*$`,
 );
-const NEXT_LINE_DEST = new RegExp(
-  String.raw`^\s*(?:<([^<>\n]*)>|(\S+))${TITLE}\s*$`,
-);
+const NEXT_LINE_DEST = new RegExp(String.raw`^\s*${DEST}${TITLE}\s*$`);
+const NEXT_LINE_TITLE = /^\s*(?:"[^"]*"|'[^']*'|\([^)]*\))\s*$/;
 // A line after which a new block starts: blank, an ATX heading, a setext
 // underline or a thematic break.
-const BLOCK_END = /^(?:|#{1,6}(?:\s.*)?|=+|-+|(?:\*\s*){3,}|(?:_\s*){3,})$/;
+const BLOCK_END =
+  /^(?:|#{1,6}(?:\s.*)?|=+|-+|(?:-\s*){3,}|(?:\*\s*){3,}|(?:_\s*){3,})$/;
 const TASK_BOX = /^\s*(?:[-*+]|\d+[.)])\s+$/;
-// Autolinks (<https://...>) are not link text.
-const AUTOLINK = /<[a-z][a-z0-9+.-]*:[^\s<>]*>/gi;
+// Autolinks (<https://...>) are not link text; an inline destination in
+// angle brackets ("](<https://...>)") is not an autolink.
+const AUTOLINK = /(?<!\]\(\s*)<[a-z][a-z0-9+.-]*:[^\s<>]*>/gi;
+// An HTML comment on one line.
+const COMMENT = /<!--.*?-->/g;
 const SCHEME = /^[a-z][a-z0-9+.-]*:/i;
 
 // Calls `visit` for each body line outside fenced code blocks. A fence closes
@@ -67,11 +72,14 @@ function normalizeLabel(label: string): string {
   return label.trim().replace(/\s+/g, " ").toLowerCase();
 }
 
-// Replaces inline code and autolinks with spaces of the same length, so that
+// Replaces inline code, autolinks and comments with spaces of the same length, so that
 // links inside them are not read but positions in the line stay the same.
 function mask(line: string): string {
   const blank = (code: string) => " ".repeat(code.length);
-  return line.replace(INLINE_CODE, blank).replace(AUTOLINK, blank);
+  return line
+    .replace(INLINE_CODE, blank)
+    .replace(COMMENT, blank)
+    .replace(AUTOLINK, blank);
 }
 
 interface ProseLine {
@@ -100,22 +108,31 @@ function readDefinitions(lines: ProseLine[]) {
     if (def && label && !label.startsWith("^")) {
       let target = def[2] ?? def[3];
       const next = lines[n + 1];
+      const nextRaw =
+        next?.index === index + 1 ? next.raw.replace(QUOTE, "") : undefined;
       if (target === undefined) {
         // "[label]:" alone is a definition only when the next line holds just
         // the destination (and an optional title).
         const dest =
-          next?.index === index + 1
-            ? NEXT_LINE_DEST.exec(next.raw.replace(QUOTE, ""))
-            : null;
+          nextRaw === undefined ? null : NEXT_LINE_DEST.exec(nextRaw);
         target = dest?.[1] ?? dest?.[2];
         if (target !== undefined && next) {
           used.add(next.index);
           n++;
         }
+      } else if (
+        next &&
+        nextRaw !== undefined &&
+        !/\s["'(]/.test(line.slice(line.indexOf("]:") + 2).trim()) &&
+        NEXT_LINE_TITLE.test(nextRaw)
+      ) {
+        // The title is on the next line.
+        used.add(next.index);
+        n++;
       }
       if (target !== undefined) {
         used.add(index);
-        if (target && !definitions.has(label)) definitions.set(label, target);
+        if (!definitions.has(label)) definitions.set(label, target);
         continue;
       }
     }
@@ -153,8 +170,6 @@ export function extractLinks(body: string, firstLine = 1): BodyLink[] {
       } else if (second !== undefined && second.length > 2) {
         const end = start + whole.length;
         target = lookup(raw.slice(end - second.length + 1, end - 1));
-        // "[a][b](c)" with b undefined: "[b](c)" may still be a link.
-        if (target === undefined) find.lastIndex = end - second.length;
       } else if (
         second !== undefined ||
         !(
@@ -164,6 +179,10 @@ export function extractLinks(body: string, firstLine = 1): BodyLink[] {
       ) {
         target = lookup(text);
       }
+      // An unresolved "[...]" is plain text; links inside it or right after
+      // it ("[a][b](c)" with b undefined) are read from just past its "[".
+      if (inline === undefined && target === undefined)
+        find.lastIndex = textStart;
       if (bang) continue;
       if (target) links.push({ target, line: firstLine + index });
     }

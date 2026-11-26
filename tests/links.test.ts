@@ -153,3 +153,29 @@ test("balanced parentheses in a destination and linked images", () => {
   expect(targets("[a](./guide_(v2).md)")).toEqual(["./guide_(v2).md"]);
   expect(targets("[![b](i.svg)](/doc.md)")).toEqual(["/doc.md"]);
 });
+
+test("links inside unresolved brackets are read", () => {
+  const targets = (body: string) => extractLinks(body).map((l) => l.target);
+  expect(targets("[Note: see [spec](/spec.md)]")).toEqual(["/spec.md"]);
+  expect(targets("[TODO: [req][1] first]\n\n[1]: /r.md")).toEqual(["/r.md"]);
+});
+
+test("angle-bracket URLs, '<' inside a target, escapes and comments", () => {
+  const targets = (body: string) => extractLinks(body).map((l) => l.target);
+  expect(targets("[spec](<https://example.com>)")).toEqual([
+    "https://example.com",
+  ]);
+  expect(targets("[a](x<y.md)")).toEqual(["x<y.md"]);
+  expect(targets("See \\[1] here\n\n[1]: /a.md")).toEqual([]);
+  expect(targets("<!-- [z][1] -->\n\n[1]: /gone.md")).toEqual([]);
+});
+
+test("definition edge cases", () => {
+  const targets = (body: string) => extractLinks(body).map((l) => l.target);
+  expect(targets('[x][b]\n\n[a]: /a.md\n  "Title"\n[b]: /b.md')).toEqual([
+    "/b.md",
+  ]);
+  expect(targets("para\n- - -\n[1]: /a.md\n\n[z][1]")).toEqual(["/a.md"]);
+  expect(targets("[z][1]\n\n[1]: <foo")).toEqual([]);
+  expect(targets("[x][a]\n\n[a]: <>\n[a]: /gone.md")).toEqual([]);
+});
