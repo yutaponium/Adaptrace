@@ -269,6 +269,7 @@ const ACTION_LABELS: Record<SyncAction["kind"], string> = {
   link: "record as in sync",
   conflict: "CONFLICT (changed on both sides)",
   missing: "MISSING in Backlog.md",
+  archived: "ARCHIVED in Backlog.md",
   "duplicate-link": "SKIPPED (backlog.id used twice)",
   pending: "PENDING (excluded by --direction)",
   "unmapped-state": "SKIPPED (state has no Backlog.md status)",
@@ -290,6 +291,10 @@ export function formatSync(plan: SyncPlan, written: boolean): string {
       lines.push(`${label} ${a.adaptrace}  (${a.id})`);
     } else if (a.kind === "unmapped-state") {
       lines.push(`${label} ${a.adaptrace}  state '${a.state}'`);
+    } else if (a.kind === "archived") {
+      lines.push(
+        `${label} ${a.adaptrace} <-> ${a.backlogPath} (${a.id})${a.changed ? "  [changed in Adaptrace; not exported]" : ""}`,
+      );
     } else if (a.kind === "duplicate-link") {
       lines.push(
         `${label} ${a.adaptrace}  (${a.id}, also ${a.others.join(", ")})`,
@@ -310,9 +315,11 @@ export function formatSync(plan: SyncPlan, written: boolean): string {
     CHANGE_KINDS.includes(a.kind),
   ).length;
   const pending = plan.actions.filter((a) => a.kind === "pending").length;
-  const problems = plan.actions.length - changes - pending;
+  const archived = plan.actions.filter((a) => a.kind === "archived").length;
+  const problems = plan.actions.length - changes - pending - archived;
   lines.push(
     `${plural(changes, "change")}, ${plural(problems, "problem")}, ${pending} pending, ${plan.inSync} in sync` +
+      (archived > 0 ? `, ${archived} archived` : "") +
       (changes > 0 && !written
         ? ". Run again with --write to apply"
         : written

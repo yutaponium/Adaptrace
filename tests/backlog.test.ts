@@ -373,3 +373,49 @@ test("--resolve per task settles each conflict to its own side", async () => {
     await readFile(join(dir, "backlog/tasks/back-9 - 設計する.md"), "utf8"),
   ).toContain("title: C");
 });
+
+test("a task archived in Backlog.md is reported as archived, not missing", async () => {
+  await sync();
+  const { rename } = await import("node:fs/promises");
+  // back-7 to archive/tasks, back-8 to archive/drafts, back-9 to drafts.
+  for (const [from, to] of [
+    ["tasks/back-7 - Write-docs.md", "archive/tasks/back-7 - Write-docs.md"],
+    ["tasks/back-8 - Build-MFA.md", "archive/drafts/back-8 - Build-MFA.md"],
+    ["tasks/back-9 - 設計する.md", "drafts/back-9 - 設計する.md"],
+  ] as const) {
+    await mkdir(join(dir, "backlog", to, ".."), { recursive: true });
+    await rename(join(dir, "backlog", from), join(dir, "backlog", to));
+  }
+  const { plan: p } = await plan();
+  expect(kinds(p)).toEqual([
+    "archived tasks/back-7.md",
+    "archived tasks/build.md",
+    "missing tasks/design.md",
+  ]);
+  expect(p.actions[0]).toMatchObject({
+    id: "BACK-7",
+    backlogPath: "archive/tasks/back-7 - Write-docs.md",
+    changed: false,
+  });
+  // Changed in Adaptrace after archiving: flagged, still not a problem.
+  const docs = join(dir, ".adaptrace/tasks/back-7.md");
+  await writeFile(
+    docs,
+    (await readFile(docs, "utf8")).replace("state: to_do", "state: done"),
+  );
+  expect((await plan()).plan.actions[0]).toMatchObject({
+    kind: "archived",
+    changed: true,
+  });
+  // A copy back in drafts/ wins over the archived one: missing again.
+  await mkdir(join(dir, "backlog/drafts"), { recursive: true });
+  await writeFile(
+    join(dir, "backlog/drafts/back-7 - Write-docs.md"),
+    "---\nid: BACK-7\ntitle: Write docs\nstatus: To Do\n---\n",
+  );
+  expect(kinds((await plan()).plan)[0]).toBe("missing tasks/back-7.md");
+  // Nothing is written for them, and no new id reuses theirs.
+  await put(".adaptrace/tasks/new.md", "---\ntype: Task\ntitle: New\n---\n");
+  const next = (await plan()).plan.actions.find((a) => a.kind === "export-new");
+  expect(next?.id).toBe("BACK-10");
+});

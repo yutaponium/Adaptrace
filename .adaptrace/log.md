@@ -2,6 +2,7 @@
 
 ## 2026-11-26
 
+* **Creation**: Backlog.mdでアーカイブされたタスクの扱いを [ADR-046](/decisions/adr-046-sync-archived.md) として記録した
 * **Creation**: Backlog.mdとの同期を支援するskillの方針を [ADR-045](/decisions/adr-045-sync-skill.md) として記録した
 * **Creation**: レビューの進め方を [ADR-044](/decisions/adr-044-review-order.md) として記録した（[ADR-017](/decisions/adr-017-gemini-review.md) の一部を置き換える）
 * **Creation**: リスクの見直しを支援するskillの方針を [ADR-043](/decisions/adr-043-risk-skill.md) として記録した

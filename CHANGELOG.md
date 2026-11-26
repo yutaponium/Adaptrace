@@ -6,6 +6,7 @@
 
 ### Added
 
+- `adaptrace sync`：Backlog.mdでアーカイブされたタスク（`archive/tasks/`、`archive/drafts/`）を、`missing` ではなく `archived` として知らせるようにした（ADR-046）。問題として扱わないので、`archived` だけなら終了コードは0。前回の同期の後にAdaptraceの文書が変わっていれば `changed: true` を付け、書き出されないことを示す。テキストの出力は `ARCHIVED in Backlog.md` で、最後の行に `N archived` を加える。MCPの `sync_plan` の結果にも `archived` が出る
 - Claude Codeのskill `adaptrace-sync`（`skills/adaptrace-sync/`、ADR-045）：Backlog.mdとの同期で、`sync` の計画を変更と問題に分けて示し、衝突、対応しない `state`、見つからないタスク、重複した `backlog.id` の扱いを、タスクごとに利用者と決めてから書き込む。Backlog.mdのファイルは、`sync --write` のほかでは書き換えない
 - `adaptrace sync --resolve <タスク>=<側>`：Backlog.mdとの衝突を、タスクごとにそろえられるようにした。タスクは、バンドルの中のパスか、Backlog.mdのIDで指定する。何回でも指定でき、全体の `--resolve adaptrace|backlog` より優先する。Backlog.mdのタスクと対応付いていないタスクや、同じタスクに別々の側を指定すると、終了コード2。全体の指定に `--resolve adaptrace --resolve backlog` と両方の側を指定した場合も、これまでは後の値を使っていたが、終了コード2にした
 - Claude Codeのskill `adaptrace-risk`（`skills/adaptrace-risk/`、ADR-043）：見直し時期を過ぎたリスクと、依存先が更新されたリスクを、1件ずつ利用者と見直す。評価の更新、対応策のタスクの作成、リスクを閉じるかどうか、次の見直し日を決め、`verified` と `stale_after` に記録する。閉じたリスクは `stale_after` を削除する。書き込みは承認を得てから行う

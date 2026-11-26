@@ -73,7 +73,8 @@ Adaptraceのskillに共通の決まり。
 | `link` | 両側の内容が同じで、対応づけの記録だけを書く | 変更 |
 | `conflict` | 前回の同期の後に、両側で変わった | 問題 |
 | `unmapped-state` | `state` に対応するステータスがBacklog.mdにないので、書き出せない | 問題 |
-| `missing` | `backlog.id` のタスクがBacklog.mdにない。削除されたか、アーカイブに移された | 問題 |
+| `missing` | `backlog.id` のタスクがBacklog.mdにない。削除されたか、下書き（`drafts/`）に戻された | 問題 |
+| `archived` | `backlog.id` のタスクが、Backlog.mdでアーカイブされた（`archive/tasks/` か `archive/drafts/`）。何も書き込まない | 知らせ |
 | `duplicate-link` | 同じ `backlog.id` を持つTaskが2つ以上ある。文書をコピーしたときに起きやすい | 問題 |
 | `pending` | `--direction` で除外した側の変更 | 保留 |
 
@@ -81,7 +82,8 @@ Adaptraceのskillに共通の決まり。
    - 項目の名前は、`title`、`state`、`tags`、`dependencies`（`depends_on` のうちタスクへのもの）、`body`、`fields` である。`body` は本文で、先頭の見出し行（`# <題>`）も含む。題を変えて見出しも変えると、`body` も変わったと出る。`fields` は、`assignee`、`priority` など、Adaptraceに対応する項目がないキーである。どのキーが違うかは計画に出ないので、Backlog.mdのファイルのキーと、Adaptraceの文書の `backlog.fields` を比べて示す
    - `import` と `export` は、Adaptraceの文書とBacklog.mdのファイルを読み、変わった項目の前後の値を示す。`import-new` と `export-new` は、題、ステータス、担当（`assignee`）、ラベルを示す
    - `errors` があれば、ファイルと内容を示す。読めないBacklog.mdのファイルや、`task_prefix` の誤りである。Backlog.mdの側で直すよう案内する
-3. 問題がなければ、手順3に進む
+   - `archived` は問題ではないので、扱いを尋ねなくてよい。Adaptraceの文書は変えず、`sync` も何も書き込まない。Backlog.mdのファイル（`backlogPath`）と、Adaptraceの文書の `state` を示す。`changed` が `true` なら、前回の同期の後にAdaptraceの文書が変わっている。その変更はBacklog.mdに書き出されないことを伝える。Backlog.mdの側に反映したいときは、利用者に、Backlog.mdでタスクをアーカイブから戻すよう案内する。Adaptraceの文書の `state` や本文を変えたいと利用者が言ったときだけ、差分を示して変える（手順2の「文書を編集するときの決まり」）。`sync` は、次も `archived` として知らせるが、終了コードは0のままである。
+3. 問題がなければ、手順3に進む。`pending` と `archived` は問題ではない
 
 ## 2. 問題の扱いを決める
 
@@ -115,7 +117,7 @@ Adaptraceのskillに共通の決まり。
 
 ### 見つからないタスク（`missing`）
 
-Backlog.mdの `backlog/archive/tasks/`、`backlog/archive/drafts/`、`backlog/drafts/` に、同じIDのタスクがあるかを確認して示す。`sync` は、アーカイブと下書きのタスクを変換しない。`backlog/completed/` のタスクは変換するので、`missing` にはならない。扱いを尋ねる。
+Backlog.mdの `backlog/drafts/` に、同じIDのタスクがあるかを確認して示す。`sync` は、下書きのタスクを変換しない。アーカイブされたタスクは `archived`、`backlog/completed/` のタスクは変換の対象なので、どちらも `missing` にはならない。扱いを尋ねる。
 
 - Backlog.mdの側で戻す：利用者に、Backlog.mdの側で戻すよう案内する。戻された後に、手順1からやり直す
 - Adaptraceの文書を残す：変更しない。`sync` は、このタスクを毎回知らせ、終了コードは1になる。ライフサイクルのキー `status` を `deprecated` にしても、知らせ続ける
@@ -152,6 +154,7 @@ Backlog.mdの `backlog/archive/tasks/`、`backlog/archive/drafts/`、`backlog/dr
 - 書き出したタスクと、取り込んだタスク。新しく作ったタスクと、振られたID
 - 衝突ごとに、そろえた側と、失われた変更
 - 残した問題（そろえなかった衝突、見つからないタスクなど）と、`sync` が次も知らせること
+- Backlog.mdでアーカイブされたタスク（`archived`）
 - Backlog.mdの側で、利用者が行うこと（ステータスの追加、タスクを戻すなど）
 - Backlog.mdから新しく取り込んだタスク。要件とのつながり（`satisfies`）がないので、必要ならPMが追加する
 - 取り込んだタスクに依存していて、`stale` に出た文書。見直しが要るかは、skill `adaptrace-review` で確認できる

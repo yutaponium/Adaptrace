@@ -48,6 +48,8 @@ export interface Backlog {
   tasks: Map<string, BacklogTask>; // by normalized id
   // Normalized ids in drafts and archives, which new ids must not reuse.
   reservedIds: Set<string>;
+  // Archived tasks (archive/tasks, archive/drafts): normalized id -> path.
+  archived: Map<string, string>;
   errors: { path: string; message: string }[];
 }
 
@@ -112,19 +114,29 @@ export async function loadBacklog(root: string): Promise<Backlog> {
     config,
     tasks: new Map(),
     reservedIds: new Set(),
+    archived: new Map(),
     errors: [],
   };
+  // A task in drafts/ is not archived, even if an archived copy is left.
+  const drafts = new Set<string>();
   for (const dir of RESERVED_DIRS) {
     const names = await readdir(posix.join(root, dir)).catch(() => []);
-    for (const name of names) {
+    for (const name of names.sort()) {
       if (!name.endsWith(".md")) continue;
       const parsed = parseDocument(
         await readFile(posix.join(root, dir, name), "utf8"),
       );
       const id = parsed.ok ? parsed.frontmatter?.id : undefined;
-      if (typeof id === "string") backlog.reservedIds.add(normalizeId(id));
+      if (typeof id !== "string") continue;
+      backlog.reservedIds.add(normalizeId(id));
+      const key = normalizeId(id);
+      if (dir === "drafts") drafts.add(key);
+      else if (!backlog.archived.has(key)) {
+        backlog.archived.set(key, `${dir}/${name}`);
+      }
     }
   }
+  for (const key of drafts) backlog.archived.delete(key);
   for (const dir of TASK_DIRS) {
     const names = await readdir(posix.join(root, dir)).catch(() => []);
     for (const name of names.sort()) {
@@ -248,6 +260,11 @@ export function resolveTaskSides(
         error: `--resolve ${key}=${side}: not a Task linked to a Backlog.md task (by its path or backlog.id)`,
       };
     }
+    if (backlog.archived.has(ids.get(path) ?? "")) {
+      return {
+        error: `--resolve ${key}=${side}: ${path} links to ${ids.get(path)}, which is archived in Backlog.md; there is nothing to resolve`,
+      };
+    }
     if (!backlog.tasks.has(ids.get(path) ?? "")) {
       return {
         error: `--resolve ${key}=${side}: ${path} links to ${ids.get(path)}, which is not in Backlog.md`,
@@ -354,6 +371,14 @@ export type SyncAction =
       fields: string[];
     }
   | { kind: "missing"; adaptrace: string; id: string }
+  | {
+      kind: "archived";
+      adaptrace: string;
+      id: string;
+      backlogPath: string;
+      // The Adaptrace side changed since the last sync: never exported.
+      changed: boolean;
+    }
   | { kind: "duplicate-link"; adaptrace: string; id: string; others: string[] }
   | {
       kind: "pending";
@@ -699,6 +724,21 @@ export function planSync(
       continue;
     }
     const task = backlog.tasks.get(normalizeId(link.id));
+    // Archived in Backlog.md: reported, but not a problem.
+    const archivedPath =
+      task === undefined
+        ? backlog.archived.get(normalizeId(link.id))
+        : undefined;
+    if (archivedPath !== undefined) {
+      plan.actions.push({
+        kind: "archived",
+        adaptrace: concept.path,
+        id: link.id,
+        backlogPath: archivedPath,
+        changed: viewHash(adaptraceView(concept, link, ids)) !== link.sync,
+      });
+      continue;
+    }
     if (task === undefined) {
       plan.actions.push({
         kind: "missing",

@@ -25,7 +25,7 @@ skillを修正したら、試験の必要度を判断する（ADR-042）。試�
 | `tasks/manual.md`（BACK-4） | 衝突。PMが題を変え、開発者が `In Progress` にして担当を付けた | Backlog.mdの側にそろえる（`--resolve tasks/manual.md=backlog` か `back-4=backlog`）。PMの題の変更は失われる |
 | `tasks/audit-log.md`（BACK-1） | 衝突。PMが本文に保存期間を書き、開発者が `In Progress` にした | 両方の変更を残す。Adaptraceの `state` を `in_progress` にしてから、Adaptraceの側にそろえる |
 | `tasks/session-timeout.md` | 対応しない `state`（`waiting`） | `state` を `to_do` にして、新しいタスクとして書き出す |
-| `tasks/legacy-import.md`（BACK-2） | 見つからない。開発者がアーカイブした | Adaptraceの文書を残す。`sync` は次も知らせる |
+| `tasks/legacy-import.md`（BACK-2） | アーカイブされた（`archived`）。開発者がアーカイブした | Adaptraceの文書を残す。`sync` は次も知らせる |
 | BACK-6 | 取り込む。開発者が追加した | `tasks/back-6.md` として取り込む |
 
 ## 手順
@@ -65,7 +65,7 @@ Backlog.mdと同期したいです。開発者がBacklog.mdでタスクを動か
 
 - `must`
   - `validate` のエラーが0件
-  - `sync` の計画に残るのは、アーカイブされたタスク（`missing`）だけ
+  - `sync` の計画に残るのは、アーカイブされたタスク（`archived`）だけ
   - ログイン画面のタスクが `done` で取り込まれ、SMSのタスクの新しい題がBacklog.mdに書き出されている
   - 操作マニュアルのタスク：両側とも、`In Progress`、担当が田中、元の題
   - 監査ログのタスク：両側とも、`In Progress` で、本文に保存期間がある
