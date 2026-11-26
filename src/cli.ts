@@ -1,6 +1,6 @@
 #!/usr/bin/env bun
 import { mkdir, readFile, stat, writeFile } from "node:fs/promises";
-import { basename, dirname, join, resolve } from "node:path";
+import { basename, dirname, join, posix, resolve, sep } from "node:path";
 import { parseArgs } from "node:util";
 import pkg from "../package.json";
 import { assessContext } from "./assess";
@@ -11,6 +11,7 @@ import {
   loadBacklogConfig,
   nowIso,
   planSync,
+  resolveTaskSides,
 } from "./backlog";
 import { board, doneState } from "./board";
 import { loadBundle } from "./bundle";
@@ -144,7 +145,8 @@ Options:
   --write             sync: write the changes instead of only showing them
                       extract, meeting: create the drafted files
                       migrate-dates: write generated into the documents
-  --resolve <side>    sync: settle conflicts with adaptrace | backlog
+  --resolve <side>    sync: settle conflicts with adaptrace | backlog; or <task>=<side> for
+                      one linked task (a bundle path or a Backlog.md id), one side per task
   --references        graph: include body links as untyped edges
   --link-base <url>   board, estimate, progress, list, conflicts, meeting, coverage --format markdown: link titles to <url> + path
   --request <doc>     estimate: the change request, given to the LLM as the reason; without
@@ -260,7 +262,7 @@ export async function run(args: string[]): Promise<number> {
         backlog: { type: "string" },
         direction: { type: "string" },
         write: { type: "boolean" },
-        resolve: { type: "string" },
+        resolve: { type: "string", multiple: true },
         "link-base": { type: "string" },
         llm: { type: "string" },
         all: { type: "boolean" },
@@ -676,22 +678,63 @@ export async function run(args: string[]): Promise<number> {
         "import",
         "export",
       ]);
-      const resolve =
-        values.resolve === undefined
-          ? undefined
-          : (pickOption("--resolve", values.resolve, [
-              "adaptrace",
-              "backlog",
-            ]) as "adaptrace" | "backlog");
+      // --resolve <side> for every conflict, or <task>=<side> for one task
+      // (a bundle path or a Backlog.md id); it may be given several times.
+      type Side = "adaptrace" | "backlog";
+      let resolveAll: Side | undefined;
+      const entries: [string, Side][] = [];
+      for (const raw of values.resolve ?? []) {
+        const value = raw.trim();
+        const eq = value.lastIndexOf("=");
+        if (eq === -1) {
+          const side = pickOption("--resolve", value, [
+            "adaptrace",
+            "backlog",
+          ]) as Side;
+          if (resolveAll !== undefined && resolveAll !== side) {
+            throw new UsageError("--resolve <side> is given both ways");
+          }
+          resolveAll = side;
+          continue;
+        }
+        const task = value.slice(0, eq).trim();
+        const side = pickOption("--resolve", value.slice(eq + 1).trim(), [
+          "adaptrace",
+          "backlog",
+        ]) as Side;
+        if (task === "") throw new UsageError(`--resolve ${value}: no task`);
+        entries.push([task, side]);
+      }
       const bundle = await openBundle(bundleDir);
       const backlogDir = values.backlog ?? DEFAULT_BACKLOG;
       if (!(await isDirectory(backlogDir))) {
         throw new UsageError(`Backlog.md directory '${backlogDir}' not found`);
       }
       const backlog = await loadBacklog(backlogDir);
+      // Each named task must be linked on both sides, with one side only:
+      // a typo or a contradiction would otherwise go unnoticed.
+      // A path may be written as ./tasks/a.md, /tasks/a.md or with the
+      // bundle directory in front (.adaptrace/tasks/a.md).
+      const bundlePrefix = `${posix.normalize(bundle.root.split(sep).join("/")).replace(/\/+$/, "")}/`;
+      const keyOf = (task: string) => {
+        const path = posix.normalize(task.split(sep).join("/"));
+        const inBundle = path.startsWith(bundlePrefix)
+          ? path.slice(bundlePrefix.length)
+          : path;
+        return inBundle.replace(/^(\.\/)+/, "").replace(/^\/+/, "");
+      };
+      const resolveTasks = resolveTaskSides(
+        bundle,
+        backlog,
+        entries.map(([task, side]) => [keyOf(task), side]),
+      );
+      if (!(resolveTasks instanceof Map)) {
+        throw new UsageError(resolveTasks.error);
+      }
       const plan = planSync(bundle, backlog, {
         direction: direction as Direction,
-        resolve,
+        resolve: resolveAll,
+        resolveTasks,
         generatedBy: `adaptrace/${pkg.version}`,
       });
       const write = values.write ?? false;

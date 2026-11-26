@@ -390,7 +390,7 @@ adaptrace sync --write    # 実際に書き込む
 
 - `type: Task` の文書と、Backlog.mdのタスクを双方向に変換します。`state` と、Backlog.mdの `status` が対応します
 - `depends_on` のうち、要件や判断へのものは、Adaptrace側にだけ残ります。Backlog.md側はタスク間の依存だけになるので、カンバンが散らかりません
-- 両側で同じタスクが変わったときは、上書きせずに衝突として知らせます。`--resolve adaptrace` か `--resolve backlog` で、どちらかにそろえます
+- 両側で同じタスクが変わったときは、上書きせずに衝突として知らせます。`--resolve adaptrace` か `--resolve backlog` で、どちらかにそろえます。タスクごとに `--resolve tasks/design.md=backlog` のように指定することもできます
 
 開発者はBacklog.mdでタスクを動かします。PMは定例の前に `sync` で取り込み、`stale` と `board` を確認します。
 この流れにすると、それぞれが慣れたツールを使えます。

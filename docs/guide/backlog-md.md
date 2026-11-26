@@ -294,6 +294,12 @@ adaptrace sync --resolve backlog --write     # Backlog.md の内容にそろえ�
 adaptrace sync --resolve adaptrace --write   # Adaptrace の内容にそろえる
 ```
 
+タスクごとに、どちらにそろえるかを決めることもできます。タスクは、バンドルの中のパスか、Backlog.mdのIDで指定します。
+
+```bash
+adaptrace sync --resolve tasks/design.md=adaptrace --resolve back-7=backlog --write
+```
+
 `--resolve` でも、`--write` を付けなければ確認だけです。
 選ばなかった側の変更は失われます。必要な変更は、そろえた後で手で戻してください。
 

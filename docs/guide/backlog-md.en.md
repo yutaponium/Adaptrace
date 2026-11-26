@@ -296,6 +296,12 @@ adaptrace sync --resolve backlog --write     # keep the Backlog.md content
 adaptrace sync --resolve adaptrace --write   # keep the Adaptrace content
 ```
 
+You can also decide the side task by task. Name the task by its bundle path or its Backlog.md id.
+
+```bash
+adaptrace sync --resolve tasks/design.md=adaptrace --resolve back-7=backlog --write
+```
+
 Even with `--resolve`, nothing is written unless you add `--write`.
 Changes on the side you did not choose are lost. If you need them, restore them by hand afterwards.
 

@@ -327,3 +327,49 @@ test("dates written to Backlog.md are quoted so YAML 1.1 parsers keep them as st
   expect(text).toMatch(/^updated_date: '2026-10-29T00:00:00Z'$/m);
   expect(text).toMatch(/^created_date: '2026-10-29T00:00:00Z'$/m);
 });
+
+test("--resolve per task settles each conflict to its own side", async () => {
+  await sync();
+  // Change both tasks on both sides.
+  const edit = async (path: string, from: string, to: string) => {
+    const file = join(dir, path);
+    await writeFile(file, (await readFile(file, "utf8")).replace(from, to));
+  };
+  await edit(".adaptrace/tasks/back-7.md", "title: Write docs", "title: A");
+  await edit(
+    "backlog/tasks/back-7 - Write-docs.md",
+    "title: Write docs",
+    "title: B",
+  );
+  await edit(".adaptrace/tasks/design.md", "title: 設計する", "title: C");
+  await edit(
+    "backlog/tasks/back-9 - 設計する.md",
+    "title: 設計する",
+    "title: D",
+  );
+  expect(kinds((await plan()).plan)).toEqual([
+    "conflict tasks/back-7.md",
+    "conflict tasks/design.md",
+  ]);
+
+  // One by Backlog.md id (any case), one by bundle path; the default for
+  // the rest does not override them.
+  const p = await sync({
+    generatedBy: "adaptrace/test",
+    resolve: "adaptrace",
+    resolveTasks: new Map([
+      ["BACK-7", "backlog"],
+      ["tasks/design.md", "adaptrace"],
+    ]),
+  });
+  expect(kinds(p)).toEqual([
+    "import tasks/back-7.md",
+    "export tasks/design.md",
+  ]);
+  expect(
+    await readFile(join(dir, ".adaptrace/tasks/back-7.md"), "utf8"),
+  ).toContain("title: B");
+  expect(
+    await readFile(join(dir, "backlog/tasks/back-9 - 設計する.md"), "utf8"),
+  ).toContain("title: C");
+});

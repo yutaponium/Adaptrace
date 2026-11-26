@@ -222,6 +222,48 @@ function linkedIds(bundle: Bundle): {
   return { ids, duplicates };
 }
 
+// Per-task sides for --resolve: each key (a bundle path or a Backlog.md id)
+// must name a task linked on both sides, and a task may get one side only.
+// Returns the sides by bundle path, or an error message.
+export function resolveTaskSides(
+  bundle: Bundle,
+  backlog: Backlog,
+  entries: [string, "adaptrace" | "backlog"][],
+): Map<string, "adaptrace" | "backlog"> | { error: string } {
+  const { ids, duplicates } = linkedIds(bundle);
+  const pathById = new Map([...ids].map(([path, id]) => [id, path]));
+  const sides = new Map<string, "adaptrace" | "backlog">();
+  for (const [key, side] of entries) {
+    const duplicated = [...duplicates].find(
+      ([id, paths]) => id === normalizeId(key) || paths.includes(key),
+    );
+    if (duplicated) {
+      return {
+        error: `--resolve ${key}=${side}: backlog.id ${duplicated[0]} is shared by ${duplicated[1].join(", ")}; give each Task its own`,
+      };
+    }
+    const path = ids.has(key) ? key : pathById.get(normalizeId(key));
+    if (path === undefined) {
+      return {
+        error: `--resolve ${key}=${side}: not a Task linked to a Backlog.md task (by its path or backlog.id)`,
+      };
+    }
+    if (!backlog.tasks.has(ids.get(path) ?? "")) {
+      return {
+        error: `--resolve ${key}=${side}: ${path} links to ${ids.get(path)}, which is not in Backlog.md`,
+      };
+    }
+    const before = sides.get(path);
+    if (before !== undefined && before !== side) {
+      return {
+        error: `--resolve ${key}=${side}: ${path} is already given ${before}`,
+      };
+    }
+    sides.set(path, side);
+  }
+  return sides;
+}
+
 function adaptraceView(
   concept: Concept,
   link: LinkInfo | null,
@@ -452,12 +494,23 @@ export function planSync(
     direction?: Direction;
     // Settles conflicts in favor of one side; without it they are reported.
     resolve?: "adaptrace" | "backlog";
+    // Per task, by bundle path (tasks/a.md) or Backlog.md id (back-7); it
+    // comes before resolve.
+    resolveTasks?: Map<string, "adaptrace" | "backlog">;
     now?: Date;
     generatedBy: string;
     tasksDir?: string;
   },
 ): SyncPlan {
   const direction = options.direction ?? "both";
+  // The side a conflict on this task is settled to, if any.
+  const byId = new Map(
+    [...(options.resolveTasks ?? [])].map(([k, v]) => [normalizeId(k), v]),
+  );
+  const sideFor = (path: string, id: string) =>
+    options.resolveTasks?.get(path) ??
+    byId.get(normalizeId(id)) ??
+    options.resolve;
   const now = options.now ?? new Date();
   const tasksDir = options.tasksDir ?? "tasks";
   const plan: SyncPlan = {
@@ -719,14 +772,14 @@ export function planSync(
     } else if (
       mineChanged &&
       theirsChanged &&
-      options.resolve === "adaptrace" &&
+      sideFor(concept.path, task.id) === "adaptrace" &&
       canExport
     ) {
       exportTo(concept, mine, task.id, task, fields);
     } else if (
       mineChanged &&
       theirsChanged &&
-      options.resolve === "backlog" &&
+      sideFor(concept.path, task.id) === "backlog" &&
       canImport
     ) {
       importFrom(

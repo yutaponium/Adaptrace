@@ -277,3 +277,86 @@ test("coverage: --milestone must be a live Milestone, --type not empty", async (
   expect(await run(["coverage", COVERAGE, "--type", " "])).toBe(2);
   expect(await run(["coverage", COVERAGE, "--type", "Task"])).toBe(2);
 });
+
+test("sync --resolve: per task, and usage errors", async () => {
+  captureLog();
+  const error = spyOn(console, "error").mockImplementation(() => {});
+  const parent = await mkdtemp(join(tmpdir(), "adaptrace-cli-sync-"));
+  const { mkdir, readFile, writeFile } = await import("node:fs/promises");
+  const put = async (path: string, text: string) => {
+    await mkdir(join(parent, path, ".."), { recursive: true });
+    await writeFile(join(parent, path), text);
+  };
+  const edit = async (path: string, from: string, to: string) => {
+    const file = join(parent, path);
+    await writeFile(file, (await readFile(file, "utf8")).replace(from, to));
+  };
+  try {
+    await put("b/index.md", "# B\n");
+    await put("b/tasks/a.md", "---\ntype: Task\ntitle: A\n---\n");
+    await put("b/requirements/r.md", "---\ntype: Requirement\ntitle: R\n---\n");
+    await put(
+      "backlog/config.yml",
+      'statuses: ["To Do", "Done"]\ntask_prefix: "back"\n',
+    );
+    const args = [
+      "sync",
+      join(parent, "b"),
+      "--backlog",
+      join(parent, "backlog"),
+    ];
+    expect(await run([...args, "--write"])).toBe(0);
+    // The same task changed on both sides: a conflict.
+    await edit("b/tasks/a.md", "title: A", "title: Mine");
+    const backlogFile = "backlog/tasks/back-1 - A.md";
+    await edit(backlogFile, "title: A", "title: Theirs");
+    expect(await run(args)).toBe(1);
+    // Settled by its Backlog.md id, in another case.
+    expect(await run([...args, "--resolve", "BACK-1=backlog", "--write"])).toBe(
+      0,
+    );
+    expect(await readFile(join(parent, "b/tasks/a.md"), "utf8")).toContain(
+      "title: Theirs",
+    );
+    // A path with the bundle directory in front reads as the bundle path.
+    await edit("b/tasks/a.md", "title: Theirs", "title: Mine again");
+    await edit(backlogFile, "title: Theirs", "title: Theirs again");
+    expect(
+      await run([
+        ...args,
+        "--resolve",
+        `${join(parent, "b")}/tasks/a.md=adaptrace`,
+        "--write",
+      ]),
+    ).toBe(0);
+    expect(await readFile(join(parent, backlogFile), "utf8")).toContain(
+      "title: Mine again",
+    );
+    // Not a linked task, or one task given both sides, or both global sides.
+    expect(await run([...args, "--resolve", "requirements/r.md=backlog"])).toBe(
+      2,
+    );
+    expect(String(error.mock.calls.at(-1)?.[0])).toContain(
+      "not a Task linked to a Backlog.md task",
+    );
+    expect(
+      await run([
+        ...args,
+        "--resolve",
+        "tasks/a.md=adaptrace",
+        "--resolve",
+        "back-1=backlog",
+      ]),
+    ).toBe(2);
+    expect(String(error.mock.calls.at(-1)?.[0])).toContain("is already given");
+    expect(
+      await run([...args, "--resolve", "adaptrace", "--resolve", "backlog"]),
+    ).toBe(2);
+    // The same global side twice is fine.
+    expect(
+      await run([...args, "--resolve", "adaptrace", "--resolve", " adaptrace"]),
+    ).toBe(0);
+  } finally {
+    await rm(parent, { recursive: true, force: true });
+  }
+});

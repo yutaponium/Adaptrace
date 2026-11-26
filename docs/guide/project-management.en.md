@@ -392,7 +392,7 @@ adaptrace sync --write    # actually writes
 
 - It converts `type: Task` documents and Backlog.md tasks both ways. `state` corresponds to Backlog.md's `status`
 - `depends_on` entries that point to requirements or decisions stay only on the Adaptrace side. On the Backlog.md side, only dependencies between tasks remain, so the kanban board stays uncluttered
-- When the same task has changed on both sides, it does not overwrite either. It reports a conflict. Use `--resolve adaptrace` or `--resolve backlog` to make both sides match one of them
+- When the same task has changed on both sides, it does not overwrite either. It reports a conflict. Use `--resolve adaptrace` or `--resolve backlog` to make both sides match one of them. You can also give it per task, as in `--resolve tasks/design.md=backlog`.
 
 Developers move tasks in Backlog.md. Before the regular meeting, the PM brings them in with `sync` and checks `stale` and `board`.
 With this flow, everyone can use the tool they are used to.
