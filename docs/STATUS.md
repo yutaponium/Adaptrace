@@ -15,6 +15,7 @@
 - skillを、Claude Codeのプラグインとして配布する。リポジトリのルートがプラグインとマーケットプレイスを兼ねる（`.claude-plugin/`）。skillに、共通の書き方の節を置いた（2026-11-26、ADR-037）
 - 行動規範（`CODE_OF_CONDUCT.md`）の連絡先を、プロジェクト用のメールアドレス `adaptrace.project@gmail.com` にした（2026-11-26）
 - GitHub Actionsのアクションを、コミットのSHAで固定した。DependabotがアクションとBun（`bun.lock`）の依存パッケージの更新を、毎週PRで提案する（2026-11-26、ADR-035）。Dependabotのコミットは、DCOの `Signed-off-by` の対象外にした
+- skillの試験は一律には必須にせず、変更の内容から必要度を判断し、根拠と推奨案を示してメンテナーの確認を取る（2026-11-26、ADR-042）
 - PRの前のレビューは、`/code-review` とGeminiのレビュー（skill「gemini-review」）を同時に開始する（2026-11-06、ADR-017）。ADR-007は `status: deprecated` にした。送らないものは `.gemini-review.json` で決める
 - メール・チャットの文案やメモは、リポジトリの `.draft/` に書く（2026-11-06、`CLAUDE.md`）。`.draft/` は `.gitignore` で除外した
 - `AGENTS.md` に「文書の書き方と用語」を追加した（2026-11-23）
