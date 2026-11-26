@@ -1,7 +1,7 @@
 {
   "name": "adaptrace",
   "version": "1.0.0",
-  "description": "Claude Code skills for Adaptrace: bring in existing files, take change requests, record decisions on them, review, prepare regular meetings, take in minutes, replace decisions, judge milestones and check the health of the dependencies, in OKF Markdown bundles",
+  "description": "Claude Code skills for Adaptrace: bring in existing files, take change requests, record decisions on them, review, prepare regular meetings, take in minutes, replace decisions, judge milestones, review risks and check the health of the dependencies, in OKF Markdown bundles",
   "author": {
     "name": "yutaponium",
     "email": "adaptrace.project@gmail.com",

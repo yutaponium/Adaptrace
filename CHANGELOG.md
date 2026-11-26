@@ -6,6 +6,7 @@
 
 ### Added
 
+- Claude Codeのskill `adaptrace-risk`（`skills/adaptrace-risk/`、ADR-043）：見直し時期を過ぎたリスクと、依存先が更新されたリスクを、1件ずつ利用者と見直す。評価の更新、対応策のタスクの作成、リスクを閉じるかどうか、次の見直し日を決め、`verified` と `stale_after` に記録する。閉じたリスクは `stale_after` を削除する。書き込みは承認を得てから行う
 - Claude Codeのskill `adaptrace-milestone`（`skills/adaptrace-milestone/`、ADR-041）：マイルストーンの前に、範囲の要件の状況、終わっていない作業、期日に間に合わない作業、範囲に関わる未決の変更要求、古くなった文書を示す。作業を別のマイルストーンに移す、期日を変えるなどの扱いを項目ごとに利用者と決め、マイルストーンの計画（`due`、`depends_on`、`blocks`、`state`）と作業の `due`・`blocks` だけを変える。書き込みは承認を得てから行う
 - `adaptrace coverage [bundle]` とMCPのツール `coverage`（ADR-040）：要件ごとに、満たす文書（`satisfies`）と進み具合を示す。数える文書のうち、満たす文書がない要件は `uncovered`、終わっていない文書がある要件は `open`、それ以外は `covered`。TaskとMilestoneは `state` で、要件は `covered` かどうかで、終わったかを決める。`--milestone` で、マイルストーンが待っている文書をたどった範囲に絞り、範囲のTaskを担当者と期日とともに示す。`--done` で終わったTaskとMilestoneの `state`、`--type` で要件の型を変えられる。`--format text|markdown|json`
 - Claude Codeのskill `adaptrace-change-decision`（`skills/adaptrace-change-decision/`、ADR-039）：変更要求の承認、却下、保留の判断を記録する。`state` をバンドルで使っている値にし、本文の末尾に「判断」の見出しで、判断した日、判断した人、理由を書く。判断の前に、影響範囲が重なる未決の変更要求を調べ、承認した変更要求の見直し（skill `adaptrace-review`）と合わせて報告する。書き込みは承認を得てから行う

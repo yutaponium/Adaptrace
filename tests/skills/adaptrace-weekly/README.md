@@ -8,7 +8,7 @@ skillを修正したら、この試験を実行する。試験の考え方と共
 | ファイル | 内容 |
 |---|---|
 | `repo/` | 模擬のリポジトリ。日付は `{{D+4}}`（今日から4日後）、`{{T-2}}`（2日前の10時）のように書き、`setup.sh` が実行した日を基準に置き換える。期限を過ぎたか、次の定例までかは、今日によって決まるため |
-| `../render-dates.ts` | 日付の置き換え。基準の日を指定できる。`adaptrace-milestone` の試験と共通。`setup.sh` は、環境変数 `ADAPTRACE_TEST_DAY`（`YYYY-MM-DD`）を基準の日として渡す |
+| `../render-dates.ts` | 日付の置き換え。基準の日を指定できる。`adaptrace-milestone`、`adaptrace-risk` の試験と共通。`setup.sh` は、環境変数 `ADAPTRACE_TEST_DAY`（`YYYY-MM-DD`）を基準の日として渡す。`run.ts` で試験するときは、ふつうは指定しない。実行役は、実際の今日の日付で動くため |
 | `setup.sh` | `repo/` から試験用のgitリポジトリを作り、日付を置き換え、skillをコピーする |
 | `prompts/runner.md` | 実行役への依頼 |
 | `check.ts` | skillを実行した後のリポジトリと、対話の記録を確認する。`must` が1つでも失敗すると、終了コード1 |

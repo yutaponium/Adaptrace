@@ -1,0 +1,11 @@
+---
+type: Task
+title: ログイン画面のMFA対応
+owner: tanaka
+state: in_progress
+due: 2026-12-15
+satisfies: /requirements/req-1-mfa.md
+generated: { by: human:sato, at: 2026-10-27T10:00:00+09:00 }
+---
+
+# ログイン画面のMFA対応

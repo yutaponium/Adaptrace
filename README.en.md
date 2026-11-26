@@ -382,7 +382,7 @@ Write the same JSON as for Antigravity in the project's `.cursor/mcp.json` (or `
 
 ## Adding the skills
 
-Adaptrace has nine skills that teach an AI agent the steps of a task. `adaptrace-change-decision` and `adaptrace-milestone` are available from the release after v1.0.0. The skills follow the open [Agent Skills](https://agentskills.io/) format.
+Adaptrace has ten skills that teach an AI agent the steps of a task. `adaptrace-change-decision`, `adaptrace-milestone` and `adaptrace-risk` are available from the release after v1.0.0. The skills follow the open [Agent Skills](https://agentskills.io/) format.
 
 > **The skills are tested only with Claude Code.** How they work with other agents has not been checked. The skills also contain instructions that assume Claude Code features (such as a tool that asks questions with choices). The skills are written in Japanese; English reference translations are in [docs/skills/](docs/skills/).
 
@@ -431,6 +431,7 @@ Every skill works in a conversation with you. It changes files only after you ap
 | Create documents from meeting minutes, and record what was decided in existing ones | `adaptrace-minutes` ([skills/adaptrace-minutes/](skills/adaptrace-minutes/SKILL.md)) | [adaptrace-minutes.en.md](docs/skills/adaptrace-minutes.en.md) |
 | Replace a decision with a new one, and settle the documents that depended on the old one | `adaptrace-supersede` ([skills/adaptrace-supersede/](skills/adaptrace-supersede/SKILL.md)) | [adaptrace-supersede.en.md](docs/skills/adaptrace-supersede.en.md) |
 | Before a milestone, show the work and requirements left and the change requests that touch it, and decide how to handle them | `adaptrace-milestone` ([skills/adaptrace-milestone/](skills/adaptrace-milestone/SKILL.md)) | [adaptrace-milestone.en.md](docs/skills/adaptrace-milestone.en.md) |
+| Review the risks past their review date one at a time, and record the assessment, mitigation tasks and the next review date | `adaptrace-risk` ([skills/adaptrace-risk/](skills/adaptrace-risk/SKILL.md)) | [adaptrace-risk.en.md](docs/skills/adaptrace-risk.en.md) |
 | Check the health of the dependencies, and tidy dependencies on deprecated documents, redundant dependencies, orphans, deadlocks and more | `adaptrace-health` ([skills/adaptrace-health/](skills/adaptrace-health/SKILL.md)) | [adaptrace-health.en.md](docs/skills/adaptrace-health.en.md) |
 
 ## Roadmap

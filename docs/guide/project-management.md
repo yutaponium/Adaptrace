@@ -259,8 +259,11 @@ risks/idp-lockin.md  updated 2026-10-05T11:00:00+09:00 (generated.at)
   past stale_after (2026-10-26T00:00:00+09:00)
 ```
 
-見直したら、`stale_after` を次の見直し日にし、`generated.at` を今の日時にします。
+見直したら、`stale_after` を次の見直し日にします。内容を変えたら `generated.at` を今の日時にし、変えなかったら `verified` に見直した人と日時を記録します。
+
 リスクを `depends_on` で判断につないでおけば、判断が変わったときにも `stale` に表示されます。
+
+Claude Codeを使っている場合は、skill `adaptrace-risk` で、見直し時期を過ぎたリスクを1件ずつ見直せます。評価の更新、対応策のタスクの作成、リスクを閉じるかどうか、次の見直し日を利用者と決め、承認を得てから記録します。内容を変えなかったリスクは、`generated` を変えずに `verified` に記録します。このskillは、v1.0.0の次のリリースから使えます。skillの入手方法は、[既存のリポジトリに導入するガイド](adoption.md#claude-codeに取り込みを手伝ってもらう) と同じです。プラグインでインストールした場合は、すべてのskillがそろっています。フォルダをコピーする場合は、コマンドの `adaptrace-adopt` を `adaptrace-risk` に置き換えてください。
 
 ## 意思決定を置き換える
 
