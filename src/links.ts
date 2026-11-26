@@ -32,11 +32,9 @@ const DEFINITION = new RegExp(
 const NEXT_LINE_DEST = new RegExp(String.raw`^\s*${DEST}(${TITLE})\s*$`);
 const NEXT_LINE_TITLE = /^\s*(?:"[^"]*"|'[^']*'|\([^)]*\))\s*$/;
 // A line after which a new block starts: blank, an ATX heading, a setext
-// underline, a thematic break or an HTML comment.
+// underline, a thematic break, or an HTML comment or the end of one.
 const BLOCK_END =
-  /^(?:|#{1,6}(?:\s.*)?|=+|-+|(?:-\s*){3,}|(?:\*\s*){3,}|(?:_\s*){3,}|<!--.*-->)$/;
-// A link in link text: "[b](" or "[b][" not after "!".
-const NESTED_LINK = /(?<!!)\[[^[\]]*\][([]/;
+  /^(?:|#{1,6}(?:\s.*)?|=+|-+|(?:-\s*){3,}|(?:\*\s*){3,}|(?:_\s*){3,}|<!--.*-->|.*-->)$/;
 const TASK_BOX = /^\s*(?:[-*+]|\d+[.)])\s+$/;
 // Autolinks (<https://...>) are not link text; an inline destination in
 // angle brackets ("](<https://...>)") is not an autolink.
@@ -68,9 +66,15 @@ export function forEachProseLine(
   });
 }
 
-// Matches reference labels case-insensitively, ignoring runs of whitespace.
+// Matches reference labels case-insensitively (close to Unicode case folding:
+// "Straße" matches "STRASSE"), treating runs of spaces, tabs and newlines as
+// one space. Other whitespace, such as an ideographic space, is kept.
 function normalizeLabel(label: string): string {
-  return label.trim().replace(/\s+/g, " ").toLowerCase();
+  return label
+    .replace(/^[ \t\n]+|[ \t\n]+$/g, "")
+    .replace(/[ \t\n]+/g, " ")
+    .toLowerCase()
+    .toUpperCase();
 }
 
 // Replaces inline code, autolinks and comments with spaces of the same length,
@@ -158,6 +162,65 @@ function readDefinitions(lines: ProseLine[]) {
   return { definitions, used };
 }
 
+interface Resolved {
+  // The target, if the span is a link (or an image) with a known target.
+  target?: string;
+  // Whether the span is an inline link or image, "[text](target)".
+  inline: boolean;
+  // Where the link text starts.
+  textStart: number;
+  // Whether the span is an image.
+  image: boolean;
+}
+
+// Resolves one LINK match in `line` (with inline code masked), reading labels
+// from `raw`.
+function resolveMatch(
+  m: RegExpExecArray,
+  raw: string,
+  line: string,
+  lookup: (label: string) => string | undefined,
+): Resolved {
+  const [whole, mark = "", masked = "", inline, angle, bare, second] = m;
+  const start = m.index;
+  const textStart = start + mark.length + 1;
+  // "\![a](b)" is a "!" and a link.
+  const image = mark !== "" && !escaped(line, start);
+  const text = raw.slice(textStart, textStart + masked.length);
+  if (inline !== undefined)
+    return { target: angle ?? bare, inline: true, textStart, image };
+  let target: string | undefined;
+  if (second !== undefined && second.length > 2) {
+    const end = start + whole.length;
+    target = lookup(raw.slice(end - second.length + 1, end - 1));
+  } else if (
+    second !== undefined ||
+    !(
+      /^[ xX]$/.test(text) &&
+      TASK_BOX.test(line.slice(0, start).replace(QUOTE, ""))
+    )
+  ) {
+    target = lookup(text);
+  }
+  return { target, inline: false, textStart, image };
+}
+
+// Whether link text holds a link (not an image), so that it is not one itself:
+// "[a [b](c) d](e)" links only "b". An unresolved "[b]" inside does not count.
+function holdsLink(
+  raw: string,
+  line: string,
+  lookup: (label: string) => string | undefined,
+): boolean {
+  const find = new RegExp(LINK.source, "g");
+  for (let m = find.exec(line); m !== null; m = find.exec(line)) {
+    if (escaped(line, m.index + (m[1]?.length ?? 0))) continue;
+    const r = resolveMatch(m, raw, line, lookup);
+    if (!r.image && (r.inline || r.target !== undefined)) return true;
+  }
+  return false;
+}
+
 // Markdown links in the body, skipping fenced code blocks, inline code and
 // autolinks. Reads inline links and reference-style links ([text][label],
 // [label][] and [label]); a reference link is reported on the line where it is
@@ -176,43 +239,31 @@ export function extractLinks(body: string, firstLine = 1): BodyLink[] {
     const line = mask(raw);
     const find = new RegExp(LINK.source, "g");
     for (let m = find.exec(line); m !== null; m = find.exec(line)) {
-      const [whole, , masked = "", inline, angle, bare, second] = m;
       const start = m.index;
-      // "\![a](b)" is a "!" and a link; "\[a](b)" is not a link.
-      const bang = m[1] && !escaped(line, start) ? "!" : "";
-      if (escaped(line, start + (m[1]?.length ?? 0))) {
-        find.lastIndex = start + (m[1]?.length ?? 0) + 1;
+      const open = start + (m[1]?.length ?? 0);
+      // "\[a](b)" is not a link.
+      if (escaped(line, open)) {
+        find.lastIndex = open + 1;
         continue;
       }
-      // A link cannot contain a link: "[a [b](c) d](e)" links only "b".
-      if (!bang && NESTED_LINK.test(masked)) {
-        find.lastIndex = start + 1;
-        continue;
-      }
-      // Labels are read from the raw line, so inline code in a label counts.
-      const textStart = start + (m[1]?.length ?? 0) + 1;
-      const text = raw.slice(textStart, textStart + masked.length);
-      let target: string | undefined;
-      if (inline !== undefined) {
-        target = angle ?? bare;
-      } else if (second !== undefined && second.length > 2) {
-        const end = start + whole.length;
-        target = lookup(raw.slice(end - second.length + 1, end - 1));
-      } else if (
-        second !== undefined ||
-        !(
-          /^[ xX]$/.test(text) &&
-          TASK_BOX.test(line.slice(0, start).replace(QUOTE, ""))
+      const r = resolveMatch(m, raw, line, lookup);
+      const textEnd = r.textStart + (m[2]?.length ?? 0);
+      if (
+        !r.image &&
+        holdsLink(
+          raw.slice(r.textStart, textEnd),
+          line.slice(r.textStart, textEnd),
+          lookup,
         )
       ) {
-        target = lookup(text);
+        find.lastIndex = r.textStart;
+        continue;
       }
       // An unresolved "[...]" is plain text; links inside it or right after
       // it ("[a][b](c)" with b undefined) are read from just past its "[".
-      if (inline === undefined && target === undefined)
-        find.lastIndex = textStart;
-      if (bang) continue;
-      if (target) links.push({ target, line: firstLine + index });
+      if (!r.inline && r.target === undefined) find.lastIndex = r.textStart;
+      if (r.image) continue;
+      if (r.target) links.push({ target: r.target, line: firstLine + index });
     }
   }
   return links;

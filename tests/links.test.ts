@@ -91,7 +91,7 @@ test("labels may contain inline code", () => {
 });
 
 test("footnotes and task boxes are not links", () => {
-  const body = "- [x] done\n\nNote[^1].\n\n[^1]: TBD\n[x]: /x.md";
+  const body = "- [x] done\n\nNote[^1].\n\n[^1]: TBD\n\n[x]: /x.md";
   expect(extractLinks(body)).toEqual([]);
 });
 
@@ -203,4 +203,22 @@ test("titles on the next line and quote boundaries", () => {
   expect(targets("[TODO]:\n> [spec](/missing.md)")).toEqual(["/missing.md"]);
   expect(targets("> text\n> > [1]: /a.md\n\n[z][1]")).toEqual(["/a.md"]);
   expect(targets("[s][1]\n\n<!-- links -->\n[1]: /m.md")).toEqual(["/m.md"]);
+});
+
+test("only a bracket that resolves to a link makes the outer text plain", () => {
+  const targets = (body: string) => extractLinks(body).map((l) => l.target);
+  expect(targets("[a [b][] c](/c.md)")).toEqual(["/c.md"]);
+  expect(targets("[See matrix[0][1]](/matrix.md)")).toEqual(["/matrix.md"]);
+  expect(targets("[a [b] c](/c.md)\n\n[b]: /b.md")).toEqual(["/b.md"]);
+});
+
+test("labels fold case and keep ideographic spaces", () => {
+  const targets = (body: string) => extractLinks(body).map((l) => l.target);
+  expect(targets("[Straße][]\n\n[STRASSE]: /s.md")).toEqual(["/s.md"]);
+  expect(targets("[要件　A][]\n\n[要件 A]: /a.md")).toEqual([]);
+});
+
+test("a definition after the end of a multi-line comment", () => {
+  const body = "[s][1]\n\n<!--\nnote\n-->\n[1]: /m.md";
+  expect(extractLinks(body).map((l) => l.target)).toEqual(["/m.md"]);
 });
