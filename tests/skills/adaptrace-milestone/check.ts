@@ -80,9 +80,18 @@ check(
   list(fm(R1).blocks).length === 0 && list(fm(R2).blocks).length === 0,
   "no blocks added to the milestones",
 );
+// The due date it had: in a test repository, the one setup.sh rendered (git
+// test-base); in expected/ and failing/, the one for 2026-11-26.
+const dueBefore = existsSync(join(repo, ".git"))
+  ? (/^due: (.*)$/m.exec(
+      Bun.spawnSync(["git", "show", `test-base:.adaptrace/${R1}`], {
+        cwd: repo,
+      }).stdout.toString(),
+    )?.[1] ?? "")
+  : "2026-12-25";
 check(
   "must",
-  String(fm(R1).due) === "2026-12-25" && fm(R1).state === undefined,
+  String(fm(R1).due) === dueBefore && fm(R1).state === undefined,
   `the year-end release keeps its due date and has no state added (due: ${String(fm(R1).due)}, state: ${String(fm(R1).state)})`,
 );
 const ORIGINAL = "human:sato 2026-11-01T10:00:00+09:00";
