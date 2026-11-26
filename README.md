@@ -15,8 +15,8 @@ Adaptraceは、プロジェクトの要件・意思決定・タスク・リス�
 人とAIエージェントが、同じ情報を読み書きできます。
 何かが変わったときに、どの文書を見直せばよいかをすぐに把握できることを目指しています。
 
-> **ステータス：v1.0.0**
-> 下の「使い方」にあるコマンドは、すべて使えます。ただし、`coverage` はv1.0.0の次のリリースから使えます。データの形式とコマンドは、[Semantic Versioning](https://semver.org/lang/ja/) に従って変えます。互換性を崩すときは、メジャーバージョンを上げます。
+> **ステータス：v1.1.0**
+> 下の「使い方」にあるコマンドは、すべて使えます。データの形式とコマンドは、[Semantic Versioning](https://semver.org/lang/ja/) に従って変えます。互換性を崩すときは、メジャーバージョンを上げます。
 > npmのパッケージは、まだ公開していません。
 
 ---
@@ -251,7 +251,6 @@ adaptrace health
 adaptrace conflicts
 
 # 要件ごとに、満たす文書と進み具合を示す。--milestoneでマイルストーンの範囲に絞り、残っている作業も示す
-# v1.0.0の次のリリースから使える
 adaptrace coverage --milestone milestones/release.md
 
 # 重なる変更要求を協議する会議の準備をする（参加者、議題、Meetingの下書き。--llmで招集の文案も）
@@ -380,7 +379,7 @@ copilot mcp add adaptrace -- adaptrace mcp .adaptrace
 
 ## skillの追加
 
-Adaptraceには、作業の手順をAIエージェントに教えるskillが11あります。`adaptrace-change-decision`、`adaptrace-milestone`、`adaptrace-risk`、`adaptrace-sync` は、v1.0.0の次のリリースから使えます。skillは、オープンな標準「[Agent Skills](https://agentskills.io/)」の形式です。
+Adaptraceには、作業の手順をAIエージェントに教えるskillが11あります。`adaptrace-change-decision`、`adaptrace-milestone`、`adaptrace-risk`、`adaptrace-sync` は、v1.1.0から使えます。skillは、オープンな標準「[Agent Skills](https://agentskills.io/)」の形式です。
 
 > **skillの試験は、Claude Codeでだけ実行しています。** ほかのエージェントでの動作は、確認していません。skillには、Claude Codeの機能を前提にした指示も含まれます（選択肢で尋ねるツールなど）。
 

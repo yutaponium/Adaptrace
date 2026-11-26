@@ -11,7 +11,7 @@
       "source": {
         "source": "github",
         "repo": "yutaponium/Adaptrace",
-        "ref": "v1.0.0"
+        "ref": "v1.1.0"
       },
       "description": "Claude Code skills for Adaptrace, a tool that keeps requirements, decisions, tasks and risks traceable as OKF Markdown"
     }

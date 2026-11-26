@@ -14,8 +14,8 @@ All data is stored as Markdown files that conform to the [Open Knowledge Format 
 People and AI agents read and write the same information.
 The goal is to know right away which documents to review when something changes.
 
-> **Status: v1.0.0**
-> Every command under "Usage" below works, except `coverage`, which is available from the release after v1.0.0. The data format and the commands change according to [Semantic Versioning](https://semver.org/). A change that breaks compatibility raises the major version.
+> **Status: v1.1.0**
+> Every command under "Usage" below works. The data format and the commands change according to [Semantic Versioning](https://semver.org/). A change that breaks compatibility raises the major version.
 > The npm package is not published yet.
 >
 > The Japanese README is the original. This English version follows it (ADR-003). The specification and the guides have English versions too. The decision records (`.adaptrace/`) and the skills are in Japanese.
@@ -253,7 +253,6 @@ adaptrace health
 adaptrace conflicts
 
 # For each requirement, what satisfies it and how far that work is. --milestone narrows to a milestone's scope and shows the work left
-# Available from the release after v1.0.0
 adaptrace coverage --milestone milestones/release.md
 
 # Prepare a meeting about overlapping change requests (participants, agenda, a Meeting draft; with --llm, an invitation too)
@@ -382,7 +381,7 @@ Write the same JSON as for Antigravity in the project's `.cursor/mcp.json` (or `
 
 ## Adding the skills
 
-Adaptrace has eleven skills that teach an AI agent the steps of a task. `adaptrace-change-decision`, `adaptrace-milestone`, `adaptrace-risk` and `adaptrace-sync` are available from the release after v1.0.0. The skills follow the open [Agent Skills](https://agentskills.io/) format.
+Adaptrace has eleven skills that teach an AI agent the steps of a task. `adaptrace-change-decision`, `adaptrace-milestone`, `adaptrace-risk` and `adaptrace-sync` are available from v1.1.0. The skills follow the open [Agent Skills](https://agentskills.io/) format.
 
 > **The skills are tested only with Claude Code.** How they work with other agents has not been checked. The skills also contain instructions that assume Claude Code features (such as a tool that asks questions with choices). The skills are written in Japanese; English reference translations are in [docs/skills/](docs/skills/).
 

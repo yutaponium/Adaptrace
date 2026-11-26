@@ -238,9 +238,9 @@ Claude Codeを使っている場合は、skill `adaptrace-weekly` で、これ�
 adaptrace coverage --milestone milestones/release.md
 ```
 
-満たす作業がない要件は `uncovered`、作業が終わっていない要件は `open` と示されます。続けて、マイルストーンが待っている作業を、担当者と期日とともに一覧にします。期日がマイルストーンより後の作業には、`(after the milestone)` が付きます。`coverage` は、v1.0.0の次のリリースから使えます。
+満たす作業がない要件は `uncovered`、作業が終わっていない要件は `open` と示されます。続けて、マイルストーンが待っている作業を、担当者と期日とともに一覧にします。期日がマイルストーンより後の作業には、`(after the milestone)` が付きます。`coverage` は、v1.1.0から使えます。
 
-Claude Codeを使っている場合は、skill `adaptrace-milestone` で、判定の材料をまとめ、残っている事柄の扱いを対話しながら決められます。範囲に関わる未決の変更要求と古くなった文書も示し、作業を次のマイルストーンに移す、期日を変えるなどの変更を、承認を得てから書きます。このskillも、v1.0.0の次のリリースから使えます。skillの入手方法は、[既存のリポジトリに導入するガイド](adoption.md#claude-codeに取り込みを手伝ってもらう) と同じです。プラグインでインストールした場合は、すべてのskillがそろっています。フォルダをコピーする場合は、コマンドの `adaptrace-adopt` を `adaptrace-milestone` に置き換えてください。
+Claude Codeを使っている場合は、skill `adaptrace-milestone` で、判定の材料をまとめ、残っている事柄の扱いを対話しながら決められます。範囲に関わる未決の変更要求と古くなった文書も示し、作業を次のマイルストーンに移す、期日を変えるなどの変更を、承認を得てから書きます。このskillも、v1.1.0から使えます。skillの入手方法は、[既存のリポジトリに導入するガイド](adoption.md#claude-codeに取り込みを手伝ってもらう) と同じです。プラグインでインストールした場合は、すべてのskillがそろっています。フォルダをコピーする場合は、コマンドの `adaptrace-adopt` を `adaptrace-milestone` に置き換えてください。
 
 ### リスクの定期的な見直し
 
@@ -263,7 +263,7 @@ risks/idp-lockin.md  updated 2026-10-05T11:00:00+09:00 (generated.at)
 
 リスクを `depends_on` で判断につないでおけば、判断が変わったときにも `stale` に表示されます。
 
-Claude Codeを使っている場合は、skill `adaptrace-risk` で、見直し時期を過ぎたリスクを1件ずつ見直せます。評価の更新、対応策のタスクの作成、リスクを閉じるかどうか、次の見直し日を利用者と決め、承認を得てから記録します。内容を変えなかったリスクは、`generated` を変えずに `verified` に記録します。このskillは、v1.0.0の次のリリースから使えます。skillの入手方法は、[既存のリポジトリに導入するガイド](adoption.md#claude-codeに取り込みを手伝ってもらう) と同じです。プラグインでインストールした場合は、すべてのskillがそろっています。フォルダをコピーする場合は、コマンドの `adaptrace-adopt` を `adaptrace-risk` に置き換えてください。
+Claude Codeを使っている場合は、skill `adaptrace-risk` で、見直し時期を過ぎたリスクを1件ずつ見直せます。評価の更新、対応策のタスクの作成、リスクを閉じるかどうか、次の見直し日を利用者と決め、承認を得てから記録します。内容を変えなかったリスクは、`generated` を変えずに `verified` に記録します。このskillは、v1.1.0から使えます。skillの入手方法は、[既存のリポジトリに導入するガイド](adoption.md#claude-codeに取り込みを手伝ってもらう) と同じです。プラグインでインストールした場合は、すべてのskillがそろっています。フォルダをコピーする場合は、コマンドの `adaptrace-adopt` を `adaptrace-risk` に置き換えてください。
 
 ## 意思決定を置き換える
 
@@ -393,7 +393,7 @@ adaptrace sync --write    # 実際に書き込む
 - 両側で同じタスクが変わったときは、上書きせずに衝突として知らせます。`--resolve adaptrace` か `--resolve backlog` で、どちらかにそろえます。タスクごとに `--resolve tasks/design.md=backlog` のように指定することもできます
 
 開発者はBacklog.mdでタスクを動かします。PMは定例の前に `sync` で取り込み、`stale` と `board` を確認します。
-Claude Codeを使っている場合は、skill `adaptrace-sync` で同期できます。`sync` の計画を項目ごとに示し、衝突などの扱いをタスクごとに利用者と決め、承認を得てから書き込みます。このskillは、v1.0.0の次のリリースから使えます。skillの入手方法は、[既存のリポジトリに導入するガイド](adoption.md#claude-codeに取り込みを手伝ってもらう) と同じです。プラグインでインストールした場合は、すべてのskillがそろっています。フォルダをコピーする場合は、コマンドの `adaptrace-adopt` を `adaptrace-sync` に置き換えてください。
+Claude Codeを使っている場合は、skill `adaptrace-sync` で同期できます。`sync` の計画を項目ごとに示し、衝突などの扱いをタスクごとに利用者と決め、承認を得てから書き込みます。このskillは、v1.1.0から使えます。skillの入手方法は、[既存のリポジトリに導入するガイド](adoption.md#claude-codeに取り込みを手伝ってもらう) と同じです。プラグインでインストールした場合は、すべてのskillがそろっています。フォルダをコピーする場合は、コマンドの `adaptrace-adopt` を `adaptrace-sync` に置き換えてください。
 この流れにすると、それぞれが慣れたツールを使えます。
 
 インストールから併用の流れまでは、[Backlog.mdと併用する](backlog-md.md) で画面付きで説明しています。
