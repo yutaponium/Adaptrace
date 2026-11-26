@@ -8,7 +8,7 @@ skillを修正したら、この試験を実行する。試験の考え方と共
 | ファイル | 内容 |
 |---|---|
 | `repo/` | 模擬のリポジトリ。マイルストーン `milestones/release-1.md`（第1期リリース）と、その範囲の作業、要件、未決の変更要求がある |
-| `setup.sh` | `repo/` から試験用のgitリポジトリを作り、skillをコピーする。期日（`due`）は、今日からの相対の日付にする（`../render-dates.ts`）。環境変数 `ADAPTRACE_TEST_DAY`（`YYYY-MM-DD`）で、基準の日を指定できる |
+| `setup.sh` | `repo/` から試験用のgitリポジトリを作り、skillをコピーする。期日（`due`）は、今日からの相対の日付にする（`../render-dates.ts`）。環境変数 `ADAPTRACE_TEST_DAY`（`YYYY-MM-DD`）で、基準の日を指定できる。これは `bun test` で `expected/` と比べるためのもので、`run.ts` で試験するときは、ふつうは指定しない。実行役は、実際の今日の日付で動くため |
 | `prompts/runner.md` | 実行役への依頼 |
 | `check.ts` | skillを実行した後のリポジトリと、対話の記録を確認する。`must` が1つでも失敗すると、終了コード1 |
 | `expected/`、`expected.dialog.md` | 期待する結果と、期待する報告の抜粋。日付は、2026-11-26を基準の日にした値 |

@@ -9,6 +9,7 @@ import { buildGraph } from "../../../src/graph";
 import { lastUpdated } from "../../../src/history";
 import { stale } from "../../../src/impact";
 import { resourceStates } from "../../../src/resource";
+import { DATETIME } from "../../../src/schema";
 import { validate } from "../../../src/validate";
 
 const [repo, dialogPath] = process.argv.slice(2);
@@ -46,7 +47,8 @@ const time = (v: unknown) =>
 // 2026-11-26, so they are checked as on that day.
 const git = existsSync(join(repo, ".git"));
 // With ADAPTRACE_TEST_DAY, the day setup.sh rendered the dates for.
-const day = process.env.ADAPTRACE_TEST_DAY;
+// Empty is unset, as in setup.sh.
+const day = process.env.ADAPTRACE_TEST_DAY || undefined;
 if (day !== undefined && !/^\d{4}-\d{2}-\d{2}$/.test(day)) {
   console.error(`ADAPTRACE_TEST_DAY is not a day: ${day} (YYYY-MM-DD)`);
   process.exit(2);
@@ -64,7 +66,11 @@ const original = (path: string) => {
   const r = Bun.spawnSync(["git", "show", `test-base:.adaptrace/${path}`], {
     cwd: repo,
   });
-  return r.exitCode === 0 ? r.stdout.toString() : "";
+  if (r.exitCode !== 0) {
+    console.log("FAIL  git failed: no test-base?");
+    process.exit(1);
+  }
+  return r.stdout.toString();
 };
 const originalGenerated = (path: string) =>
   /^generated: (.*)$/m.exec(original(path))?.[1] ?? null;
@@ -91,7 +97,16 @@ check(
 const IDP = "risks/idp-lock-in.md";
 const rawVerified: unknown = fm(IDP).verified;
 // Each record with a by and an at that is a date and time with an offset.
-const OFFSET = /(Z|[+-]\d{2}:\d{2})$/;
+// The original generated.at: a review record must be later.
+const generatedBefore = git
+  ? time(
+      (
+        parseDocument(original(IDP)) as {
+          frontmatter?: { generated?: { at?: unknown } };
+        }
+      ).frontmatter?.generated?.at ?? "",
+    )
+  : Number.NEGATIVE_INFINITY;
 const records = (Array.isArray(rawVerified) ? rawVerified : [rawVerified])
   .filter(
     (v: unknown): v is { by: string; at: unknown } =>
@@ -101,7 +116,8 @@ const records = (Array.isArray(rawVerified) ? rawVerified : [rawVerified])
   )
   .filter((v) => {
     const at = v.at instanceof Date ? v.at.toISOString() : String(v.at);
-    return OFFSET.test(at) && !Number.isNaN(time(at));
+    // Adaptrace's own rule for a date and time (validate, verifiedRange).
+    return DATETIME.test(at) && time(at) > generatedBefore;
   });
 const verified = records.map((v) => v.by);
 // generated as parsed YAML: the style does not matter.

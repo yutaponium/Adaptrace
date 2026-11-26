@@ -128,7 +128,7 @@ generated: { by: <agent>/<model ID>, at: <date and time from step 0> }
 1. After deciding the handling of all the risks, show the changes decided in step 2 as a diff per document, get approval for them together, and write them. If the user wants to write risk by risk, do so
 2. Ask whether to record this in `log.md` once, at the end. You may ask together with the diff in item 1 of this step. If so, write one line `* **Update**: <description>` for the whole session under today's date heading (`## YYYY-MM-DD`). If you created tasks, write a `* **Creation**: <description>` line too
 3. Run `adaptrace validate`. If there are more errors than at step 0, explain the cause and show a diff that fixes them
-4. Run `adaptrace stale --format json` again, and check that the reviewed risks no longer appear. If a risk still appears, report why
+4. Run `adaptrace stale --format json` again, and check that the reviewed risks no longer appear. If a risk still appears, report why. Documents that depend on a risk whose assessment or body you updated (such as mitigation tasks) may newly appear, because the risk's content changed; write in the report whether they need a review
 
 ## 4. Report
 
@@ -137,5 +137,5 @@ Report the following together. Report in the conversation, not in a file.
 - The handling of each risk, and its next review date
 - The tasks created, with their owners and due dates
 - The risks closed, and those that happened. For the ones that happened, what people need to do
-- The risks not reviewed (put off by the user), and the risks that still appear in `stale`
+- The risks not reviewed (put off by the user), and the risks that still appear in `stale`. Documents that depend on an updated risk and newly appear in `stale`
 - Errors and warnings from `validate` that increased since step 0
