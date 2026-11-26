@@ -47,6 +47,10 @@ const time = (v: unknown) =>
 const git = existsSync(join(repo, ".git"));
 // With ADAPTRACE_TEST_DAY, the day setup.sh rendered the dates for.
 const day = process.env.ADAPTRACE_TEST_DAY;
+if (day !== undefined && !/^\d{4}-\d{2}-\d{2}$/.test(day)) {
+  console.error(`ADAPTRACE_TEST_DAY is not a day: ${day} (YYYY-MM-DD)`);
+  process.exit(2);
+}
 const now = !git
   ? Date.parse("2026-11-26T12:00:00+09:00")
   : day
@@ -86,16 +90,25 @@ check(
 // Kept as it was: reviewed, not changed.
 const IDP = "risks/idp-lock-in.md";
 const rawVerified: unknown = fm(IDP).verified;
-// The by of each record that has one.
-const verified = (Array.isArray(rawVerified) ? rawVerified : [rawVerified])
+// Each record with a by and an at that is a date and time with an offset.
+const OFFSET = /(Z|[+-]\d{2}:\d{2})$/;
+const records = (Array.isArray(rawVerified) ? rawVerified : [rawVerified])
   .filter(
-    (v: unknown): v is { by: string } =>
+    (v: unknown): v is { by: string; at: unknown } =>
       typeof v === "object" &&
       v !== null &&
       typeof (v as { by?: unknown }).by === "string",
   )
-  .map((v) => v.by);
-const idpGenerated = /^generated: (.*)$/m.exec(read(IDP))?.[1] ?? "";
+  .filter((v) => {
+    const at = v.at instanceof Date ? v.at.toISOString() : String(v.at);
+    return OFFSET.test(at) && !Number.isNaN(time(at));
+  });
+const verified = records.map((v) => v.by);
+// generated as parsed YAML: the style does not matter.
+const parsedGenerated = (text: string) => {
+  const doc = parseDocument(text);
+  return doc.ok ? JSON.stringify(doc.frontmatter?.generated ?? null) : "";
+};
 check(
   "must",
   verified.length > 0 &&
@@ -104,7 +117,7 @@ check(
     read(IDP).includes(
       "対応方針：契約の更新の3か月前に、ほかのIdPと比べる。",
     ) &&
-    (!git || idpGenerated === originalGenerated(IDP)) &&
+    (!git || parsedGenerated(read(IDP)) === parsedGenerated(original(IDP))) &&
     time(fm(IDP).stale_after) > now,
   "the IdP risk is verified, unchanged, with a later review date",
 );
@@ -131,8 +144,8 @@ check(
 );
 check(
   "should",
-  /上限/.test(read(SMS)),
-  "the SMS cost risk's body names the limit",
+  /上限/.test(read(SMS)) && /送信件数を毎月確認/.test(read(SMS)),
+  "the SMS cost risk's body names the limit and keeps the monthly check",
 );
 
 // The mitigation task.
