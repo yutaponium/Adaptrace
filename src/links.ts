@@ -14,8 +14,7 @@ const INLINE_CODE = /`[^`]*`/g;
 const DEST = String.raw`(?:<([^<>\n]*)>|((?!<)(?:[^\s()]|\([^\s()]*\))+))`;
 const TITLE = String.raw`(?:\s+(?:"[^"]*"|'[^']*'|\([^)]*\)))?`;
 // Link text may hold one level of brackets, as in a linked image [![b](i)](t).
-// A "[" escaped with a backslash does not open a link.
-const TEXT = String.raw`(?<!\\)\[((?:[^\[\]]|\[[^\[\]]*\])*)\]`;
+const TEXT = String.raw`\[((?:[^\[\]]|\[[^\[\]]*\])*)\]`;
 // One bracketed span, optionally followed by an inline destination (possibly
 // empty) or a second bracketed label. Images ("!" first) are matched to skip
 // them.
@@ -28,14 +27,16 @@ const LINK = new RegExp(
 // allowed.
 const QUOTE = /^ {0,3}(?:> ?)+/;
 const DEFINITION = new RegExp(
-  String.raw`^ {0,3}\[([^\]]+)\]:(?:\s*${DEST}${TITLE})?\s*$`,
+  String.raw`^ {0,3}\[([^\]]+)\]:(?:\s*${DEST}(${TITLE}))?\s*$`,
 );
-const NEXT_LINE_DEST = new RegExp(String.raw`^\s*${DEST}${TITLE}\s*$`);
+const NEXT_LINE_DEST = new RegExp(String.raw`^\s*${DEST}(${TITLE})\s*$`);
 const NEXT_LINE_TITLE = /^\s*(?:"[^"]*"|'[^']*'|\([^)]*\))\s*$/;
 // A line after which a new block starts: blank, an ATX heading, a setext
-// underline or a thematic break.
+// underline, a thematic break or an HTML comment.
 const BLOCK_END =
-  /^(?:|#{1,6}(?:\s.*)?|=+|-+|(?:-\s*){3,}|(?:\*\s*){3,}|(?:_\s*){3,})$/;
+  /^(?:|#{1,6}(?:\s.*)?|=+|-+|(?:-\s*){3,}|(?:\*\s*){3,}|(?:_\s*){3,}|<!--.*-->)$/;
+// A link in link text: "[b](" or "[b][" not after "!".
+const NESTED_LINK = /(?<!!)\[[^[\]]*\][([]/;
 const TASK_BOX = /^\s*(?:[-*+]|\d+[.)])\s+$/;
 // Autolinks (<https://...>) are not link text; an inline destination in
 // angle brackets ("](<https://...>)") is not an autolink.
@@ -72,14 +73,27 @@ function normalizeLabel(label: string): string {
   return label.trim().replace(/\s+/g, " ").toLowerCase();
 }
 
-// Replaces inline code, autolinks and comments with spaces of the same length, so that
-// links inside them are not read but positions in the line stay the same.
+// Replaces inline code, autolinks and comments with spaces of the same length,
+// so that links inside them are not read but positions in the line stay the
+// same.
 function mask(line: string): string {
   const blank = (code: string) => " ".repeat(code.length);
   return line
     .replace(INLINE_CODE, blank)
     .replace(COMMENT, blank)
     .replace(AUTOLINK, blank);
+}
+
+// The number of blockquote markers (">") that start a line.
+function quoteDepth(raw: string): number {
+  return (QUOTE.exec(raw)?.[0].match(/>/g) ?? []).length;
+}
+
+// Whether the character at `at` is escaped by an odd number of backslashes.
+function escaped(line: string, at: number): boolean {
+  let count = 0;
+  for (let i = at - 1; i >= 0 && line[i] === "\\"; i--) count++;
+  return count % 2 === 1;
 }
 
 interface ProseLine {
@@ -94,44 +108,47 @@ function readDefinitions(lines: ProseLine[]) {
   const definitions = new Map<string, string>();
   const used = new Set<number>();
   let blockStart = true;
-  let quoted = false;
+  let depth = 0;
+  // The text of line n + k without its quote markers, when it directly follows
+  // and has the same quote depth; a definition does not cross a quote boundary.
+  const follow = (n: number, k: number) => {
+    const from = lines[n] as ProseLine;
+    const to = lines[n + k];
+    if (to === undefined || to.index !== from.index + k) return undefined;
+    if (quoteDepth(to.raw) !== quoteDepth(from.raw)) return undefined;
+    return to.raw.replace(QUOTE, "");
+  };
   for (let n = 0; n < lines.length; n++) {
     const { raw, index } = lines[n] as ProseLine;
     const prev = lines[n - 1];
     const line = raw.replace(QUOTE, "");
-    const inQuote = line !== raw;
     if (prev !== undefined && prev.index !== index - 1) blockStart = true;
-    if (inQuote && !quoted) blockStart = true;
-    quoted = inQuote;
+    // A deeper quote starts a new block, even inside a paragraph.
+    if (quoteDepth(raw) > depth) blockStart = true;
+    depth = quoteDepth(raw);
     const def = blockStart ? DEFINITION.exec(line) : null;
     const label = def ? normalizeLabel(def[1] ?? "") : "";
     if (def && label && !label.startsWith("^")) {
       let target = def[2] ?? def[3];
-      const next = lines[n + 1];
-      const nextRaw =
-        next?.index === index + 1 ? next.raw.replace(QUOTE, "") : undefined;
+      let title = def[4];
+      let taken = 0;
       if (target === undefined) {
         // "[label]:" alone is a definition only when the next line holds just
         // the destination (and an optional title).
-        const dest =
-          nextRaw === undefined ? null : NEXT_LINE_DEST.exec(nextRaw);
-        target = dest?.[1] ?? dest?.[2];
-        if (target !== undefined && next) {
-          used.add(next.index);
-          n++;
+        const next = follow(n, 1);
+        const dest = next === undefined ? null : NEXT_LINE_DEST.exec(next);
+        if (dest) {
+          target = dest[1] ?? dest[2];
+          title = dest[3];
+          taken = 1;
         }
-      } else if (
-        next &&
-        nextRaw !== undefined &&
-        !/\s["'(]/.test(line.slice(line.indexOf("]:") + 2).trim()) &&
-        NEXT_LINE_TITLE.test(nextRaw)
-      ) {
-        // The title is on the next line.
-        used.add(next.index);
-        n++;
       }
       if (target !== undefined) {
-        used.add(index);
+        // Without a title, the title may be on the following line.
+        const after = title ? undefined : follow(n, taken + 1);
+        if (after !== undefined && NEXT_LINE_TITLE.test(after)) taken++;
+        for (let k = 0; k <= taken; k++) used.add(index + k);
+        n += taken;
         if (!definitions.has(label)) definitions.set(label, target);
         continue;
       }
@@ -159,10 +176,21 @@ export function extractLinks(body: string, firstLine = 1): BodyLink[] {
     const line = mask(raw);
     const find = new RegExp(LINK.source, "g");
     for (let m = find.exec(line); m !== null; m = find.exec(line)) {
-      const [whole, bang = "", masked = "", inline, angle, bare, second] = m;
+      const [whole, , masked = "", inline, angle, bare, second] = m;
       const start = m.index;
+      // "\![a](b)" is a "!" and a link; "\[a](b)" is not a link.
+      const bang = m[1] && !escaped(line, start) ? "!" : "";
+      if (escaped(line, start + (m[1]?.length ?? 0))) {
+        find.lastIndex = start + (m[1]?.length ?? 0) + 1;
+        continue;
+      }
+      // A link cannot contain a link: "[a [b](c) d](e)" links only "b".
+      if (!bang && NESTED_LINK.test(masked)) {
+        find.lastIndex = start + 1;
+        continue;
+      }
       // Labels are read from the raw line, so inline code in a label counts.
-      const textStart = start + bang.length + 1;
+      const textStart = start + (m[1]?.length ?? 0) + 1;
       const text = raw.slice(textStart, textStart + masked.length);
       let target: string | undefined;
       if (inline !== undefined) {

@@ -179,3 +179,28 @@ test("definition edge cases", () => {
   expect(targets("[z][1]\n\n[1]: <foo")).toEqual([]);
   expect(targets("[x][a]\n\n[a]: <>\n[a]: /gone.md")).toEqual([]);
 });
+
+test("a link inside link text, and escapes", () => {
+  const targets = (body: string) => extractLinks(body).map((l) => l.target);
+  expect(targets("[a [b](/b.md) c](/c.md)")).toEqual(["/b.md"]);
+  expect(targets("[a [b][1] c](/c.md)\n\n[1]: /b.md")).toEqual(["/b.md"]);
+  expect(targets("[a [b] c](/c.md)")).toEqual(["/c.md"]);
+  expect(targets("\\\\[a](gone.md)")).toEqual(["gone.md"]);
+  expect(targets("\\![a](/gone.md)")).toEqual(["/gone.md"]);
+});
+
+test("titles on the next line and quote boundaries", () => {
+  const targets = (body: string) => extractLinks(body).map((l) => l.target);
+  expect(targets('[z][2]\n\n[1]:\n  /a.md\n  "Title"\n[2]: /b.md')).toEqual([
+    "/b.md",
+  ]);
+  expect(targets('[z][2]\n\n[1]: <my (v2).md>\n  "T"\n[2]: /b.md')).toEqual([
+    "/b.md",
+  ]);
+  expect(targets('[1]: /a.md\n> "See [b](/missing.md)"')).toEqual([
+    "/missing.md",
+  ]);
+  expect(targets("[TODO]:\n> [spec](/missing.md)")).toEqual(["/missing.md"]);
+  expect(targets("> text\n> > [1]: /a.md\n\n[z][1]")).toEqual(["/a.md"]);
+  expect(targets("[s][1]\n\n<!-- links -->\n[1]: /m.md")).toEqual(["/m.md"]);
+});
