@@ -250,7 +250,8 @@ adaptrace health
 # 未決の変更要求のうち、影響範囲が重なる組を示す（矛盾していないかを協議する材料）
 adaptrace conflicts
 
-# 要件ごとに、満たす文書と進み具合を示す（--milestone でマイルストーンの範囲に絞り、残っている作業も示す。v1.0.0の次のリリースから）
+# 要件ごとに、満たす文書と進み具合を示す。--milestone でマイルストーンの範囲に絞り、残っている作業も示す
+# v1.0.0の次のリリースから使える
 adaptrace coverage --milestone milestones/release.md
 
 # 重なる変更要求を協議する会議の準備をする（参加者、議題、Meetingの下書き。--llmで招集の文案も）

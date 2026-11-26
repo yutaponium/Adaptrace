@@ -499,17 +499,23 @@ For each requirement, shows the documents that satisfy it (the documents that po
 
 | Status | Meaning |
 | --- | --- |
-| `uncovered` | No document without `status: deprecated` points to the requirement with `satisfies` |
-| `open` | A Task that satisfies the requirement is not done. This includes a requirement that satisfies it and is not `covered` |
+| `uncovered` | No document that counts points to the requirement with `satisfies` |
+| `open` | One of the documents that count is not done |
 | `covered` | The others |
 
 - Requirements are documents with `type: Requirement`. `--type` picks another type. Requirements with `status: deprecated` and deprecated documents that satisfy them are left out
-- Only Tasks have progress. A Task is done when its `state` is `done` (change it with `--done`; case does not matter). If a document that satisfies a requirement is of a requirement type, it counts by whether that requirement is `covered`. A document of another type (such as a Decision) counts as satisfying it if it exists. In JSON its `done` is `null`
+- Whether a document that satisfies a requirement is done depends on its type. In JSON it is `done`
+  - Task: done when its `state` is `done`. Change the value with `--done`. Case does not matter
+  - A document of a requirement type: done when that requirement is `covered`. Its status is shown in `status` in JSON
+  - Milestone: done when all the Tasks in that milestone's scope are done
+  - Others (such as a Decision): satisfy the requirement if they exist. `done` is `null`
 - With `--milestone <document>`, only the milestone's scope is shown
-  - The scope is the documents the milestone waits for (`depends_on` and `blocks`, in the same direction as `board`). From Tasks and Milestones, the walk goes on. Other documents (requirements, decisions and so on) are in the scope, but the walk does not go past them. Documents with `status: deprecated` are not in the scope, and the walk does not go past them
-  - The requirements shown are the requirements in the scope, and those that the Tasks and Milestones in the scope (the milestone itself included) satisfy with `satisfies`
-  - Tasks outside the scope do not count toward a requirement's progress; their `inScope` in JSON is `false`. But for a requirement the milestone waits for (one in the scope), every Task that satisfies it counts
-- With `--milestone`, the documents in the scope are shown nearest first (`scope` in JSON), with the owner (`owner`), the due date (`due`) and whether the due date is after the milestone's `due` (`late`). Only Tasks have `done`. `text` and `markdown` show only the Tasks
+  - The scope starts from the documents the milestone waits for (`depends_on` and `blocks`) and is followed nearest first. The direction is the same as in `board`
+  - From a Task or a Milestone, the walk follows what it waits for. From a requirement, it follows the Tasks and requirements that satisfy it
+  - Other documents (such as decisions) are in the scope, but the walk does not go past them. Documents with `status: deprecated` are not in the scope, and the walk does not go past them
+  - The requirements shown are the requirements in the scope, and those that the Tasks and Milestones in the scope satisfy with `satisfies`. Requirements the milestone itself satisfies are included
+  - Tasks outside the scope do not count. Their `counted` in JSON is `false`
+- With `--milestone`, the documents in the scope are shown nearest first (`scope` in JSON), with the owner (`owner`) and the due date (`due`). If the due date is after the milestone's `due`, `late` is `true`. Only Tasks have `done`. `text` and `markdown` show only the Tasks
 - `--format` is `text` (default), `markdown` or `json`. In `markdown`, documents are shown as in `board`, and `--link-base` makes them links
 
 ## Preparing a discussion meeting (`adaptrace meeting <change request>...`)

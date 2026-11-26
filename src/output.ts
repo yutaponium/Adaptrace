@@ -1155,8 +1155,24 @@ export function formatCoverage(
     markdown
       ? oneLine(docLink(title, path, linkBase, table))
       : `${oneLine(title)}  ${oneLine(path)}`;
-  const state = (s: { state: string | null; done: boolean | null }) =>
+  const state = (s: { state: string | null }) =>
     s.state === null ? "(no state)" : w(s.state);
+  // A satisfier's progress: a requirement's status, a Milestone's work, a
+  // Task's state; nothing for the others.
+  const progress = (
+    s: CoverageReport["requirements"][number]["satisfiers"][number],
+  ) =>
+    s.status !== null
+      ? s.status
+      : s.type === "Milestone"
+        ? s.done === null
+          ? ""
+          : s.done
+            ? "work done"
+            : "work left"
+        : s.done === null
+          ? ""
+          : state(s);
   const m = report.milestone;
   const heading = m
     ? `Requirement coverage for ${markdown ? doc(m.title, m.path) : `${oneLine(m.title)} (${oneLine(m.path)})`}${m.due ? `, due ${w(m.due)}` : ""}`
@@ -1175,7 +1191,7 @@ export function formatCoverage(
           : r.satisfiers
               .map(
                 (s) =>
-                  `${doc(s.title, s.path, true)}${s.type ? ` ${w(s.type)}` : ""}${s.done === null ? "" : ` (${state(s)})`}${s.inScope ? "" : " (outside the milestone)"}`,
+                  `${doc(s.title, s.path, true)}${s.type ? ` ${w(s.type)}` : ""}${progress(s) === "" ? "" : ` (${progress(s)})`}${s.counted ? "" : " (outside the milestone)"}`,
               )
               .join("<br>");
       lines.push(
@@ -1189,7 +1205,7 @@ export function formatCoverage(
       );
       for (const s of r.satisfiers) {
         lines.push(
-          `               ${doc(s.title, s.path)}  ${s.type ? w(s.type) : "(no type)"}${s.done === null ? "" : `  ${state(s)}`}${s.inScope ? "" : "  (outside the milestone)"}`,
+          `               ${doc(s.title, s.path)}  ${s.type ? w(s.type) : "(no type)"}${progress(s) === "" ? "" : `  ${progress(s)}`}${s.counted ? "" : "  (outside the milestone)"}`,
         );
       }
     }

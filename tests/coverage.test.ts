@@ -11,32 +11,41 @@ const MILESTONE = "milestones/m1-release.md";
 
 test("each live requirement with what satisfies it", () => {
   const report = coverage(bundle, graph);
-  expect(
-    report.requirements.map((r) => [r.path, r.status, r.satisfiers.length]),
-  ).toEqual([
-    // A Decision tracks no work; "Done" is done in any case; v2 is not.
-    ["requirements/req-1-login.md", "open", 3],
+  expect(report.requirements.map((r) => [r.path, r.status])).toEqual([
+    // "Done" is done in any case; v2 is not. A Decision tracks no work.
+    ["requirements/req-1-login.md", "open"],
     // The deprecated task is left out.
-    ["requirements/req-2-mfa.md", "open", 1],
-    ["requirements/req-3-audit.md", "open", 1],
+    ["requirements/req-2-mfa.md", "open"],
+    ["requirements/req-3-audit.md", "open"],
     // REQ-8 satisfies it and is uncovered itself.
-    ["requirements/req-5-export.md", "open", 2],
-    ["requirements/req-6-policy.md", "covered", 1],
-    ["requirements/req-7-uptime.md", "covered", 1],
-    ["requirements/req-8-sub.md", "uncovered", 0],
+    ["requirements/req-5-export.md", "open"],
+    ["requirements/req-6-policy.md", "covered"],
+    // The milestone that satisfies it has work left.
+    ["requirements/req-7-uptime.md", "open"],
+    ["requirements/req-8-sub.md", "uncovered"],
+    ["requirements/req-9-retention.md", "covered"],
   ]);
-  expect(report.byStatus).toEqual({ uncovered: 1, open: 4, covered: 2 });
+  expect(report.byStatus).toEqual({ uncovered: 1, open: 5, covered: 2 });
   expect(report.scope).toBeNull();
-  expect(
-    report.requirements[0]?.satisfiers.map((s) => [s.path, s.done, s.inScope]),
-  ).toEqual([
-    ["decisions/adr-1-idp.md", null, true],
-    ["tasks/t-a-login.md", true, true],
-    ["tasks/t-y-login-v2.md", false, true],
+  const satisfiers = (path: string) =>
+    report.requirements
+      .find((r) => r.path === path)
+      ?.satisfiers.map((s) => [s.path, s.status, s.done, s.counted]);
+  expect(satisfiers("requirements/req-1-login.md")).toEqual([
+    ["decisions/adr-1-idp.md", null, null, true],
+    ["tasks/t-a-login.md", null, true, true],
+    ["tasks/t-y-login-v2.md", null, false, true],
+  ]);
+  expect(satisfiers("requirements/req-5-export.md")).toEqual([
+    ["requirements/req-8-sub.md", "uncovered", false, true],
+    ["tasks/t-z-export.md", null, true, true],
+  ]);
+  expect(satisfiers("requirements/req-7-uptime.md")).toEqual([
+    ["milestones/m1-release.md", null, false, true],
   ]);
 });
 
-test("a milestone's scope: the work it waits for, and what that satisfies", () => {
+test("a milestone's scope and what counts in it", () => {
   const report = coverage(bundle, graph, { milestone: MILESTONE });
   expect(report.milestone).toEqual({
     path: MILESTONE,
@@ -45,42 +54,37 @@ test("a milestone's scope: the work it waits for, and what that satisfies", () =
     due: "2026-12-25",
   });
   expect(report.requirements.map((r) => [r.path, r.status])).toEqual([
-    // Work outside the milestone (v2) does not count.
+    // The v2 task is outside the milestone, and does not count.
     ["requirements/req-1-login.md", "covered"],
     ["requirements/req-2-mfa.md", "open"],
-    // Waited for directly: its work counts even outside the scope.
+    // Waited for directly: the work that satisfies it joins the scope.
     ["requirements/req-3-audit.md", "open"],
-    // Satisfied by the milestone itself. Not REQ-5 (no work in scope), nor
-    // REQ-6 (only a Decision the work depends on satisfies it).
-    ["requirements/req-7-uptime.md", "covered"],
+    // Satisfied by the milestone itself, whose work is not done. Not REQ-5
+    // (no work in the scope), nor REQ-6 (only a Decision the work depends
+    // on satisfies it).
+    ["requirements/req-7-uptime.md", "open"],
+    // It satisfies REQ-3, which is in the scope.
+    ["requirements/req-9-retention.md", "covered"],
   ]);
   expect(
-    report.requirements[0]?.satisfiers.map((s) => [s.path, s.inScope]),
+    report.requirements[0]?.satisfiers.map((s) => [s.path, s.counted]),
   ).toEqual([
-    ["decisions/adr-1-idp.md", false],
+    ["decisions/adr-1-idp.md", true],
     ["tasks/t-a-login.md", true],
     ["tasks/t-y-login-v2.md", false],
   ]);
-  // Nearest first, through Tasks only: the Decision is in the scope, the
-  // requirement it depends on is not.
+  // Nearest first. From Tasks: what they wait for. From a requirement: its
+  // work. The Decision is in it, the requirement it depends on is not.
   expect(report.scope?.map((i) => [i.path, i.done, i.late])).toEqual([
     ["requirements/req-3-audit.md", null, false],
     ["tasks/t-a-login.md", true, false],
     ["tasks/t-b-mfa.md", false, true],
     ["tasks/t-e-review.md", false, false],
+    ["requirements/req-9-retention.md", null, false],
+    ["tasks/t-w-audit.md", false, false],
     ["decisions/adr-2-otp.md", null, false],
     ["tasks/t-c-sms.md", false, false],
-  ]);
-});
-
-test("a requirement the milestone waits for counts all its work", () => {
-  const report = coverage(bundle, graph, { milestone: MILESTONE });
-  const audit = report.requirements.find(
-    (r) => r.path === "requirements/req-3-audit.md",
-  );
-  expect(audit?.status).toBe("open");
-  expect(audit?.satisfiers.map((s) => [s.path, s.done, s.inScope])).toEqual([
-    ["tasks/t-w-audit.md", false, false],
+    ["tasks/t-v-rotation.md", true, false],
   ]);
 });
 
@@ -90,11 +94,14 @@ test("--done and --type change what counts", () => {
     // "Done" is no longer a done state.
     "open",
     "covered",
-    "covered",
+    // REQ-9's "done" task is not done now.
+    "open",
     "open",
     "covered",
-    "covered",
+    // The milestone's work: "Done" and "done" are not done now.
+    "open",
     "uncovered",
+    "open",
   ]);
   const decisions = coverage(bundle, graph, { types: ["Decision"] });
   expect(decisions.requirements.map((r) => [r.path, r.status])).toEqual([
@@ -110,8 +117,11 @@ test("text and markdown output", () => {
     "open       REQ-3 Audit log  requirements/req-3-audit.md",
   );
   expect(text).toContain("to_do  (outside the milestone)");
-  expect(text).toContain("Work the milestone waits for (3 not done of 4)");
+  expect(text).toContain("Milestone  work left");
+  expect(text).toContain("Work the milestone waits for (4 not done of 6)");
   expect(text).toContain("due 2026-12-30 (after the milestone)");
+  const all = formatCoverage(coverage(bundle, graph), false);
+  expect(all).toContain("Requirement  uncovered");
   const md = formatCoverage(report, true, "https://example.com/b/");
   expect(md).toContain("| Status | Requirement | Satisfied by |");
   expect(md).toContain(

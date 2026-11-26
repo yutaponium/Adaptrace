@@ -1,8 +1,9 @@
 // Requirement coverage (ADR-040): for each requirement, the live documents
 // that satisfy it and whether their work is done. With a milestone, only the
 // requirements in its scope: what it waits for through depends_on and blocks,
-// followed on through Tasks and Milestones, and the requirements those Tasks
-// and Milestones (and the milestone itself) satisfy. It is computed from the
+// followed on through Tasks and Milestones and through the work that
+// satisfies a requirement in it, and the requirements that work (and the
+// milestone itself) satisfies. Only Tasks in the scope count. It is computed from the
 // dependencies, not kept as a separate table (docs/guide/pmbok.md), and
 // writes nothing.
 import { waitPairs } from "./board";
@@ -21,22 +22,25 @@ export interface Satisfier {
   type: string | null;
   title: string;
   state: string | null;
-  // Tasks: whether the state is a done one. A requirement (one of the
-  // requirement types): whether it is covered itself. Other types track no
-  // work: null.
+  // A requirement (one of the requirement types): its own status. Others:
+  // null.
+  status: CoverageStatus | null;
+  // A Task: whether the state is a done one. A requirement: whether it is
+  // covered. A Milestone: whether every Task in its scope is done. Other
+  // types track no work: null.
   done: boolean | null;
-  // With a milestone: whether it is in the milestone's scope. Without: true.
-  inScope: boolean;
+  // Whether it counts toward the status: with a milestone, a Task outside
+  // its scope does not. Without a milestone: true.
+  counted: boolean;
 }
 
 export interface RequirementCoverage {
   path: string;
   title: string;
   state: string | null;
-  // uncovered: no live document satisfies it. open: a Task (or a
-  // requirement) that satisfies it is not done (not covered); with a
-  // milestone, only those in its scope count, unless the milestone waits for
-  // the requirement itself. covered: the others.
+  // uncovered: no live document that counts satisfies it. open: one of them
+  // is not done (a Task not done, a requirement not covered, a Milestone with
+  // work left). covered: the others.
   status: CoverageStatus;
   satisfiers: Satisfier[];
 }
@@ -63,9 +67,8 @@ export interface CoverageReport {
   types: string[];
   done: string[];
   requirements: RequirementCoverage[];
-  // With a milestone: the live documents it waits for, followed on through
-  // Tasks and Milestones, nearest first. done is set for Tasks only. Without
-  // one: null.
+  // With a milestone: the live documents in its scope (see scopeOf), nearest
+  // first. done is set for Tasks only. Without one: null.
   scope: ScopeItem[] | null;
   byStatus: Record<CoverageStatus, number>;
 }
@@ -109,14 +112,53 @@ export function coverage(
     return t !== null && types.includes(t);
   };
 
-  // The milestone's scope: what it waits for, followed on through live
-  // documents, nearest first.
-  // Only work goes further: a Requirement or a Decision the work depends on
-  // is in the scope, but what it depends on or satisfies is not.
-  const work = (path: string) => {
-    const t = typeOf(path);
-    return t === "Task" || t === "Milestone";
+  const satisfiersOf = (path: string) =>
+    [
+      ...new Set(
+        (graph.backlinks.get(path) ?? [])
+          .filter((e) => e.kind === "satisfies" && live(e.from))
+          .map((e) => e.from),
+      ),
+    ].sort();
+  const waits = new Map<string, string[]>();
+  for (const { waiter, waitee } of waitPairs(graph)) {
+    const list = waits.get(waiter) ?? [];
+    list.push(waitee);
+    waits.set(waiter, list);
+  }
+  // A milestone's scope, nearest first: the live documents it waits for.
+  // From a Task or a Milestone, what it waits for in turn; from a requirement,
+  // the Tasks and requirements that satisfy it (the work it needs). Other
+  // documents, such as a Decision the work depends on, are in the scope, but
+  // the walk does not go past them.
+  const scopeOf = (root: string): string[] => {
+    const seen = new Set([root]);
+    const order: string[] = [];
+    let level = [root];
+    while (level.length > 0) {
+      const next: string[] = [];
+      for (const path of level) {
+        const t = typeOf(path);
+        const onward =
+          t === "Task" || t === "Milestone"
+            ? [...(waits.get(path) ?? [])].sort()
+            : isRequirement(path)
+              ? satisfiersOf(path).filter(
+                  (p) => typeOf(p) === "Task" || isRequirement(p),
+                )
+              : [];
+        for (const p of onward) {
+          if (seen.has(p) || !live(p)) continue;
+          seen.add(p);
+          order.push(p);
+          next.push(p);
+        }
+      }
+      level = next;
+    }
+    return order;
   };
+
   let milestone: CoverageReport["milestone"] = null;
   let scope: string[] | null = null;
   if (options.milestone !== undefined) {
@@ -127,89 +169,73 @@ export function coverage(
       state: stateOf(root),
       due: text(fm(root)?.due),
     };
-    const waits = new Map<string, string[]>();
-    for (const { waiter, waitee } of waitPairs(graph)) {
-      const list = waits.get(waiter) ?? [];
-      list.push(waitee);
-      waits.set(waiter, list);
-    }
-    const seen = new Set([root]);
-    const order: string[] = [];
-    let level = [root];
-    while (level.length > 0) {
-      const next: string[] = [];
-      for (const path of level) {
-        for (const waitee of [...(waits.get(path) ?? [])].sort()) {
-          if (seen.has(waitee) || !live(waitee)) continue;
-          seen.add(waitee);
-          order.push(waitee);
-          if (work(waitee)) next.push(waitee);
-        }
-      }
-      level = next;
-    }
-    scope = order;
+    scope = scopeOf(root);
   }
+  const scopeSet = scope === null ? null : new Set(scope);
+  // Counts toward progress: with a milestone, Tasks in its scope only.
+  const counted = (path: string) =>
+    scopeSet === null || typeOf(path) !== "Task" || scopeSet.has(path);
 
-  // Requirements: all live ones, or those in the scope and those its
-  // documents satisfy.
+  // Requirements: all live ones, or those in the scope and those its work
+  // (Tasks and Milestones, the milestone itself included) satisfies.
   let paths: string[];
   if (scope === null) {
     paths = [...bundle.concepts.keys()].filter(
       (p) => live(p) && isRequirement(p),
     );
   } else {
-    // What the work satisfies, the milestone's own satisfies included.
-    const inScope = new Set([...scope.filter(work), options.milestone ?? ""]);
+    const work = new Set([
+      ...scope.filter((p) => {
+        const t = typeOf(p);
+        return t === "Task" || t === "Milestone";
+      }),
+      options.milestone ?? "",
+    ]);
     const found = new Set(scope.filter(isRequirement));
     for (const e of graph.edges) {
-      if (e.kind !== "satisfies" || !inScope.has(e.from)) continue;
+      if (e.kind !== "satisfies" || !work.has(e.from)) continue;
       if (live(e.to) && isRequirement(e.to)) found.add(e.to);
     }
     paths = [...found];
   }
   paths.sort();
 
-  const scopeSet =
-    scope === null ? null : new Set([...scope, options.milestone ?? ""]);
-  const satisfiersOf = (path: string) =>
-    [
-      ...new Set(
-        (graph.backlinks.get(path) ?? [])
-          .filter((e) => e.kind === "satisfies" && live(e.from))
-          .map((e) => e.from),
-      ),
-    ].sort();
-  // A requirement's status; a requirement that satisfies another counts by
-  // its own status. A cycle of satisfies counts as not done.
+  // Whether a satisfier is done: a Task by its state; a requirement by being
+  // covered; a Milestone by all the Tasks in its own scope being done
+  // (unknown, null, when it has none); others track no work (null). A cycle
+  // counts as not done.
   const statuses = new Map<string, CoverageStatus>();
+  const milestones = new Map<string, boolean | null>();
   const visiting = new Set<string>();
+  const satisfied = (path: string): boolean | null => {
+    if (isRequirement(path)) return statusOf(path) === "covered";
+    if (typeOf(path) === "Milestone") {
+      const known = milestones.get(path);
+      if (known !== undefined) return known;
+      const tasks = scopeOf(path).filter((p) => typeOf(p) === "Task");
+      const done =
+        tasks.length === 0 ? null : tasks.every((p) => isDone(p) === true);
+      milestones.set(path, done);
+      return done;
+    }
+    return isDone(path);
+  };
   const statusOf = (path: string): CoverageStatus => {
     const known = statuses.get(path);
     if (known !== undefined) return known;
     if (visiting.has(path)) return "open";
     visiting.add(path);
-    // With a milestone, work outside its scope does not count, unless the
-    // milestone waits for the requirement itself.
-    const all = scopeSet === null || scopeSet.has(path);
-    const list = satisfiersOf(path);
+    const list = satisfiersOf(path).filter(counted);
     const status: CoverageStatus =
       list.length === 0
         ? "uncovered"
-        : list.some(
-              (p) =>
-                (all || scopeSet?.has(p) === true || !isTask(p)) &&
-                satisfied(p) === false,
-            )
+        : list.some((p) => satisfied(p) === false)
           ? "open"
           : "covered";
     visiting.delete(path);
     statuses.set(path, status);
     return status;
   };
-  const isTask = (path: string) => typeOf(path) === "Task";
-  const satisfied = (path: string): boolean | null =>
-    isRequirement(path) ? statusOf(path) === "covered" : isDone(path);
 
   const requirements = paths.map((path): RequirementCoverage => {
     const satisfiers = satisfiersOf(path).map(
@@ -218,8 +244,9 @@ export function coverage(
         type: typeOf(p),
         title: titleOf(p),
         state: stateOf(p),
+        status: isRequirement(p) ? statusOf(p) : null,
         done: satisfied(p),
-        inScope: scopeSet === null || scopeSet.has(p),
+        counted: counted(p),
       }),
     );
     return {

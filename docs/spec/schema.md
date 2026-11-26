@@ -497,17 +497,23 @@ LLMの答えの形：
 
 | 状況 | 内容 |
 | --- | --- |
-| `uncovered` | `status: deprecated` でない文書のうち、要件を `satisfies` で指すものがない |
-| `open` | 要件を満たすTaskのうち、終わっていないものがある。要件を満たす要件が `covered` でない場合も含む |
+| `uncovered` | 数える文書のうち、要件を `satisfies` で指すものがない |
+| `open` | 数える文書のうち、終わっていないものがある |
 | `covered` | それ以外 |
 
 - 要件は、`type: Requirement` の文書です。`--type` で別の型にできます。`status: deprecated` の要件と、`deprecated` の満たす文書は含めません
-- 進み具合を持つのはTaskだけです。Taskは、`state` が `done`（`--done` で変えられる。大文字と小文字は区別しない）なら終わったとみなします。要件を満たす文書が要件の型なら、その要件が `covered` かどうかで判断します。それ以外の満たす文書（Decisionなど）は、あれば満たしているとみなします。JSONの `done` は `null` です
+- 満たす文書が終わったかは、型で決めます。JSONでは `done` です
+  - Task：`state` が `done` なら、終わったとみなします。値は `--done` で変えられます。大文字と小文字は区別しません
+  - 要件の型の文書：その要件が `covered` なら、終わったとみなします。JSONの `status` に、その要件の状況を示します
+  - Milestone：そのマイルストーンの範囲のTaskが、すべて終わっていれば、終わったとみなします
+  - それ以外（Decisionなど）：あれば満たしているとみなします。`done` は `null` です
 - `--milestone <文書>` を付けると、マイルストーンの範囲だけを示します
-  - 範囲は、マイルストーンが待っている文書（`depends_on` と `blocks`。`board` と同じ向き）です。TaskとMilestoneからは、その先もたどります。Task以外の文書（要件や判断など）は範囲に入りますが、その先はたどりません。`status: deprecated` の文書は範囲に含めず、その先もたどりません
-  - 示す要件は、範囲の要件と、範囲のTaskとMilestone（マイルストーン自身を含む）が `satisfies` で満たす要件です
-  - 範囲の外のTaskは、要件の進み具合に数えません。JSONの `inScope` が `false` です。ただし、マイルストーンが待っている要件（範囲の要件）は、満たすTaskをすべて数えます
-- `--milestone` のときは、範囲の文書を近い順に示します（JSONでは `scope`）。担当者（`owner`）、期日（`due`）、期日がマイルストーンの `due` より後か（`late`）を示します。`done` を持つのはTaskだけです。`text` と `markdown` では、Taskだけを示します
+  - 範囲は、マイルストーンが待っている文書（`depends_on` と `blocks`）から始めて、近い順にたどります。向きは `board` と同じです
+  - TaskとMilestoneからは、それが待っている文書をたどります。要件からは、それを満たすTaskと要件をたどります
+  - それ以外の文書（判断など）は範囲に入りますが、その先はたどりません。`status: deprecated` の文書は範囲に含めず、その先もたどりません
+  - 示す要件は、範囲の要件と、範囲のTaskとMilestoneが `satisfies` で満たす要件です。マイルストーン自身が満たす要件も含みます
+  - 範囲の外のTaskは、数えません。JSONの `counted` が `false` です
+- `--milestone` のときは、範囲の文書を近い順に示します（JSONでは `scope`）。担当者（`owner`）と期日（`due`）を示します。期日がマイルストーンの `due` より後なら、`late` が `true` です。`done` を持つのはTaskだけです。`text` と `markdown` では、Taskだけを示します
 - `--format` は `text`（既定）、`markdown`、`json` です。`markdown` での文書の示し方は `board` と同じで、`--link-base` でリンクにします
 
 ## 協議の会議の準備（`adaptrace meeting <変更要求>...`）
