@@ -23,8 +23,13 @@
 
 ## 次にやること
 
-- [ ] skillの候補（ADR-026の使い分けに従い、既存の機能を組み合わせて対話しながら進める作業）。作ったら、`tests/skills/` に試験も置く
+- [ ] skillの候補（2026-11-26に4つ追加。ADR-026の使い分けに従い、既存の機能を組み合わせて対話しながら進める作業）。作ったら、`tests/skills/` に試験も置く
   - 済：既存のファイルの取り込み（`adaptrace-adopt`、ADR-026）、変更要求の受付（`adaptrace-change-request`、ADR-027）、見直しの実施（`adaptrace-review`、ADR-028）、定例の会議の準備（`adaptrace-weekly`、ADR-030）、議事録の取り込み（`adaptrace-minutes`、ADR-031）、判断の置き換え（`adaptrace-supersede`、ADR-032）、バンドルのヘルスチェック（`health` とskill `adaptrace-health`、ADR-033、ADR-034）
+  - [ ] 変更要求の決着（`adaptrace-change-close`）：承認・却下・保留の判断を受けて `state` を変更する。承認なら、`changes` の相手に `derived_from` を追加し（ADR-023）、見直し（`adaptrace-review`）につなぐ。`progress` で見直しが済んだら完了にし、重なっていた変更要求に決着を知らせる。既存のCLI（`progress`、`conflicts`、`list`）で作れる
+  - [ ] マイルストーンの判定（`adaptrace-milestone`）：マイルストーンの前に、満たす文書（`satisfies`）がない要件、未完了のタスク、未決の変更要求を示し、延期や範囲の除外を利用者と決める。要件ごとの充足の計算は、ADR-026に従ってCLIに作る（トレーサビリティ・マトリクス。コマンド名は未定）
+  - [ ] リスクの見直し（`adaptrace-risk`）：見直し時期を過ぎたリスクを1件ずつ見直す。発生の可能性と影響の更新、対応策のTaskの作成、リスクを閉じるかどうか、`stale_after` の延長を利用者と決める。既存の機能で作れる
+  - [ ] Backlog.mdとの同期（`adaptrace-sync`）：`sync` の差分を項目ごとに示し、どちらに合わせるか（`--resolve`）を利用者と決める。Backlog.mdを使うチーム向け
+  - `state` を書き換えるskillは、`state` の値の一覧が未確定なので、バンドルで使っている値にそろえる（`adaptrace-change-request` と同じ方針）
 
 ## 未確定事項
 
