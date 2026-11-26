@@ -277,3 +277,35 @@ test("coverage: --milestone must be a live Milestone, --type not empty", async (
   expect(await run(["coverage", COVERAGE, "--type", " "])).toBe(2);
   expect(await run(["coverage", COVERAGE, "--type", "Task"])).toBe(2);
 });
+
+test("sync --resolve: per task, and usage errors", async () => {
+  captureLog();
+  const error = spyOn(console, "error").mockImplementation(() => {});
+  const parent = await mkdtemp(join(tmpdir(), "adaptrace-cli-sync-"));
+  try {
+    await cp("tests/fixtures/valid", join(parent, "b"), { recursive: true });
+    const backlog = join(parent, "backlog");
+    const { mkdir, writeFile } = await import("node:fs/promises");
+    await mkdir(join(backlog, "tasks"), { recursive: true });
+    await writeFile(
+      join(backlog, "config.yml"),
+      'statuses: ["To Do", "Done"]\ntask_prefix: "back"\n',
+    );
+    const args = ["sync", join(parent, "b"), "--backlog", backlog];
+    expect(
+      await run([...args, "--resolve", "tasks/task-042-mfa-login.md=backlog"]),
+    ).not.toBe(2);
+    expect(await run([...args, "--resolve", "tasks/nope.md=backlog"])).toBe(2);
+    expect(String(error.mock.calls.at(-1)?.[0])).toContain(
+      "not a Task in the bundle or a Backlog.md task id",
+    );
+    expect(
+      await run([...args, "--resolve", "tasks/task-042-mfa-login.md=both"]),
+    ).toBe(2);
+    expect(
+      await run([...args, "--resolve", "adaptrace", "--resolve", "backlog"]),
+    ).toBe(2);
+  } finally {
+    await rm(parent, { recursive: true, force: true });
+  }
+});

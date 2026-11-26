@@ -452,12 +452,23 @@ export function planSync(
     direction?: Direction;
     // Settles conflicts in favor of one side; without it they are reported.
     resolve?: "adaptrace" | "backlog";
+    // Per task, by bundle path (tasks/a.md) or Backlog.md id (back-7); it
+    // comes before resolve.
+    resolveTasks?: Map<string, "adaptrace" | "backlog">;
     now?: Date;
     generatedBy: string;
     tasksDir?: string;
   },
 ): SyncPlan {
   const direction = options.direction ?? "both";
+  // The side a conflict on this task is settled to, if any.
+  const byId = new Map(
+    [...(options.resolveTasks ?? [])].map(([k, v]) => [normalizeId(k), v]),
+  );
+  const sideFor = (path: string, id: string) =>
+    options.resolveTasks?.get(path) ??
+    byId.get(normalizeId(id)) ??
+    options.resolve;
   const now = options.now ?? new Date();
   const tasksDir = options.tasksDir ?? "tasks";
   const plan: SyncPlan = {
@@ -719,14 +730,14 @@ export function planSync(
     } else if (
       mineChanged &&
       theirsChanged &&
-      options.resolve === "adaptrace" &&
+      sideFor(concept.path, task.id) === "adaptrace" &&
       canExport
     ) {
       exportTo(concept, mine, task.id, task, fields);
     } else if (
       mineChanged &&
       theirsChanged &&
-      options.resolve === "backlog" &&
+      sideFor(concept.path, task.id) === "backlog" &&
       canImport
     ) {
       importFrom(

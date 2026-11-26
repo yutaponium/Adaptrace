@@ -273,6 +273,7 @@ sources:
 - 既定では、計画を表示するだけです。`--write` を付けたときだけ書き込みます
 - Backlog.mdのディレクトリは、`--backlog`（既定は `backlog`）で指定します。`config.yml` の `statuses`、`default_status`、`task_prefix` を読みます
 - `--direction import|export` で、片方向だけにできます。除外した側の変更は「pending」として示し、書き込みません。`--resolve` も、除外した側には書き込みません
+- `--resolve <タスク>=<側>` で、衝突をタスクごとにそろえます。タスクは、バンドルの中のパス（`tasks/design.md`）か、Backlog.mdのID（`back-7`。大文字と小文字は区別しない）で指定します。タスクごとに1回ずつ、何回でも指定できます。全体の `--resolve adaptrace|backlog` と一緒に指定すると、タスクごとの指定が優先されます。バンドルのTaskにもBacklog.mdのタスクにもないものを指定すると、使い方の誤り（終了コード2）になります
 
 ### 対応する項目
 
@@ -304,7 +305,7 @@ sources:
 | 変わっていない | 変わっていない | そろっている |
 | 変わった | 変わっていない | Backlog.mdへ書き出す |
 | 変わっていない | 変わった | Adaptraceへ取り込む |
-| 変わった | 変わった | 衝突。上書きせずに知らせる。`--resolve adaptrace` か `--resolve backlog` でどちらかにそろえる |
+| 変わった | 変わった | 衝突。上書きせずに知らせる。`--resolve adaptrace` か `--resolve backlog` でどちらかにそろえる。タスクごとに `--resolve <タスク>=<側>` でもそろえられる |
 
 両側の内容が同じで、`backlog.sync` だけがないときは、記録だけします。
 `backlog.id` のタスクがBacklog.mdにないときは知らせ、作り直しも削除もしません。

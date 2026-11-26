@@ -9,6 +9,7 @@ import {
   type Direction,
   loadBacklog,
   loadBacklogConfig,
+  normalizeId,
   nowIso,
   planSync,
 } from "./backlog";
@@ -144,7 +145,8 @@ Options:
   --write             sync: write the changes instead of only showing them
                       extract, meeting: create the drafted files
                       migrate-dates: write generated into the documents
-  --resolve <side>    sync: settle conflicts with adaptrace | backlog
+  --resolve <side>    sync: settle conflicts with adaptrace | backlog; or <task>=<side> for
+                      one task (a bundle path or a Backlog.md id), given once per task
   --references        graph: include body links as untyped edges
   --link-base <url>   board, estimate, progress, list, conflicts, meeting, coverage --format markdown: link titles to <url> + path
   --request <doc>     estimate: the change request, given to the LLM as the reason; without
@@ -260,7 +262,7 @@ export async function run(args: string[]): Promise<number> {
         backlog: { type: "string" },
         direction: { type: "string" },
         write: { type: "boolean" },
-        resolve: { type: "string" },
+        resolve: { type: "string", multiple: true },
         "link-base": { type: "string" },
         llm: { type: "string" },
         all: { type: "boolean" },
@@ -676,22 +678,52 @@ export async function run(args: string[]): Promise<number> {
         "import",
         "export",
       ]);
-      const resolve =
-        values.resolve === undefined
-          ? undefined
-          : (pickOption("--resolve", values.resolve, [
-              "adaptrace",
-              "backlog",
-            ]) as "adaptrace" | "backlog");
+      // --resolve <side> for every conflict, or <task>=<side> for one task
+      // (a bundle path or a Backlog.md id); it may be given several times.
+      type Side = "adaptrace" | "backlog";
+      let resolve: Side | undefined;
+      const resolveTasks = new Map<string, Side>();
+      for (const value of values.resolve ?? []) {
+        const eq = value.lastIndexOf("=");
+        if (eq === -1) {
+          if (resolve !== undefined) {
+            throw new UsageError("--resolve <side> may be given once");
+          }
+          resolve = pickOption("--resolve", value, [
+            "adaptrace",
+            "backlog",
+          ]) as Side;
+          continue;
+        }
+        const task = value.slice(0, eq).trim().replace(/^\/+/, "");
+        const side = pickOption("--resolve", value.slice(eq + 1).trim(), [
+          "adaptrace",
+          "backlog",
+        ]) as Side;
+        if (task === "") throw new UsageError(`--resolve ${value}: no task`);
+        resolveTasks.set(task, side);
+      }
       const bundle = await openBundle(bundleDir);
       const backlogDir = values.backlog ?? DEFAULT_BACKLOG;
       if (!(await isDirectory(backlogDir))) {
         throw new UsageError(`Backlog.md directory '${backlogDir}' not found`);
       }
       const backlog = await loadBacklog(backlogDir);
+      // A task named in --resolve must exist: a typo would leave a conflict.
+      for (const task of resolveTasks.keys()) {
+        const known =
+          bundle.concepts.get(task)?.frontmatter.type === "Task" ||
+          backlog.tasks.has(normalizeId(task));
+        if (!known) {
+          throw new UsageError(
+            `--resolve ${task}=...: not a Task in the bundle or a Backlog.md task id`,
+          );
+        }
+      }
       const plan = planSync(bundle, backlog, {
         direction: direction as Direction,
         resolve,
+        resolveTasks,
         generatedBy: `adaptrace/${pkg.version}`,
       });
       const write = values.write ?? false;
