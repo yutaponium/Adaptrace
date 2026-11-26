@@ -183,7 +183,7 @@ This gives you the `adaptrace` command. To move to a newer version, change the t
 
 **Download an executable** (no Bun needed)
 
-From [Releases](https://github.com/yutaponium/Adaptrace/releases), download the file for your platform (`adaptrace-<version>-<platform>.tar.gz`, or `.zip` for Windows). The platforms are `linux-x64`, `linux-arm64`, `darwin-arm64` (Apple silicon), `darwin-x64` (Intel Mac) and `windows-x64`. You can check the file with `SHA256SUMS` on the same page.
+From [Releases](https://github.com/yutaponium/Adaptrace/releases), download the file for your platform (`adaptrace-<version>-<platform>.tar.gz`, or `.zip` for Windows). The platforms are `linux-x64`, `linux-arm64`, `darwin-arm64` (Apple silicon), `darwin-x64` (Intel Mac) and `windows-x64`. You can check the file with `SHA256SUMS` on the same page. The Linux builds use glibc, so they do not run on musl systems such as Alpine Linux.
 
 Extracting it creates a folder with the same name. Put the `adaptrace` inside (`adaptrace.exe` on Windows) in a folder on your PATH.
 

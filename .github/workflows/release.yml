@@ -75,7 +75,7 @@ jobs:
           mkdir -p "$dir"
           bun build --compile --minify --target="bun-${{ matrix.target }}" \
             src/cli.ts --outfile "$dir/$exe" --metafile=dist/meta.json
-          cp LICENSE "$dir/"
+          cp LICENSE THIRD_PARTY_NOTICES.md "$dir/"
           # The runtime is bundled too: add Bun's license for this version.
           curl -fsSL -o dist/BUN_LICENSE.md \
             "https://raw.githubusercontent.com/oven-sh/bun/bun-v$(bun --version | tr -d '\r')/LICENSE.md"
@@ -130,7 +130,10 @@ jobs:
               echo "$out"
               exit 1
             fi
-            gh release create "$TAG" --draft --verify-tag --title "$TAG" \
+            # A tag with "-" (v1.1.0-rc.1) is a pre-release.
+            pre=""
+            case "$TAG" in *-*) pre="--prerelease" ;; esac
+            gh release create "$TAG" --draft $pre --verify-tag --title "$TAG" \
               --notes "See CHANGELOG.md for the changes in this version."
           fi
           gh release upload "$TAG" dist/* --clobber

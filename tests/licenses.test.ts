@@ -32,7 +32,7 @@ test("lists each bundled package once with its license text", async () => {
 });
 
 test("fails when no bundled package is found", async () => {
-  expect(licenses(["src/cli.ts"], "")).rejects.toThrow(
+  await expect(licenses(["src/cli.ts"], "")).rejects.toThrow(
     "no bundled packages found",
   );
 });

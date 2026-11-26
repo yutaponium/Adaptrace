@@ -181,7 +181,7 @@ adaptrace --version
 
 **実行ファイルをダウンロードする**（Bunが要りません）
 
-[Releases](https://github.com/yutaponium/Adaptrace/releases) から、使う環境のファイル（`adaptrace-<版>-<環境>.tar.gz`、Windowsは `.zip`）をダウンロードします。環境は、`linux-x64`、`linux-arm64`、`darwin-arm64`（Apple silicon）、`darwin-x64`（Intel Mac）、`windows-x64` です。ファイルが正しいかは、同じページの `SHA256SUMS` で確認できます。
+[Releases](https://github.com/yutaponium/Adaptrace/releases) から、使う環境のファイル（`adaptrace-<版>-<環境>.tar.gz`、Windowsは `.zip`）をダウンロードします。環境は、`linux-x64`、`linux-arm64`、`darwin-arm64`（Apple silicon）、`darwin-x64`（Intel Mac）、`windows-x64` です。ファイルが正しいかは、同じページの `SHA256SUMS` で確認できます。Linux向けはglibcを使うので、Alpine Linuxなどのmuslの環境では動きません。
 
 展開すると、同じ名前のフォルダができます。中の `adaptrace`（Windowsは `adaptrace.exe`）を、PATHの通ったフォルダに置きます。
 

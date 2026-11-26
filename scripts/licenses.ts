@@ -23,7 +23,23 @@ export function packageDir(input: string): string | null {
   return name ? path.slice(0, at + marker.length) + name : null;
 }
 
-const LICENSE_FILE = /^(licen[cs]e|copying|notice)/i;
+// LICENSE, LICENSE.md, LICENSE-MIT.txt, NOTICE and the like, but not code.
+const LICENSE_FILE =
+  /^(licen[cs]e|copying|notice)([.-][\w-]+)?(\.(md|txt|markdown))?$/i;
+
+// The license named in package.json: a string, or the legacy object forms.
+function licenseName(pkg: { license?: unknown; licenses?: unknown }): string {
+  const name = (value: unknown) =>
+    typeof value === "string"
+      ? value
+      : typeof value === "object" && value !== null && "type" in value
+        ? String(value.type)
+        : undefined;
+  if (pkg.license !== undefined) return name(pkg.license) ?? "see below";
+  if (Array.isArray(pkg.licenses))
+    return pkg.licenses.map(name).filter(Boolean).join(" OR ") || "see below";
+  return "see below";
+}
 
 export async function licenses(
   inputs: string[],
@@ -40,20 +56,25 @@ export async function licenses(
   for (const dir of dirs) {
     const pkg = JSON.parse(
       await readFile(join(root, dir, "package.json"), "utf8"),
-    ) as { name?: string; version?: string; license?: string };
+    ) as {
+      name?: string;
+      version?: string;
+      license?: unknown;
+      licenses?: unknown;
+    };
     const files = (await readdir(join(root, dir), { withFileTypes: true }))
       .filter((e) => e.isFile() && LICENSE_FILE.test(e.name))
       .map((e) => e.name)
       .sort();
     if (files.length === 0)
       throw new Error(
-        `${dir}: no license file found (license: ${pkg.license})`,
+        `${dir}: no license file found (license: ${licenseName(pkg)})`,
       );
     const texts = await Promise.all(
       files.map((f) => readFile(join(root, dir, f), "utf8")),
     );
     sections.push(
-      `## ${pkg.name}@${pkg.version} (${pkg.license})\n\n${texts.map((t) => t.trim()).join("\n\n")}\n`,
+      `## ${pkg.name}@${pkg.version} (${licenseName(pkg)})\n\n${texts.map((t) => t.trim()).join("\n\n")}\n`,
     );
   }
   return [
@@ -61,7 +82,8 @@ export async function licenses(
     "Licenses of the third-party code bundled into this executable.\n",
     "## Bun\n",
     "This executable includes the Bun runtime. Its license follows. The source of Adaptrace is at https://github.com/yutaponium/Adaptrace, so the executable can be rebuilt with `bun build --compile`, including with a modified Bun.\n",
-    `${bunLicense.trim()}\n`,
+    // Bun's own headings go one level down, under "## Bun".
+    `${bunLicense.trim().replace(/^(#+) /gm, "#$1 ")}\n`,
     ...sections,
   ].join("\n");
 }
