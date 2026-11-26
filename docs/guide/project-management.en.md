@@ -242,7 +242,7 @@ adaptrace coverage --milestone milestones/release.md
 
 A requirement that no work satisfies is shown as `uncovered`, and one whose work is not done as `open`. Then the work the milestone waits for is listed with owners and due dates. Work due after the milestone is marked `(after the milestone)`. `coverage` is available from the release after v1.0.0.
 
-If you use Claude Code, the skill `adaptrace-milestone` gathers the material for the judgment and lets you decide how to handle what is left in a conversation. It also shows open change requests and out-of-date documents that touch the scope, and writes changes such as moving work to the next milestone or changing a due date after you approve them. This skill is also available from the release after v1.0.0. You get the skill the same way as `adaptrace-weekly` above.
+If you use Claude Code, the skill `adaptrace-milestone` gathers the material for the judgment and lets you decide how to handle what is left in a conversation. It also shows open change requests and out-of-date documents that touch the scope, and writes changes such as moving work to the next milestone or changing a due date after you approve them. This skill is also available from the release after v1.0.0. You get the skill the same way as in [the guide to adopting Adaptrace in an existing repository](adoption.en.md#have-claude-code-help-you-bring-in-files). If you installed the plugin, you already have all the skills. If you copy the folder, replace `adaptrace-adopt` in the command with `adaptrace-milestone`.
 
 ### Regular risk reviews
 

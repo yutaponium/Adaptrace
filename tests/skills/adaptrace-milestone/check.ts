@@ -32,8 +32,10 @@ const fm = (path: string) =>
   (bundle.concepts.get(path)?.frontmatter ?? {}) as Record<string, unknown>;
 const list = (v: unknown) =>
   (Array.isArray(v) ? v : v === undefined || v === null ? [] : [v]).map(String);
-const at = (path: string) =>
-  String((fm(path).generated as { at?: unknown } | undefined)?.at);
+const gen = (path: string) => {
+  const g = (fm(path).generated ?? {}) as { at?: unknown; by?: unknown };
+  return `${String(g.by)} ${String(g.at)}`;
+};
 const R1 = "milestones/release-1.md";
 const R2 = "milestones/release-2.md";
 const SMS = "/tasks/sms-send.md";
@@ -81,12 +83,13 @@ check(
 check(
   "must",
   String(fm(R1).due) === "2026-12-25" && fm(R1).state === undefined,
-  `the year-end release keeps its due date and is not marked done (due: ${String(fm(R1).due)}, state: ${String(fm(R1).state)})`,
+  `the year-end release keeps its due date and has no state added (due: ${String(fm(R1).due)}, state: ${String(fm(R1).state)})`,
 );
+const ORIGINAL = "human:sato 2026-11-01T10:00:00+09:00";
 check(
   "should",
-  at(R1).startsWith("2026-11-01") && at(R2).startsWith("2026-11-01"),
-  "the milestones keep their generated.at",
+  [R1, R2, "tasks/sms-send.md"].every((p) => gen(p) === ORIGINAL),
+  "the milestones and the SMS task keep their generated",
 );
 
 // Only the milestones' dependency keys changed; nothing else, and nothing new.
@@ -108,11 +111,12 @@ if (existsSync(join(repo, ".git"))) {
     return r.stdout.toString();
   };
   const ALLOWED: Record<string, RegExp> = {
-    // generated is checked above (should): changing it is a warning.
-    [R1]: /^(depends_on|blocks|generated):|^\s*- /,
-    [R2]: /^(depends_on|blocks|generated):|^\s*- /,
-    // The task may move a blocks that pointed at the year-end release.
-    "tasks/sms-send.md": /^(blocks|generated):|^\s*- /,
+    // generated is checked above (should): changing it, in any style, is a
+    // warning.
+    [R1]: /^(depends_on|blocks|generated):|^\s*- |^\s+(by|at):/,
+    [R2]: /^(depends_on|blocks|generated):|^\s*- |^\s+(by|at):/,
+    // The task may point a blocks at the second release instead.
+    "tasks/sms-send.md": /^(blocks|generated):|^\s*- |^\s+(by|at):/,
   };
   const changed = git([
     "diff",
