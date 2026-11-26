@@ -38,3 +38,4 @@
 * [ADR-036](adr-036-rename-adaptrace.md) - 名前をAccordantからAdaptraceに変え、柔軟な意思決定と硬い開発プロセスをつなぐツールと説明する
 * [ADR-037](adr-037-plugin.md) - skillをClaude Codeのプラグインとして配布し、skillに共通の書き方を各skillに置く
 * [ADR-038](adr-038-release-binaries.md) - CLIを1つの実行ファイルにして、タグを付けたときにGitHub Actionsで作り、Releaseに添付する
+* [ADR-039](adr-039-change-decision-skill.md) - 変更要求の判断は、skillが変更要求の文書に記録し、次の手順と影響を受ける変更要求を示す

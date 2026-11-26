@@ -2,6 +2,7 @@
 
 ## 2026-11-26
 
+* **Creation**: 変更要求の判断を記録するskillの方針を [ADR-039](/decisions/adr-039-change-decision-skill.md) として記録した
 * **Creation**: CLIの実行ファイルを作ってReleaseに添付する方針を [ADR-038](/decisions/adr-038-release-binaries.md) として記録した
 * **Creation**: skillの配布方法と、skillに共通の書き方を [ADR-037](/decisions/adr-037-plugin.md) として記録した
 * **Creation**: 名前をAccordantからAdaptraceに変える決定を [ADR-036](/decisions/adr-036-rename-adaptrace.md) として記録した

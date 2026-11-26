@@ -378,13 +378,13 @@ Write the same JSON as for Antigravity in the project's `.cursor/mcp.json` (or `
 
 ## Adding the skills
 
-Adaptrace has seven skills that teach an AI agent the steps of a task. The skills follow the open [Agent Skills](https://agentskills.io/) format.
+Adaptrace has eight skills that teach an AI agent the steps of a task. `adaptrace-change-decision` is available from the release after v1.0.0. The skills follow the open [Agent Skills](https://agentskills.io/) format.
 
 > **The skills are tested only with Claude Code.** How they work with other agents has not been checked. The skills also contain instructions that assume Claude Code features (such as a tool that asks questions with choices). The skills are written in Japanese; English reference translations are in [docs/skills/](docs/skills/).
 
 ### Claude Code
 
-You can install all seven skills together as a Claude Code plugin.
+You can install all the released skills together as a Claude Code plugin.
 
 ```text
 /plugin marketplace add yutaponium/Adaptrace
@@ -421,6 +421,7 @@ Every skill works in a conversation with you. It changes files only after you ap
 |---|---|---|
 | Bring existing files into the bundle and add dependencies. How to use it is in [the adoption guide](docs/guide/adoption.en.md#have-claude-code-help-you-bring-in-files) | `adaptrace-adopt` ([skills/adaptrace-adopt/](skills/adaptrace-adopt/SKILL.md)) | [adaptrace-adopt.en.md](docs/skills/adaptrace-adopt.en.md) |
 | Take a request received by e-mail or chat as a change request | `adaptrace-change-request` ([skills/adaptrace-change-request/](skills/adaptrace-change-request/SKILL.md)) | [adaptrace-change-request.en.md](docs/skills/adaptrace-change-request.en.md) |
+| Record the decision to approve, reject or defer change requests, and show the overlapping change requests and the next steps | `adaptrace-change-decision` ([skills/adaptrace-change-decision/](skills/adaptrace-change-decision/SKILL.md)) | [adaptrace-change-decision.en.md](docs/skills/adaptrace-change-decision.en.md) |
 | Review the documents an approved change request reaches, upstream first | `adaptrace-review` ([skills/adaptrace-review/](skills/adaptrace-review/SKILL.md)) | [adaptrace-review.en.md](docs/skills/adaptrace-review.en.md) |
 | Before a regular meeting, sum up the status and draft an agenda | `adaptrace-weekly` ([skills/adaptrace-weekly/](skills/adaptrace-weekly/SKILL.md)) | [adaptrace-weekly.en.md](docs/skills/adaptrace-weekly.en.md) |
 | Create documents from meeting minutes, and record what was decided in existing ones | `adaptrace-minutes` ([skills/adaptrace-minutes/](skills/adaptrace-minutes/SKILL.md)) | [adaptrace-minutes.en.md](docs/skills/adaptrace-minutes.en.md) |
