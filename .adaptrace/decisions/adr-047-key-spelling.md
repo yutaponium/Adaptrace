@@ -2,7 +2,7 @@
 type: Decision
 title: 依存関係のキーと型の書き間違いを、`validate` が既知の名前を示して警告する
 state: accepted
-generated: { by: claude-code/claude-opus-5-5, at: 2026-11-28T19:46:43+09:00 }
+generated: { by: claude-code/claude-opus-5-5, at: 2026-11-28T19:51:30+09:00 }
 depends_on:
   - /decisions/adr-008-okf-alignment.md
 ---
@@ -11,15 +11,17 @@ depends_on:
 
 ## 決定
 
-- フロントマターのキーが、既知のキーに近い綴りなら、`validate` が `key-spelling` として警告し、意図したと思われるキーを示す。既知のキーは、依存関係のキー、`docs/spec/schema.md` の「フロントマター」にある表のキー、`okf_version`、`timestamp`
+- フロントマターのキーが、既知のキーに近い綴りなら、`validate` が `key-spelling` として警告し、意図したと思われるキーを示す。既知のキーは、依存関係のキー、`docs/spec/schema.md` の「フロントマター」にある表のキー、`okf_version`、`timestamp`、コマンドが読む `owner`、`due`、`backlog`
 - 近い綴りとみなす条件
   - 大文字・小文字と区切り（`_`、`-`、空白）を除くと同じ
   - 末尾の `s` だけが違う
-  - 書いたキーと既知のキーが6文字以上で、編集距離（隣り合う2文字の入れ替えを1と数える）が2以下。既知のキーが5文字以下なら、書いたキーが6文字以上で、編集距離が1
+  - 書いたキーが6文字以上で、編集距離（隣り合う2文字の入れ替えを1と数える）が1。ただし、7文字以下で同じ長さの1文字の置き換え（`charges` と `changes`）は除く。短い語は、1文字の置き換えで別の語になりやすいため
+  - 両方が9文字以上で、先頭の3文字が同じで、編集距離が2
+  - ただし、既知のキーに単語を付け足したキー（`description_en`、`verified_by`）は、別のものを表すので除く
   - ただし、依存関係でないキーの単語を丸ごと別の単語にしたキー（`requested_by` に対する `requested_at`）は、別のものを表すので除く。依存関係のキー（`depends_to`）は除かない。書き間違いのほうが起こりやすく、見逃すと依存関係が漏れるため
   - 依存関係の別の言い方（`dependencies`、`dependency`、`depends`、`depend`、`derived`、`derives`、`satisfy`、`blocking`）
   - `changed` は、`changes` と1文字違いだが、日時のキーとして使われることが多いので除く
-- 依存関係を相手の側から書いたキー（`blocked_by`、`blocked`、`blocked_on`、`blocks_on`、`blocker`、`blockers`、`superseded_by`、`superseded`、`satisfied_by`、`satisfied`、`derived_by`、`changed_by`）も警告し、相手の文書に書くキーを示す。`blocked`、`superseded` などは既知のキーと1文字違いだが、既知のキーに書き換えると関係の向きが逆になるため、相手の側から書いたキーとして扱う。`blocks` の側のキーは、この文書の `depends_on` でも書けることを示す
+- 依存関係を相手の側から書いたキー（`blocked_by`、`blocked`、`blocked_on`、`blocks_on`、`blocks_by`、`blocker`、`blockers`、`superseded_by`、`superseded`、`satisfied_by`、`satisfied`、`satisfiers`、`depends_on_by`、`depended_on`、`dependents`、`derived_by`、`changed_by`）も警告し、相手の文書に書くキーを示す。`blocked`、`superseded` などは既知のキーと1文字違いだが、既知のキーに書き換えると関係の向きが逆になるため、相手の側から書いたキーとして扱う。`blocks` の側のキーは、この文書の `depends_on` でも書けることを示す
 - 型は、これまでの `type-spelling` を広げる。表の型と、大文字・小文字と区切りを除いて同じか、複数形か、編集距離が2以下なら警告する。編集距離が2のときは、先頭の2文字が同じものに限る（`Revision` は `Decision` とみなさない）。表の型が5文字以下なら、1文字多いか、隣り合う2文字を入れ替えたときだけ警告する（`Ask`、`Disk` は警告しない）。短い語は、1文字の置き換えで別の語になりやすいため
 - どちらも警告とし、エラーにしない。終了コードは変えない
 
@@ -35,3 +37,4 @@ depends_on:
 - 知らないキーをすべて警告する：`owner`、`due` などの独自のキーは、仕様で許している。警告が多すぎて、本当の書き間違いが埋もれる
 - エラーにする：OKFが許す書き方を拒むことになる。独自のキーで、たまたま近い綴りのものを使えなくなる
 - 5文字以下のキーにも編集距離を使う：`size` と `side`、`rule` と `role` のように、独自のキーと既知のキーが1文字違いになりやすく、誤検出が多い
+- 6文字以上のキーに、編集距離2まで一律に使う：`channel` と `changes`、`stages` と `status` のように、無関係な語が近くなり、誤検出が多い

@@ -3,7 +3,7 @@ import { buildGraph, findCycles, type Graph } from "./graph";
 import { forEachProseLine } from "./links";
 import { isReadableFile, localResources, SHA256 } from "./resource";
 import { DATETIME, LIFECYCLE_STATUSES, OKF_VERSION } from "./schema";
-import { suggestKey, suggestType } from "./spelling";
+import { canonical, suggestKey, suggestType } from "./spelling";
 
 export type Severity = "error" | "warning";
 
@@ -41,9 +41,7 @@ function checkConcept(concept: Concept, issues: Issue[]) {
     const known = suggestType(type);
     if (known) {
       // Only case or separators differ: the same word, written another way.
-      const sameWord =
-        known.toLowerCase().replace(/[\s_-]+/g, "") ===
-        type.toLowerCase().replace(/[\s_-]+/g, "");
+      const sameWord = canonical(known) === canonical(type);
       at(
         "type-spelling",
         "warning",

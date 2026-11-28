@@ -20,7 +20,7 @@ export interface KeySuggestion {
 
 // Lower case, without separators: dependsOn, depends-on and Depends_On are
 // all "dependson".
-const canonical = (s: string) => s.toLowerCase().replace(/[\s_-]+/g, "");
+export const canonical = (s: string) => s.toLowerCase().replace(/[\s_-]+/g, "");
 
 // Other words for a dependency key that are not within editing distance.
 // Maps, not object literals: a key such as "constructor" must not find an
@@ -50,6 +50,12 @@ const REVERSE = new Map<string, DependencyKey>([
   ["superseded", "supersedes"],
   ["satisfied", "satisfies"],
   ["satisfiedby", "satisfies"],
+  ["satisfiers", "satisfies"],
+  ["blocksby", "blocks"],
+  ["dependsonby", "depends_on"],
+  ["dependedon", "depends_on"],
+  ["dependedonby", "depends_on"],
+  ["dependents", "depends_on"],
   ["derivedby", "derived_from"],
   ["changedby", "changes"],
 ]);
@@ -111,23 +117,51 @@ function replacesWord(written: string, known: string): boolean {
   });
 }
 
+// A known key with words added (description_en, verified_by) names another
+// thing, not a misspelling.
+function addsWords(written: string, known: string): boolean {
+  const a = words(written);
+  const b = words(known);
+  return a.length > b.length && b.every((w, i) => a[i] === w);
+}
+
+// Two words of the same length that differ in one letter are often both
+// real words ("charges" and "changes", "statue" and "status").
+function swapOnly(a: string, b: string): boolean {
+  return a.length === b.length && [...a].sort().join() === [...b].sort().join();
+}
+
 // How far a key is from a known key, or null when not close. A plural "s"
 // comes before one letter of difference: "states" is "state", not "status".
+// - One letter: an extra or missing letter, or two adjacent letters swapped.
+//   A replaced letter counts only from eight letters on.
+// - Two letters: only from nine letters on, with the first three the same.
 // Short words are too close to each other ("size" is one letter from
-// "side"), so a short known key matches by editing only a longer written
-// key, one letter away ("stated" for "state").
+// "side"), so a short known key matches only a longer key ("stated").
 function near(written: string, known: string): number | null {
   const a = canonical(written);
   const b = canonical(known);
   if (a === b) return 0;
   if (a === `${b}s` || b === `${a}s`) return 0.5;
   if (a.length < 6) return null;
+  if (addsWords(written, known)) return null;
   // Only for keys that are not dependencies: a dependency key with a word
   // replaced (depends_to) is still most likely meant as the dependency.
   if (!DEPENDENCY_SET.has(known) && replacesWord(written, known)) return null;
   const d = editDistance(a, b);
-  if (b.length < 6) return d <= 1 ? d : null;
-  return d <= 2 ? d : null;
+  if (d === 1) {
+    if (a.length === b.length && a.length < 8 && !swapOnly(a, b)) return null;
+    return 1;
+  }
+  if (
+    d === 2 &&
+    a.length >= 9 &&
+    b.length >= 9 &&
+    a.slice(0, 3) === b.slice(0, 3)
+  ) {
+    return 2;
+  }
+  return null;
 }
 
 // The key a frontmatter key was probably meant to be, or null when the key
@@ -182,9 +216,9 @@ export function suggestType(type: string): string | null {
           : null;
       // Short: one letter more, or two adjacent letters swapped. One letter
       // replaced makes another word too often ("Disk" for "Risk").
-      const swapped =
-        a.length === b.length && [...a].sort().join() === [...b].sort().join();
-      if (b.length < 6 && e === 1 && (a.length > b.length || swapped)) d = 1;
+      if (b.length < 6 && e === 1 && (a.length > b.length || swapOnly(a, b))) {
+        d = 1;
+      }
     }
     if (d !== null && (best === null || d < best.d)) best = { type: known, d };
   }

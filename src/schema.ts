@@ -38,7 +38,9 @@ export const DEPENDENCY_KEYS = {
 export type DependencyKey = keyof typeof DEPENDENCY_KEYS;
 
 // Frontmatter keys other than the dependency keys that OKF or Adaptrace
-// reads. A key close to one of these is likely a misspelling (ADR-047).
+// reads: the frontmatter table in docs/spec/schema.md, and the keys that
+// commands read (owner, due, backlog). A key close to one of these is
+// likely a misspelling (ADR-047).
 export const KNOWN_KEYS = [
   "type",
   "title",
@@ -58,6 +60,9 @@ export const KNOWN_KEYS = [
   "role",
   "okf_version",
   "timestamp",
+  "owner",
+  "due",
+  "backlog",
 ] as const;
 
 export const DEPENDENCY_KEY_NAMES = Object.keys(

@@ -41,6 +41,15 @@ test("suggestKey: known and unrelated keys pass, near misses name the key", () =
     "requested_at",
     "received_by",
     "changed",
+    "channel",
+    "change_id",
+    "chances",
+    "Charges",
+    "stages",
+    "description_en",
+    "verified_by",
+    "generated_by",
+    "title_en",
   ]) {
     expect(suggestKey(key)).toBeNull();
   }
@@ -75,6 +84,22 @@ test("suggestKey: known and unrelated keys pass, near misses name the key", () =
   });
   expect(suggestKey("satisfied")?.reverse).toBe(true);
   expect(suggestKey("roles")?.key).toBe("role");
+  expect(suggestKey("backlogs")?.key).toBe("backlog");
+  expect(suggestKey("statue")?.key).toBe("state");
+  expect(suggestKey("backlgo")?.key).toBe("backlog");
+  expect(suggestKey("satisifes")?.key).toBe("satisfies");
+  for (const [key, meant] of [
+    ["satisfiers", "satisfies"],
+    ["blocks_by", "blocks"],
+    ["depends_on_by", "depends_on"],
+    ["depended_on", "depends_on"],
+  ] as const) {
+    expect(suggestKey(key)).toEqual({
+      key: meant,
+      dependency: true,
+      reverse: true,
+    });
+  }
   for (const key of [
     "blocked",
     "blocker",

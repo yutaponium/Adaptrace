@@ -92,7 +92,7 @@ Adaptraceのバンドルは、[OKF 0.2](https://github.com/GoogleCloudPlatform/k
 | error | `dependency-cycle` | 見直しの連鎖（`depends_on`・`derived_from`・`satisfies`）か `supersedes` が循環している |
 | warning | `okf-version` | `okf_version` が0.2でない |
 | warning | `type-spelling` | 表の型を小文字やハイフンで書いている。または、表の型と1〜2文字だけ違う |
-| warning | `key-spelling` | キーの綴りが、上の表のキーか依存関係のキーに近い（下の「キーの書き間違い」） |
+| warning | `key-spelling` | キーの綴りが、既知のキー（「フロントマター」の表のキーや依存関係のキーなど）に近い（下の「キーの書き間違い」） |
 | warning | `invalid-status` | `status` がOKFのライフサイクルの値でない |
 | warning | `legacy-timestamp` | `timestamp` を使っている |
 | warning | `invalid-generated` / `invalid-verified` / `invalid-datetime` | `generated`、`verified`、`stale_after`、`received_at` の形が正しくない |
@@ -112,11 +112,21 @@ OKFでは知らないキーも許されるので、依存関係のキーを書�
 
 - 大文字・小文字と区切り（`_`、`-`、空白）を除くと、既知のキーと同じ（`dependsOn`、`derived-from`）
 - 既知のキーに `s` を付けた形か、`s` を除いた形（`block`、`tag`）
-- 6文字以上で、既知のキーと1〜2文字だけ違う（`depend_on`、`recieved_at`、`supercedes`）。既知のキーが5文字以下なら、1文字だけ長い（`stated`）
+- 6文字以上で、既知のキーと1文字だけ多いか少ないか、隣り合う2文字が入れ替わっている（`depend_on`、`recieved_at`、`stated`）
+- 8文字以上で、既知のキーと1文字だけ違う（`supercedes`）
+- 9文字以上で、先頭の3文字が同じで、既知のキーと2文字だけ違う（`depends_to`）
 - 依存関係の別の言い方（`dependencies`、`depends`、`depend`、`derived`、`satisfy`、`blocking`）
-- 依存関係を相手の側から書いたキー（`blocked_by`、`blocked`、`blocks_on`、`blocker`、`superseded_by`、`superseded`、`satisfied_by`、`satisfied`、`derived_by`、`changed_by`）。Adaptraceは、関係を一方の文書にだけ書きます。相手の文書に、対応するキーを書きます。`blocked_by` などは、この文書の `depends_on` でも書けます
+- 依存関係を相手の側から書いたキー（`blocked_by`、`blocked`、`blocks_on`、`blocks_by`、`blocker`、`superseded_by`、`superseded`、`satisfied_by`、`satisfied`、`satisfiers`、`depended_on`、`dependents`、`derived_by`、`changed_by` など）。Adaptraceは、関係を一方の文書にだけ書きます。相手の文書に、対応するキーを書きます。`blocked_by` などは、この文書の `depends_on` でも書けます
 
-既知のキーは、「フロントマター」の表のキー、依存関係のキー、`okf_version`、`timestamp` です。5文字以下の独自のキー（`size`、`due`）は、`s` の有無のほかは、1文字違いでも警告しません。依存関係でないキーの単語を丸ごと別の単語にしたキー（`requested_at`、`received_by`）と、日時に使われることが多い `changed` は、別のものを表すとみなし、警告しません。
+既知のキーは、「フロントマター」の表のキー、依存関係のキー、`okf_version`、`timestamp` と、コマンドが読む `owner`、`due`、`backlog` です。
+
+次のキーは、別のものを表すとみなし、警告しません。
+
+- 5文字以下のキーで、`s` の有無のほかに1文字違う（`size`）
+- 7文字以下で、既知のキーと同じ長さで1文字を置き換えた（`charges`、`chances`）。短い語は、1文字の置き換えで別の語になりやすいため
+- 既知のキーに単語を付け足した（`description_en`、`verified_by`）
+- 依存関係でないキーの単語を、丸ごと別の単語にした（`requested_at`、`received_by`）
+- 日時に使われることが多い `changed`
 
 ### デッドロック
 

@@ -94,7 +94,7 @@ It reads links of the form `[text](target)` and reference-style links (`[text][1
 | error | `dependency-cycle` | The review chain (`depends_on`, `derived_from`, `satisfies`) or `supersedes` forms a cycle |
 | warning | `okf-version` | `okf_version` is not 0.2 |
 | warning | `type-spelling` | A type in the table is written in lowercase or with hyphens, or a type is one or two letters away from a type in the table |
-| warning | `key-spelling` | A key is spelled close to a key in the table above or a dependency key (see "Misspelled keys" below) |
+| warning | `key-spelling` | A key is spelled close to a known key, such as a key in the "Frontmatter" table or a dependency key (see "Misspelled keys" below) |
 | warning | `invalid-status` | `status` is not an OKF lifecycle value |
 | warning | `legacy-timestamp` | `timestamp` is used |
 | warning | `invalid-generated` / `invalid-verified` / `invalid-datetime` | The form of `generated`, `verified`, `stale_after` or `received_at` is wrong |
@@ -114,11 +114,21 @@ So the following keys get a `key-spelling` warning ([ADR-047](../../.adaptrace/d
 
 - Ignoring case and separators (`_`, `-`, spaces), the key equals a known key (`dependsOn`, `derived-from`)
 - The key is a known key with an `s` added or removed (`block`, `tag`)
-- The key has six or more letters and is one or two letters away from a known key (`depend_on`, `recieved_at`, `supercedes`). For a known key of five letters or fewer, the key is one letter longer (`stated`)
+- The key has six or more letters and has one extra or missing letter, or two adjacent letters swapped, compared with a known key (`depend_on`, `recieved_at`, `stated`)
+- The key has eight or more letters and one letter replaced (`supercedes`)
+- The key has nine or more letters, the same first three letters, and is two letters away from a known key (`depends_to`)
 - The key is another word for a dependency (`dependencies`, `depends`, `depend`, `derived`, `satisfy`, `blocking`)
-- The key states a dependency from the other side (`blocked_by`, `blocked`, `blocks_on`, `blocker`, `superseded_by`, `superseded`, `satisfied_by`, `satisfied`, `derived_by`, `changed_by`). Adaptrace records a relation on one document only: write the matching key on the other document. `blocked_by` and the like can also be written as `depends_on` on this document
+- The key states a dependency from the other side (`blocked_by`, `blocked`, `blocks_on`, `blocks_by`, `blocker`, `superseded_by`, `superseded`, `satisfied_by`, `satisfied`, `satisfiers`, `depended_on`, `dependents`, `derived_by`, `changed_by`, and so on). Adaptrace records a relation on one document only: write the matching key on the other document. `blocked_by` and the like can also be written as `depends_on` on this document
 
-The known keys are the keys in the "Frontmatter" table, the dependency keys, `okf_version`, and `timestamp`. Custom keys of five letters or fewer (`size`, `due`) are not warned for a one-letter difference other than a plural `s`. A non-dependency key with a whole word replaced by another (`requested_at`, `received_by`), and `changed`, which is often a date, are taken to mean something else and are not warned.
+The known keys are the keys in the "Frontmatter" table, the dependency keys, `okf_version`, `timestamp`, and `owner`, `due`, and `backlog`, which commands read.
+
+The following keys are taken to mean something else and are not warned.
+
+- A key of five letters or fewer that differs by one letter other than a plural `s` (`size`)
+- A key of seven letters or fewer with one letter replaced, at the same length as a known key (`charges`, `chances`). One replaced letter often makes another word in short words
+- A known key with words added (`description_en`, `verified_by`)
+- A non-dependency key with a whole word replaced by another (`requested_at`, `received_by`)
+- `changed`, which is often a date
 
 ### Deadlocks
 
