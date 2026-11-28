@@ -17,6 +17,7 @@ test("misspelled dependency keys and types are warned with the meant name", asyn
     "warning key-spelling tasks/login.md:8 key 'recieved_at' looks like 'received_at'; as written, Adaptrace does not read it",
     "warning key-spelling tasks/other.md:4 key 'dependencies' looks like 'depends_on'; as written, it is not read as a dependency",
     "warning key-spelling tasks/other.md:5 key 'superseded_by' is not read as a dependency. Adaptrace records this relation on the other document: write 'supersedes' there",
+    "warning key-spelling tasks/other.md:7 key 'satisifes' looks like 'satisfies'; as written, it is not read as a dependency",
   ]);
 });
 
@@ -34,6 +35,11 @@ test("suggestKey: known and unrelated keys pass, near misses name the key", () =
     "rule",
     "assignee",
     "changelog",
+    "constructor",
+    "Constructor",
+    "toString",
+    "requested_at",
+    "received_by",
   ]) {
     expect(suggestKey(key)).toBeNull();
   }
@@ -51,6 +57,17 @@ test("suggestKey: known and unrelated keys pass, near misses name the key", () =
     reverse: false,
   });
   expect(suggestKey("requestedBy")?.key).toBe("requested_by");
+  expect(suggestKey("depend")?.key).toBe("depends_on");
+  expect(suggestKey("derived")?.key).toBe("derived_from");
+  expect(suggestKey("states")?.key).toBe("state");
+  expect(suggestKey("stated")?.key).toBe("state");
+  for (const key of ["blocked", "blocker", "blockers", "blocked_on"]) {
+    expect(suggestKey(key)).toEqual({
+      key: "blocks",
+      dependency: true,
+      reverse: true,
+    });
+  }
   expect(suggestKey("satisfied_by")).toEqual({
     key: "satisfies",
     dependency: true,
@@ -65,6 +82,8 @@ test("suggestType: listed and distant types pass, near misses name the type", ()
     "Test",
     "Plan",
     "Stakeholder",
+    "Ask",
+    "Disk",
   ]) {
     expect(suggestType(type)).toBeNull();
   }
@@ -74,6 +93,8 @@ test("suggestType: listed and distant types pass, near misses name the type", ()
   expect(suggestType("Requirment")).toBe("Requirement");
   expect(suggestType("Desicion")).toBe("Decision");
   expect(suggestType("Meetings")).toBe("Meeting");
+  expect(suggestType("Tsak")).toBe("Task");
+  expect(suggestType("Taask")).toBe("Task");
 });
 
 test("editDistance counts an adjacent swap as one edit", () => {

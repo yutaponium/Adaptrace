@@ -23,23 +23,33 @@ export interface KeySuggestion {
 const canonical = (s: string) => s.toLowerCase().replace(/[\s_-]+/g, "");
 
 // Other words for a dependency key that are not within editing distance.
-const SYNONYMS: Record<string, DependencyKey> = {
-  dependencies: "depends_on",
-  dependency: "depends_on",
-  depends: "depends_on",
-  satisfy: "satisfies",
-  satisfied: "satisfies",
-};
+// Maps, not object literals: a key such as "constructor" must not find an
+// inherited property.
+const SYNONYMS = new Map<string, DependencyKey>([
+  ["dependencies", "depends_on"],
+  ["dependency", "depends_on"],
+  ["depends", "depends_on"],
+  ["depend", "depends_on"],
+  ["derived", "derived_from"],
+  ["derives", "derived_from"],
+  ["satisfy", "satisfies"],
+  ["satisfied", "satisfies"],
+]);
 
 // Keys that state the relation from the other side. Adaptrace records each
-// relation on one document only.
-const REVERSE: Record<string, DependencyKey> = {
-  blockedby: "blocks",
-  supersededby: "supersedes",
-  satisfiedby: "satisfies",
-  derivedby: "derived_from",
-  changedby: "changes",
-};
+// relation on one document only. "blocked" is one letter from "blocks", but
+// renaming it would turn the relation around.
+const REVERSE = new Map<string, DependencyKey>([
+  ["blockedby", "blocks"],
+  ["blocked", "blocks"],
+  ["blockedon", "blocks"],
+  ["blocker", "blocks"],
+  ["blockers", "blocks"],
+  ["supersededby", "supersedes"],
+  ["satisfiedby", "satisfies"],
+  ["derivedby", "derived_from"],
+  ["changedby", "changes"],
+]);
 
 const DEPENDENCY_SET = new Set<string>(DEPENDENCY_KEY_NAMES);
 const ALL_KEYS: string[] = [...DEPENDENCY_KEY_NAMES, ...KNOWN_KEYS];
@@ -73,15 +83,41 @@ export function editDistance(a: string, b: string): number {
   return (rows[a.length] as number[])[b.length] as number;
 }
 
-// Short words are too close to each other: "size" is one letter from
-// "side". They match only by case, separators or a plural "s".
+// The words of a key: depends_on, dependsOn and depends-on are all
+// ["depends", "on"].
+const words = (s: string) =>
+  s
+    .replace(/([a-z0-9])([A-Z])/g, "$1_$2")
+    .toLowerCase()
+    .split(/[\s_-]+/)
+    .filter((w) => w !== "");
+
+// A whole word replaced by another (requested_at for requested_by) names a
+// different thing, not a misspelling.
+function replacesWord(written: string, known: string): boolean {
+  const a = words(written);
+  const b = words(known);
+  if (a.length !== b.length || a.length < 2) return false;
+  return a.some((w, i) => {
+    const v = b[i] as string;
+    return w !== v && editDistance(w, v) >= Math.max(w.length, v.length);
+  });
+}
+
+// How far a key is from a known key, or null when not close. A plural "s"
+// comes before one letter of difference: "states" is "state", not "status".
+// Short words are too close to each other ("size" is one letter from
+// "side"), so a short known key matches by editing only a longer written
+// key, one letter away ("stated" for "state").
 function near(written: string, known: string): number | null {
   const a = canonical(written);
   const b = canonical(known);
   if (a === b) return 0;
-  if (a === `${b}s` || b === `${a}s`) return 1;
-  if (a.length < 6 || b.length < 6) return null;
+  if (a === `${b}s` || b === `${a}s`) return 0.5;
+  if (a.length < 6) return null;
+  if (replacesWord(written, known)) return null;
   const d = editDistance(a, b);
+  if (b.length < 6) return d <= 1 ? d : null;
   return d <= 2 ? d : null;
 }
 
@@ -90,11 +126,11 @@ function near(written: string, known: string): number | null {
 export function suggestKey(key: string): KeySuggestion | null {
   if (ALL_SET.has(key)) return null;
   const c = canonical(key);
-  const reverse = REVERSE[c];
+  const reverse = REVERSE.get(c);
   if (reverse !== undefined) {
     return { key: reverse, dependency: true, reverse: true };
   }
-  const synonym = SYNONYMS[c];
+  const synonym = SYNONYMS.get(c);
   if (synonym !== undefined) {
     return { key: synonym, dependency: true, reverse: false };
   }
@@ -113,7 +149,9 @@ export function suggestKey(key: string): KeySuggestion | null {
 
 // The listed type a type was probably meant to be, or null when it is listed
 // or not close to one. Projects may add their own types, so this only
-// catches names one or two letters from a listed type.
+// catches names one or two letters from a listed type. A listed type of five
+// letters or fewer matches only one letter more or two letters swapped
+// ("Taask", "Tsak" or "Tasks" for "Task", but not "Ask" or "Disk").
 export function suggestType(type: string): string | null {
   if ((KNOWN_TYPES as readonly string[]).includes(type)) return null;
   let best: { type: string; d: number } | null = null;
@@ -125,7 +163,12 @@ export function suggestType(type: string): string | null {
     else if (a === `${b}s`) d = 1;
     else {
       const e = editDistance(a, b);
-      d = e <= (b.length < 6 ? 1 : 2) ? e : null;
+      d = e <= 2 && b.length >= 6 ? e : null;
+      // Short: one letter more, or two adjacent letters swapped. One letter
+      // replaced makes another word too often ("Disk" for "Risk").
+      const swapped =
+        a.length === b.length && [...a].sort().join() === [...b].sort().join();
+      if (b.length < 6 && e === 1 && (a.length > b.length || swapped)) d = 1;
     }
     if (d !== null && (best === null || d < best.d)) best = { type: known, d };
   }

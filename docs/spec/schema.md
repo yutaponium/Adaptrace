@@ -56,7 +56,7 @@ Adaptraceのバンドルは、[OKF 0.2](https://github.com/GoogleCloudPlatform/k
 
 型はプロジェクトごとに追加できます。表にない型もエラーにはなりません。
 表の型を小文字やハイフンで書いた場合（`task`、`change-request`）は、書き方の修正を促す警告が出ます。
-表の型と1〜2文字だけ違う型（`Decison`、`Tasks`）も、書き間違いとして警告が出ます。4〜5文字の型（`Task`、`Risk`）は、1文字の違いと複数形だけを警告します。
+表の型と1〜2文字だけ違う型（`Decison`、`Tasks`）も、書き間違いとして警告が出ます。4〜5文字の型（`Task`、`Risk`）は、1文字多い型と、隣り合う2文字を入れ替えた型だけを警告します（`Taask`、`Tsak`、`Tasks`。`Ask` や `Disk` は警告しません）。
 
 ## 依存関係のキー
 
@@ -112,11 +112,11 @@ OKFでは知らないキーも許されるので、依存関係のキーを書�
 
 - 大文字・小文字と区切り（`_`、`-`、空白）を除くと、既知のキーと同じ（`dependsOn`、`derived-from`）
 - 既知のキーに `s` を付けた形か、`s` を除いた形（`block`、`tag`）
-- 6文字以上で、既知のキーと1〜2文字だけ違う（`depend_on`、`recieved_at`、`supercedes`）
-- 依存関係の別の言い方（`dependencies`、`depends`、`satisfy`）
-- 依存関係を相手の側から書いたキー（`blocked_by`、`superseded_by`、`satisfied_by`、`derived_by`、`changed_by`）。Adaptraceは、関係を一方の文書にだけ書きます。相手の文書に、対応するキーを書きます。`blocked_by` は、この文書の `depends_on` でも書けます
+- 6文字以上で、既知のキーと1〜2文字だけ違う（`depend_on`、`recieved_at`、`supercedes`）。既知のキーが5文字以下なら、1文字だけ長いか違う（`stated`）
+- 依存関係の別の言い方（`dependencies`、`depends`、`depend`、`derived`、`satisfy`）
+- 依存関係を相手の側から書いたキー（`blocked_by`、`blocked`、`blocker`、`superseded_by`、`satisfied_by`、`derived_by`、`changed_by`）。Adaptraceは、関係を一方の文書にだけ書きます。相手の文書に、対応するキーを書きます。`blocked_by` などは、この文書の `depends_on` でも書けます
 
-既知のキーは、「フロントマター」の表のキー、依存関係のキー、`okf_version`、`timestamp` です。5文字以下の独自のキー（`size`、`due`）は、1文字違いでは警告しません。
+既知のキーは、「フロントマター」の表のキー、依存関係のキー、`okf_version`、`timestamp` です。5文字以下の独自のキー（`size`、`due`）は、1文字違いでは警告しません。単語を丸ごと別の単語にしたキー（`requested_at`、`received_by`）は、別のものを表すとみなし、警告しません。
 
 ### デッドロック
 

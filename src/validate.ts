@@ -68,7 +68,8 @@ function checkConcept(concept: Concept, issues: Issue[]) {
     } else {
       message = `key '${key}' looks like '${s.key}'; as written, Adaptrace does not read it`;
     }
-    at("key-spelling", "warning", escapeRegExp(key), message);
+    // The key may be quoted in YAML.
+    at("key-spelling", "warning", `["']?${escapeRegExp(key)}["']?`, message);
   }
 
   if (
