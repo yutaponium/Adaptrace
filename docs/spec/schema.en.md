@@ -58,7 +58,7 @@ This document defines the rules that Adaptrace adds on top of OKF. The reasons f
 
 Each project can add types. A type not in the table is not an error.
 If a type in the table is written in lowercase or with hyphens (`task`, `change-request`), a warning suggests fixing the spelling.
-A type one or two letters away from a type in the table (`Decison`, `Tasks`) also gets a warning as a likely misspelling. A type two letters away is warned only when its first two letters match (`Revision` is not warned). For types of four or five letters (`Task`, `Risk`), only a type with one extra letter or with two adjacent letters swapped is warned (`Taask`, `Tsak`, `Tasks`; not `Ask` or `Disk`).
+A type one or two letters away from a type in the table (`Decison`, `Tasks`) also gets a warning as a likely misspelling. A type of seven letters or fewer with one letter replaced is not warned (`Melting`). A type two letters away is warned only when its first three letters match, or its first two letters match and only the order of letters differs (`Desicion`). `Revision` and `Retirement` are not warned. For types of four or five letters (`Task`, `Risk`), only a type with one extra letter or with two adjacent letters swapped is warned (`Taask`, `Tsak`, `Tasks`; not `Ask` or `Disk`).
 
 ## Dependency keys
 
@@ -110,13 +110,13 @@ It reads links of the form `[text](target)` and reference-style links (`[text][1
 ### Misspelled keys
 
 OKF allows unknown keys, so a misspelled dependency key is not an error. The dependency is treated as absent and is missing from `impact` and `stale`.
-So the following keys get a `key-spelling` warning ([ADR-047](../../.adaptrace/decisions/adr-047-key-spelling.md)).
+So the following keys get a `key-spelling` warning ([ADR-047](../../.adaptrace/decisions/adr-047-key-spelling.md)). Letters are counted without separators (`_`, `-`, spaces). A warning that takes a key for a dependency key is given only when the value is a path or a list (`blocked: true` is not warned).
 
 - Ignoring case and separators (`_`, `-`, spaces), the key equals a known key (`dependsOn`, `derived-from`)
 - The key is a known key with an `s` added or removed (`block`, `tag`)
 - The key has six or more letters and has one extra or missing letter, or two adjacent letters swapped, compared with a known key (`depend_on`, `recieved_at`, `stated`)
 - The key has eight or more letters and one letter replaced (`supercedes`)
-- The key has nine or more letters, the same first three letters, and is two letters away from a known key (`depends_to`)
+- Both the key and the known key have nine or more letters, the same first three letters, and are two letters apart (`depends_to`)
 - The key is another word for a dependency (`dependencies`, `depends`, `depend`, `derived`, `satisfy`, `blocking`)
 - The key states a dependency from the other side (`blocked_by`, `blocked`, `blocks_on`, `blocks_by`, `blocker`, `superseded_by`, `superseded`, `satisfied_by`, `satisfied`, `satisfiers`, `depended_on`, `dependents`, `derived_by`, `changed_by`, and so on). Adaptrace records a relation on one document only: write the matching key on the other document. `blocked_by` and the like can also be written as `depends_on` on this document
 

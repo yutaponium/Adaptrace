@@ -207,13 +207,17 @@ export function suggestType(type: string): string | null {
     else if (a === `${b}s`) d = 1;
     else {
       const e = editDistance(a, b);
-      // Two letters apart, an unrelated word is too often as close
-      // ("Revision" for "Decision"): the start must agree.
-      d =
-        b.length >= 6 &&
-        (e === 1 || (e === 2 && a.slice(0, 2) === b.slice(0, 2)))
-          ? e
-          : null;
+      // As for keys: one replaced letter in a word of seven letters or fewer
+      // makes another word too often ("Melting" for "Meeting"). Two letters
+      // apart, the first three must agree ("Revision" for "Decision",
+      // "Retirement" for "Requirement"), or the same letters reordered with
+      // the first two the same ("Desicion").
+      const replaced = a.length === b.length && a.length < 8 && !swapOnly(a, b);
+      const twoApart =
+        e === 2 &&
+        (a.slice(0, 3) === b.slice(0, 3) ||
+          (a.slice(0, 2) === b.slice(0, 2) && swapOnly(a, b)));
+      d = b.length >= 6 && ((e === 1 && !replaced) || twoApart) ? e : null;
       // Short: one letter more, or two adjacent letters swapped. One letter
       // replaced makes another word too often ("Disk" for "Risk").
       if (b.length < 6 && e === 1 && (a.length > b.length || swapOnly(a, b))) {

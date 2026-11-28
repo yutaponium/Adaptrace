@@ -17,7 +17,7 @@ test("misspelled dependency keys and types are warned with the meant name", asyn
     "warning key-spelling tasks/login.md:8 key 'recieved_at' looks like 'received_at'; as written, Adaptrace does not read it",
     "warning key-spelling tasks/other.md:4 key 'dependencies' looks like 'depends_on'; as written, it is not read as a dependency",
     "warning key-spelling tasks/other.md:5 key 'superseded_by' is not read as a dependency. Adaptrace records this relation on the other document: write 'supersedes' there",
-    "warning key-spelling tasks/other.md:7 key 'satisifes' looks like 'satisfies'; as written, it is not read as a dependency",
+    "warning key-spelling tasks/other.md:8 key 'satisifes' looks like 'satisfies'; as written, it is not read as a dependency",
   ]);
 });
 
@@ -132,6 +132,8 @@ test("suggestType: listed and distant types pass, near misses name the type", ()
     "Revision",
     "Division",
     "Precision",
+    "Melting",
+    "Retirement",
   ]) {
     expect(suggestType(type)).toBeNull();
   }

@@ -56,6 +56,12 @@ function checkConcept(concept: Concept, issues: Issue[]) {
   for (const key of Object.keys(fm)) {
     const s = suggestKey(key);
     if (s === null) continue;
+    // A dependency is a path or a list of paths. "blocked: true" is a flag,
+    // not a misplaced dependency.
+    const value = fm[key];
+    if (s.dependency && typeof value !== "string" && !Array.isArray(value)) {
+      continue;
+    }
     let message: string;
     if (s.reverse) {
       // X blocked_by Y is also "X waits for Y", which depends_on states.

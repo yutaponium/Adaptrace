@@ -56,7 +56,7 @@ Adaptraceのバンドルは、[OKF 0.2](https://github.com/GoogleCloudPlatform/k
 
 型はプロジェクトごとに追加できます。表にない型もエラーにはなりません。
 表の型を小文字やハイフンで書いた場合（`task`、`change-request`）は、書き方の修正を促す警告が出ます。
-表の型と1〜2文字だけ違う型（`Decison`、`Tasks`）も、書き間違いとして警告が出ます。2文字違う型は、先頭の2文字が同じものだけを警告します（`Revision` は警告しません）。4〜5文字の型（`Task`、`Risk`）は、1文字多い型と、隣り合う2文字を入れ替えた型だけを警告します（`Taask`、`Tsak`、`Tasks`。`Ask` や `Disk` は警告しません）。
+表の型と1〜2文字だけ違う型（`Decison`、`Tasks`）も、書き間違いとして警告が出ます。7文字以下の型で1文字を置き換えたものは警告しません（`Melting`）。2文字違う型は、先頭の3文字が同じものか、先頭の2文字が同じで文字の並びだけが違うもの（`Desicion`）だけを警告します（`Revision`、`Retirement` は警告しません）。4〜5文字の型（`Task`、`Risk`）は、1文字多い型と、隣り合う2文字を入れ替えた型だけを警告します（`Taask`、`Tsak`、`Tasks`。`Ask` や `Disk` は警告しません）。
 
 ## 依存関係のキー
 
@@ -108,13 +108,13 @@ Adaptraceのバンドルは、[OKF 0.2](https://github.com/GoogleCloudPlatform/k
 ### キーの書き間違い
 
 OKFでは知らないキーも許されるので、依存関係のキーを書き間違えてもエラーになりません。その依存関係は存在しないものとして扱われ、`impact` や `stale` から漏れます。
-そこで、次のキーを `key-spelling` として警告します（[ADR-047](../../.adaptrace/decisions/adr-047-key-spelling.md)）。
+そこで、次のキーを `key-spelling` として警告します（[ADR-047](../../.adaptrace/decisions/adr-047-key-spelling.md)）。文字数は、区切り（`_`、`-`、空白）を除いて数えます。依存関係のキーとみなす警告は、値がパスかリストのときだけ出します（`blocked: true` は警告しません）。
 
 - 大文字・小文字と区切り（`_`、`-`、空白）を除くと、既知のキーと同じ（`dependsOn`、`derived-from`）
 - 既知のキーに `s` を付けた形か、`s` を除いた形（`block`、`tag`）
 - 6文字以上で、既知のキーと1文字だけ多いか少ないか、隣り合う2文字が入れ替わっている（`depend_on`、`recieved_at`、`stated`）
 - 8文字以上で、既知のキーと1文字だけ違う（`supercedes`）
-- 9文字以上で、先頭の3文字が同じで、既知のキーと2文字だけ違う（`depends_to`）
+- 書いたキーと既知のキーの両方が9文字以上で、先頭の3文字が同じで、2文字だけ違う（`depends_to`）
 - 依存関係の別の言い方（`dependencies`、`depends`、`depend`、`derived`、`satisfy`、`blocking`）
 - 依存関係を相手の側から書いたキー（`blocked_by`、`blocked`、`blocks_on`、`blocks_by`、`blocker`、`superseded_by`、`superseded`、`satisfied_by`、`satisfied`、`satisfiers`、`depended_on`、`dependents`、`derived_by`、`changed_by` など）。Adaptraceは、関係を一方の文書にだけ書きます。相手の文書に、対応するキーを書きます。`blocked_by` などは、この文書の `depends_on` でも書けます
 
