@@ -2,12 +2,8 @@ import { type Bundle, type Concept, findLine } from "./bundle";
 import { buildGraph, findCycles, type Graph } from "./graph";
 import { forEachProseLine } from "./links";
 import { isReadableFile, localResources, SHA256 } from "./resource";
-import {
-  DATETIME,
-  KNOWN_TYPES,
-  LIFECYCLE_STATUSES,
-  OKF_VERSION,
-} from "./schema";
+import { DATETIME, LIFECYCLE_STATUSES, OKF_VERSION } from "./schema";
+import { canonical, suggestKey, suggestType } from "./spelling";
 
 export type Severity = "error" | "warning";
 
@@ -42,18 +38,42 @@ function checkConcept(concept: Concept, issues: Issue[]) {
       "frontmatter must have a non-empty 'type'",
     );
   } else {
-    const known = KNOWN_TYPES.find(
-      (t) =>
-        t !== type && t.toLowerCase() === type.toLowerCase().replace(/-/g, " "),
-    );
+    const known = suggestType(type);
     if (known) {
+      // Only case or separators differ: the same word, written another way.
+      const sameWord = canonical(known) === canonical(type);
       at(
         "type-spelling",
         "warning",
         "type",
-        `type '${type}' should be written '${known}'`,
+        sameWord
+          ? `type '${type}' should be written '${known}'`
+          : `type '${type}' looks like '${known}'; as written, it is a different type`,
       );
     }
+  }
+
+  for (const key of Object.keys(fm)) {
+    const s = suggestKey(key);
+    if (s === null) continue;
+    // A dependency is a path or a list of paths. "blocked: true" is a flag,
+    // not a misplaced dependency.
+    const value = fm[key];
+    if (s.dependency && typeof value !== "string" && !Array.isArray(value)) {
+      continue;
+    }
+    let message: string;
+    if (s.reverse) {
+      // X blocked_by Y is also "X waits for Y", which depends_on states.
+      const here = s.key === "blocks" ? ", or 'depends_on' here" : "";
+      message = `key '${key}' is not read as a dependency. Adaptrace records this relation on the other document: write '${s.key}' there${here}`;
+    } else if (s.dependency) {
+      message = `key '${key}' looks like '${s.key}'; as written, it is not read as a dependency`;
+    } else {
+      message = `key '${key}' looks like '${s.key}'; as written, Adaptrace does not read it`;
+    }
+    // The key may be quoted in YAML.
+    at("key-spelling", "warning", `["']?${escapeRegExp(key)}["']?`, message);
   }
 
   if (
@@ -127,6 +147,10 @@ function checkConcept(concept: Concept, issues: Issue[]) {
       );
     }
   }
+}
+
+function escapeRegExp(text: string): string {
+  return text.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
 // The form, and a real date: the last update reads it the same way.

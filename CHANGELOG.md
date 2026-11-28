@@ -4,6 +4,14 @@
 
 ## [Unreleased]
 
+### Added
+
+- `adaptrace validate`：依存関係のキーやスキーマのキーに近い綴りのキーを、`key-spelling` として警告するようにした（ADR-047）。`depend_on`、`dependsOn`、`derived-from`、`recieved_at` などは、そのままでは読まれず、依存関係なら `impact` や `stale` から漏れていた。`blocked_by`、`superseded_by` など、依存関係を相手の側から書いたキーには、どちらの文書に何を書くかを示す。MCPの `validate`、`propose_document`、`propose_update` の結果にも出る
+
+### Changed
+
+- `adaptrace validate` の `type-spelling`：表の型と1〜2文字だけ違う型（`Decison`、`Tasks`）も警告するようにした（ADR-047）。これまでは、大文字・小文字とハイフンの違いだけを警告していた
+
 ## [1.1.0] - 2026-11-26
 
 プロジェクト管理の作業を支援するskillを4つ追加したリリース。変更要求の判断の記録、マイルストーンの判定、リスクの見直し、Backlog.mdとの同期を、Claude Codeと対話しながら進められる。要件の充足を示す `coverage` を追加した。
