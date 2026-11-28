@@ -33,7 +33,7 @@ const SYNONYMS = new Map<string, DependencyKey>([
   ["derived", "derived_from"],
   ["derives", "derived_from"],
   ["satisfy", "satisfies"],
-  ["satisfied", "satisfies"],
+  ["blocking", "blocks"],
 ]);
 
 // Keys that state the relation from the other side. Adaptrace records each
@@ -45,11 +45,18 @@ const REVERSE = new Map<string, DependencyKey>([
   ["blockedon", "blocks"],
   ["blocker", "blocks"],
   ["blockers", "blocks"],
+  ["blockson", "blocks"],
   ["supersededby", "supersedes"],
+  ["superseded", "supersedes"],
+  ["satisfied", "satisfies"],
   ["satisfiedby", "satisfies"],
   ["derivedby", "derived_from"],
   ["changedby", "changes"],
 ]);
+
+// Words one letter from a dependency key that usually mean something else:
+// "changed" is most often a date.
+const NOT_KEYS = new Set(["changed"]);
 
 const DEPENDENCY_SET = new Set<string>(DEPENDENCY_KEY_NAMES);
 const ALL_KEYS: string[] = [...DEPENDENCY_KEY_NAMES, ...KNOWN_KEYS];
@@ -115,7 +122,9 @@ function near(written: string, known: string): number | null {
   if (a === b) return 0;
   if (a === `${b}s` || b === `${a}s`) return 0.5;
   if (a.length < 6) return null;
-  if (replacesWord(written, known)) return null;
+  // Only for keys that are not dependencies: a dependency key with a word
+  // replaced (depends_to) is still most likely meant as the dependency.
+  if (!DEPENDENCY_SET.has(known) && replacesWord(written, known)) return null;
   const d = editDistance(a, b);
   if (b.length < 6) return d <= 1 ? d : null;
   return d <= 2 ? d : null;
@@ -126,6 +135,7 @@ function near(written: string, known: string): number | null {
 export function suggestKey(key: string): KeySuggestion | null {
   if (ALL_SET.has(key)) return null;
   const c = canonical(key);
+  if (NOT_KEYS.has(c)) return null;
   const reverse = REVERSE.get(c);
   if (reverse !== undefined) {
     return { key: reverse, dependency: true, reverse: true };
@@ -163,7 +173,13 @@ export function suggestType(type: string): string | null {
     else if (a === `${b}s`) d = 1;
     else {
       const e = editDistance(a, b);
-      d = e <= 2 && b.length >= 6 ? e : null;
+      // Two letters apart, an unrelated word is too often as close
+      // ("Revision" for "Decision"): the start must agree.
+      d =
+        b.length >= 6 &&
+        (e === 1 || (e === 2 && a.slice(0, 2) === b.slice(0, 2)))
+          ? e
+          : null;
       // Short: one letter more, or two adjacent letters swapped. One letter
       // replaced makes another word too often ("Disk" for "Risk").
       const swapped =

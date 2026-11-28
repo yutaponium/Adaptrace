@@ -40,6 +40,7 @@ test("suggestKey: known and unrelated keys pass, near misses name the key", () =
     "toString",
     "requested_at",
     "received_by",
+    "changed",
   ]) {
     expect(suggestKey(key)).toBeNull();
   }
@@ -61,7 +62,26 @@ test("suggestKey: known and unrelated keys pass, near misses name the key", () =
   expect(suggestKey("derived")?.key).toBe("derived_from");
   expect(suggestKey("states")?.key).toBe("state");
   expect(suggestKey("stated")?.key).toBe("state");
-  for (const key of ["blocked", "blocker", "blockers", "blocked_on"]) {
+  expect(suggestKey("depends_to")?.key).toBe("depends_on");
+  expect(suggestKey("blocking")).toEqual({
+    key: "blocks",
+    dependency: true,
+    reverse: false,
+  });
+  expect(suggestKey("superseded")).toEqual({
+    key: "supersedes",
+    dependency: true,
+    reverse: true,
+  });
+  expect(suggestKey("satisfied")?.reverse).toBe(true);
+  expect(suggestKey("roles")?.key).toBe("role");
+  for (const key of [
+    "blocked",
+    "blocker",
+    "blockers",
+    "blocked_on",
+    "blocks_on",
+  ]) {
     expect(suggestKey(key)).toEqual({
       key: "blocks",
       dependency: true,
@@ -84,6 +104,9 @@ test("suggestType: listed and distant types pass, near misses name the type", ()
     "Stakeholder",
     "Ask",
     "Disk",
+    "Revision",
+    "Division",
+    "Precision",
   ]) {
     expect(suggestType(type)).toBeNull();
   }

@@ -58,7 +58,7 @@ This document defines the rules that Adaptrace adds on top of OKF. The reasons f
 
 Each project can add types. A type not in the table is not an error.
 If a type in the table is written in lowercase or with hyphens (`task`, `change-request`), a warning suggests fixing the spelling.
-A type one or two letters away from a type in the table (`Decison`, `Tasks`) also gets a warning as a likely misspelling. For types of four or five letters (`Task`, `Risk`), only a type with one extra letter or with two adjacent letters swapped is warned (`Taask`, `Tsak`, `Tasks`; not `Ask` or `Disk`).
+A type one or two letters away from a type in the table (`Decison`, `Tasks`) also gets a warning as a likely misspelling. A type two letters away is warned only when its first two letters match (`Revision` is not warned). For types of four or five letters (`Task`, `Risk`), only a type with one extra letter or with two adjacent letters swapped is warned (`Taask`, `Tsak`, `Tasks`; not `Ask` or `Disk`).
 
 ## Dependency keys
 
@@ -114,11 +114,11 @@ So the following keys get a `key-spelling` warning ([ADR-047](../../.adaptrace/d
 
 - Ignoring case and separators (`_`, `-`, spaces), the key equals a known key (`dependsOn`, `derived-from`)
 - The key is a known key with an `s` added or removed (`block`, `tag`)
-- The key has six or more letters and is one or two letters away from a known key (`depend_on`, `recieved_at`, `supercedes`). For a known key of five letters or fewer, the key is one letter longer or different (`stated`)
-- The key is another word for a dependency (`dependencies`, `depends`, `depend`, `derived`, `satisfy`)
-- The key states a dependency from the other side (`blocked_by`, `blocked`, `blocker`, `superseded_by`, `satisfied_by`, `derived_by`, `changed_by`). Adaptrace records a relation on one document only: write the matching key on the other document. `blocked_by` and the like can also be written as `depends_on` on this document
+- The key has six or more letters and is one or two letters away from a known key (`depend_on`, `recieved_at`, `supercedes`). For a known key of five letters or fewer, the key is one letter longer (`stated`)
+- The key is another word for a dependency (`dependencies`, `depends`, `depend`, `derived`, `satisfy`, `blocking`)
+- The key states a dependency from the other side (`blocked_by`, `blocked`, `blocks_on`, `blocker`, `superseded_by`, `superseded`, `satisfied_by`, `satisfied`, `derived_by`, `changed_by`). Adaptrace records a relation on one document only: write the matching key on the other document. `blocked_by` and the like can also be written as `depends_on` on this document
 
-The known keys are the keys in the "Frontmatter" table, the dependency keys, `okf_version`, and `timestamp`. Custom keys of five letters or fewer (`size`, `due`) are not warned for a one-letter difference. A key with a whole word replaced by another (`requested_at`, `received_by`) is taken to mean something else and is not warned.
+The known keys are the keys in the "Frontmatter" table, the dependency keys, `okf_version`, and `timestamp`. Custom keys of five letters or fewer (`size`, `due`) are not warned for a one-letter difference other than a plural `s`. A non-dependency key with a whole word replaced by another (`requested_at`, `received_by`), and `changed`, which is often a date, are taken to mean something else and are not warned.
 
 ### Deadlocks
 

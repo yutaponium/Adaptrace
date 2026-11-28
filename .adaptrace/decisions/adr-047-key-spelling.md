@@ -2,7 +2,7 @@
 type: Decision
 title: 依存関係のキーと型の書き間違いを、`validate` が既知の名前を示して警告する
 state: accepted
-generated: { by: claude-code/claude-opus-5-5, at: 2026-11-28T19:43:26+09:00 }
+generated: { by: claude-code/claude-opus-5-5, at: 2026-11-28T19:46:43+09:00 }
 depends_on:
   - /decisions/adr-008-okf-alignment.md
 ---
@@ -16,10 +16,11 @@ depends_on:
   - 大文字・小文字と区切り（`_`、`-`、空白）を除くと同じ
   - 末尾の `s` だけが違う
   - 書いたキーと既知のキーが6文字以上で、編集距離（隣り合う2文字の入れ替えを1と数える）が2以下。既知のキーが5文字以下なら、書いたキーが6文字以上で、編集距離が1
-  - ただし、単語を丸ごと別の単語にしたキー（`requested_by` に対する `requested_at`）は、別のものを表すので除く
-  - 依存関係の別の言い方（`dependencies`、`dependency`、`depends`、`depend`、`derived`、`derives`、`satisfy`、`satisfied`）
-- 依存関係を相手の側から書いたキー（`blocked_by`、`blocked`、`blocked_on`、`blocker`、`blockers`、`superseded_by`、`satisfied_by`、`derived_by`、`changed_by`）も警告し、相手の文書に書くキーを示す。`blocked` などは `blocks` と1文字違いだが、`blocks` に書き換えると関係の向きが逆になるため、相手の側から書いたキーとして扱う。`blocks` の側のキーは、この文書の `depends_on` でも書けることを示す
-- 型は、これまでの `type-spelling` を広げる。表の型と、大文字・小文字と区切りを除いて同じか、複数形か、編集距離が2以下なら警告する。表の型が5文字以下なら、1文字多いか、隣り合う2文字を入れ替えたときだけ警告する（`Ask`、`Disk` は警告しない）。短い語は、1文字の置き換えで別の語になりやすいため
+  - ただし、依存関係でないキーの単語を丸ごと別の単語にしたキー（`requested_by` に対する `requested_at`）は、別のものを表すので除く。依存関係のキー（`depends_to`）は除かない。書き間違いのほうが起こりやすく、見逃すと依存関係が漏れるため
+  - 依存関係の別の言い方（`dependencies`、`dependency`、`depends`、`depend`、`derived`、`derives`、`satisfy`、`blocking`）
+  - `changed` は、`changes` と1文字違いだが、日時のキーとして使われることが多いので除く
+- 依存関係を相手の側から書いたキー（`blocked_by`、`blocked`、`blocked_on`、`blocks_on`、`blocker`、`blockers`、`superseded_by`、`superseded`、`satisfied_by`、`satisfied`、`derived_by`、`changed_by`）も警告し、相手の文書に書くキーを示す。`blocked`、`superseded` などは既知のキーと1文字違いだが、既知のキーに書き換えると関係の向きが逆になるため、相手の側から書いたキーとして扱う。`blocks` の側のキーは、この文書の `depends_on` でも書けることを示す
+- 型は、これまでの `type-spelling` を広げる。表の型と、大文字・小文字と区切りを除いて同じか、複数形か、編集距離が2以下なら警告する。編集距離が2のときは、先頭の2文字が同じものに限る（`Revision` は `Decision` とみなさない）。表の型が5文字以下なら、1文字多いか、隣り合う2文字を入れ替えたときだけ警告する（`Ask`、`Disk` は警告しない）。短い語は、1文字の置き換えで別の語になりやすいため
 - どちらも警告とし、エラーにしない。終了コードは変えない
 
 ## 理由
