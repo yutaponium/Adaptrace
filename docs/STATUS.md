@@ -2,7 +2,7 @@
 
 最新の状況と、次にやること。`AGENTS.md` と食い違う場合はこのファイルを優先する。
 
-最終更新：2026-11-26
+最終更新：2026-11-28
 
 ## 今の状況
 
@@ -27,12 +27,20 @@
 - リスクの見直しを支援するskill `adaptrace-risk` を追加した。1件ずつ扱いを利用者と決め、`verified` と `stale_after` に記録する（2026-11-26、ADR-043）
 - `sync --resolve <タスク>=<側>` で、Backlog.mdとの衝突をタスクごとにそろえられるようにした（2026-11-26）。Backlog.mdとの同期を支援するskill `adaptrace-sync` を追加した。衝突などの扱いを利用者と決めてから書き込む（2026-11-26、ADR-045）。Backlog.mdでアーカイブされたタスクを、`sync` が `archived` として知らせ、問題として扱わないようにした（2026-11-26、ADR-046）
 - v1.1.0をリリースした。skill 4つ（`adaptrace-change-decision`、`adaptrace-milestone`、`adaptrace-risk`、`adaptrace-sync`）と、`coverage` を加えた（2026-11-26）
+- 記録の新規作成の支援を始めた。`validate` が、依存関係のキーと型の書き間違いを、既知の名前を示して警告するようにした（`key-spelling`、`type-spelling` の拡張。2026-11-28、ADR-047）
 
 ## 次にやること
 
 - [x] skillの候補（2026-11-26に4つ追加。ADR-026の使い分けに従い、既存の機能を組み合わせて対話しながら進める作業）。作ったら、`tests/skills/` に試験も置く
   - 済：既存のファイルの取り込み（`adaptrace-adopt`、ADR-026）、変更要求の受付（`adaptrace-change-request`、ADR-027）、見直しの実施（`adaptrace-review`、ADR-028）、定例の会議の準備（`adaptrace-weekly`、ADR-030）、議事録の取り込み（`adaptrace-minutes`、ADR-031）、判断の置き換え（`adaptrace-supersede`、ADR-032）、バンドルのヘルスチェック（`health` とskill `adaptrace-health`、ADR-033、ADR-034）、変更要求の判断の記録（`adaptrace-change-decision`、ADR-039）、マイルストーンの判定（`coverage` とskill `adaptrace-milestone`、ADR-040、ADR-041）、リスクの見直し（`adaptrace-risk`、ADR-043）、Backlog.mdとの同期（`sync --resolve <タスク>=<側>` とskill `adaptrace-sync`、ADR-045）
   - `state` を書き換えるskillは、`state` の値の一覧が未確定なので、バンドルで使っている値にそろえる（`adaptrace-change-request` と同じ方針）
+
+- [ ] 記録の新規作成の支援（2026-11-28に方針を決めた順で進める）
+  - 済：書き間違いの警告（ADR-047）
+  - CLIの新規作成のコマンド（`propose_document` と同じ処理。既定は表示だけで、`--write` で作成する）
+  - 顧客とのメールや電話のやり取りを記録する新しい型。型の名前と、書くキーは未確定
+  - 型ごとの推奨キーと、ない場合の警告。型ごとのキーの一覧は未確定
+  - 記録を対話しながら作るskill
 
 ## 未確定事項
 

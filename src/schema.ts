@@ -37,6 +37,29 @@ export const DEPENDENCY_KEYS = {
 
 export type DependencyKey = keyof typeof DEPENDENCY_KEYS;
 
+// Frontmatter keys other than the dependency keys that OKF or Adaptrace
+// reads. A key close to one of these is likely a misspelling (ADR-047).
+export const KNOWN_KEYS = [
+  "type",
+  "title",
+  "description",
+  "tags",
+  "status",
+  "generated",
+  "verified",
+  "stale_after",
+  "resource",
+  "resource_sha256",
+  "sources",
+  "state",
+  "received_at",
+  "requested_by",
+  "side",
+  "role",
+  "okf_version",
+  "timestamp",
+] as const;
+
 export const DEPENDENCY_KEY_NAMES = Object.keys(
   DEPENDENCY_KEYS,
 ) as DependencyKey[];

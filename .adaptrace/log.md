@@ -1,5 +1,9 @@
 # 変更履歴
 
+## 2026-11-28
+
+* **Creation**: 依存関係のキーと型の書き間違いを警告する方針を [ADR-047](/decisions/adr-047-key-spelling.md) として記録した
+
 ## 2026-11-26
 
 * **Creation**: Backlog.mdでアーカイブされたタスクの扱いを [ADR-046](/decisions/adr-046-sync-archived.md) として記録した

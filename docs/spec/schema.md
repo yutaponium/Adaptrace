@@ -38,6 +38,7 @@ Adaptraceのバンドルは、[OKF 0.2](https://github.com/GoogleCloudPlatform/k
 - 日時は、UTCオフセット付きのISO 8601で書きます（例：`2026-10-29T10:00:00+09:00`）
 - actorはOKFの決まりに従います。人は `human:<id>`、エージェントやツールは `<producer>/<version>`、自動処理は `process:<id>` です
 - `owner` や `due` など、ほかのキーも自由に追加できます。Adaptraceは知らないキーを削除しません
+- 上の表のキーや依存関係のキーに近い綴りのキー（`depend_on`、`dependsOn`、`recieved_at` など）は、書き間違いとして警告が出ます。そのままでは読まれず、依存関係なら影響分析から漏れるためです（[ADR-047](../../.adaptrace/decisions/adr-047-key-spelling.md)）
 - OKF 0.1の `timestamp` は読めますが、`generated.at` への移行を勧める警告が出ます
 
 ## 型
@@ -55,6 +56,7 @@ Adaptraceのバンドルは、[OKF 0.2](https://github.com/GoogleCloudPlatform/k
 
 型はプロジェクトごとに追加できます。表にない型もエラーにはなりません。
 表の型を小文字やハイフンで書いた場合（`task`、`change-request`）は、書き方の修正を促す警告が出ます。
+表の型と1〜2文字だけ違う型（`Decison`、`Tasks`）も、書き間違いとして警告が出ます。4〜5文字の型（`Task`、`Risk`）は、1文字の違いと複数形だけを警告します。
 
 ## 依存関係のキー
 
@@ -89,7 +91,8 @@ Adaptraceのバンドルは、[OKF 0.2](https://github.com/GoogleCloudPlatform/k
 | error | `dependency-target` | 依存先が存在しない、概念の文書でない、バンドルの外にある |
 | error | `dependency-cycle` | 見直しの連鎖（`depends_on`・`derived_from`・`satisfies`）か `supersedes` が循環している |
 | warning | `okf-version` | `okf_version` が0.2でない |
-| warning | `type-spelling` | 表の型を小文字やハイフンで書いている |
+| warning | `type-spelling` | 表の型を小文字やハイフンで書いている。または、表の型と1〜2文字だけ違う |
+| warning | `key-spelling` | キーの綴りが、上の表のキーか依存関係のキーに近い（下の「キーの書き間違い」） |
 | warning | `invalid-status` | `status` がOKFのライフサイクルの値でない |
 | warning | `legacy-timestamp` | `timestamp` を使っている |
 | warning | `invalid-generated` / `invalid-verified` / `invalid-datetime` | `generated`、`verified`、`stale_after`、`received_at` の形が正しくない |
@@ -101,6 +104,19 @@ Adaptraceのバンドルは、[OKF 0.2](https://github.com/GoogleCloudPlatform/k
 | warning | `missing-generated` | `generated.at` も `timestamp` もない。内容の最終更新が分からない（下の「最終更新」）。`verified` だけがある文書と、`generated` に `at` がない文書も含む。`at` の形式が違う文書は、`invalid-datetime` が示す。CLIとMCPの `validate` だけが調べる |
 | warning | `stale-generated` | 本文を変えたのに、`generated` も `verified` も変えていない（下の「更新漏れの検出」）。CLIとMCPの `validate` だけが、gitのリポジトリで調べる |
 | warning | `stale-generated-skipped` | 浅いcloneなので、`stale-generated` を調べなかった。または、gitが比べられなかった文書がある |
+
+### キーの書き間違い
+
+OKFでは知らないキーも許されるので、依存関係のキーを書き間違えてもエラーになりません。その依存関係は存在しないものとして扱われ、`impact` や `stale` から漏れます。
+そこで、次のキーを `key-spelling` として警告します（[ADR-047](../../.adaptrace/decisions/adr-047-key-spelling.md)）。
+
+- 大文字・小文字と区切り（`_`、`-`、空白）を除くと、既知のキーと同じ（`dependsOn`、`derived-from`）
+- 既知のキーに `s` を付けた形か、`s` を除いた形（`block`、`tag`）
+- 6文字以上で、既知のキーと1〜2文字だけ違う（`depend_on`、`recieved_at`、`supercedes`）
+- 依存関係の別の言い方（`dependencies`、`depends`、`satisfy`）
+- 依存関係を相手の側から書いたキー（`blocked_by`、`superseded_by`、`satisfied_by`、`derived_by`、`changed_by`）。Adaptraceは、関係を一方の文書にだけ書きます。相手の文書に、対応するキーを書きます。`blocked_by` は、この文書の `depends_on` でも書けます
+
+既知のキーは、「フロントマター」の表のキー、依存関係のキー、`okf_version`、`timestamp` です。5文字以下の独自のキー（`size`、`due`）は、1文字違いでは警告しません。
 
 ### デッドロック
 

@@ -1,0 +1,83 @@
+import { expect, test } from "bun:test";
+import { loadBundle } from "../src/bundle";
+import { editDistance, suggestKey, suggestType } from "../src/spelling";
+import { validate } from "../src/validate";
+
+test("misspelled dependency keys and types are warned with the meant name", async () => {
+  const issues = validate(await loadBundle("tests/fixtures/spelling"));
+  const found = issues.map(
+    (i) => `${i.severity} ${i.code} ${i.file}:${i.line} ${i.message}`,
+  );
+  expect(found).toEqual([
+    "warning type-spelling decisions/auth.md:2 type 'Decison' looks like 'Decision'; as written, it is a different type",
+    "warning type-spelling tasks/login.md:2 type 'Tasks' looks like 'Task'; as written, it is a different type",
+    "warning key-spelling tasks/login.md:4 key 'dependsOn' looks like 'depends_on'; as written, it is not read as a dependency",
+    "warning key-spelling tasks/login.md:5 key 'derived-from' looks like 'derived_from'; as written, it is not read as a dependency",
+    "warning key-spelling tasks/login.md:7 key 'blocked_by' is not read as a dependency. Adaptrace records this relation on the other document: write 'blocks' there, or 'depends_on' here",
+    "warning key-spelling tasks/login.md:8 key 'recieved_at' looks like 'received_at'; as written, Adaptrace does not read it",
+    "warning key-spelling tasks/other.md:4 key 'dependencies' looks like 'depends_on'; as written, it is not read as a dependency",
+    "warning key-spelling tasks/other.md:5 key 'superseded_by' is not read as a dependency. Adaptrace records this relation on the other document: write 'supersedes' there",
+  ]);
+});
+
+test("suggestKey: known and unrelated keys pass, near misses name the key", () => {
+  for (const key of [
+    "depends_on",
+    "state",
+    "status",
+    "owner",
+    "due",
+    "impact",
+    "probability",
+    "backlog",
+    "size",
+    "rule",
+    "assignee",
+    "changelog",
+  ]) {
+    expect(suggestKey(key)).toBeNull();
+  }
+  expect(suggestKey("depend_on")?.key).toBe("depends_on");
+  expect(suggestKey("dpeends_on")?.key).toBe("depends_on");
+  expect(suggestKey("Depends-On")?.key).toBe("depends_on");
+  expect(suggestKey("satisfy")?.key).toBe("satisfies");
+  expect(suggestKey("satisifes")?.key).toBe("satisfies");
+  expect(suggestKey("block")?.key).toBe("blocks");
+  expect(suggestKey("change")?.key).toBe("changes");
+  expect(suggestKey("supercedes")?.key).toBe("supersedes");
+  expect(suggestKey("tag")).toEqual({
+    key: "tags",
+    dependency: false,
+    reverse: false,
+  });
+  expect(suggestKey("requestedBy")?.key).toBe("requested_by");
+  expect(suggestKey("satisfied_by")).toEqual({
+    key: "satisfies",
+    dependency: true,
+    reverse: true,
+  });
+});
+
+test("suggestType: listed and distant types pass, near misses name the type", () => {
+  for (const type of [
+    "Task",
+    "Change Request",
+    "Test",
+    "Plan",
+    "Stakeholder",
+  ]) {
+    expect(suggestType(type)).toBeNull();
+  }
+  expect(suggestType("task")).toBe("Task");
+  expect(suggestType("change-request")).toBe("Change Request");
+  expect(suggestType("ChangeRequest")).toBe("Change Request");
+  expect(suggestType("Requirment")).toBe("Requirement");
+  expect(suggestType("Desicion")).toBe("Decision");
+  expect(suggestType("Meetings")).toBe("Meeting");
+});
+
+test("editDistance counts an adjacent swap as one edit", () => {
+  expect(editDistance("depends", "dpeends")).toBe(1);
+  expect(editDistance("", "abc")).toBe(3);
+  expect(editDistance("kitten", "sitting")).toBe(3);
+});

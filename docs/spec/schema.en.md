@@ -40,6 +40,7 @@ This document defines the rules that Adaptrace adds on top of OKF. The reasons f
 - Write datetimes in ISO 8601 with a UTC offset (for example, `2026-10-29T10:00:00+09:00`)
 - Actors follow the OKF rules. A person is `human:<id>`, an agent or tool is `<producer>/<version>`, and an automated process is `process:<id>`
 - You may add other keys freely, such as `owner` or `due`. Adaptrace does not delete keys it does not know
+- A key spelled close to a key in the table above or a dependency key (`depend_on`, `dependsOn`, `recieved_at`, and so on) gets a warning as a likely misspelling. As written it is not read, and a dependency would be missing from impact analysis ([ADR-047](../../.adaptrace/decisions/adr-047-key-spelling.md))
 - The OKF 0.1 `timestamp` is readable, but a warning recommends moving to `generated.at`
 
 ## Types
@@ -57,6 +58,7 @@ This document defines the rules that Adaptrace adds on top of OKF. The reasons f
 
 Each project can add types. A type not in the table is not an error.
 If a type in the table is written in lowercase or with hyphens (`task`, `change-request`), a warning suggests fixing the spelling.
+A type one or two letters away from a type in the table (`Decison`, `Tasks`) also gets a warning as a likely misspelling. For types of four or five letters (`Task`, `Risk`), only one letter of difference and the plural are warned.
 
 ## Dependency keys
 
@@ -91,7 +93,8 @@ It reads links of the form `[text](target)` and reference-style links (`[text][1
 | error | `dependency-target` | The target does not exist, is not a concept document, or is outside the bundle |
 | error | `dependency-cycle` | The review chain (`depends_on`, `derived_from`, `satisfies`) or `supersedes` forms a cycle |
 | warning | `okf-version` | `okf_version` is not 0.2 |
-| warning | `type-spelling` | A type in the table is written in lowercase or with hyphens |
+| warning | `type-spelling` | A type in the table is written in lowercase or with hyphens, or a type is one or two letters away from a type in the table |
+| warning | `key-spelling` | A key is spelled close to a key in the table above or a dependency key (see "Misspelled keys" below) |
 | warning | `invalid-status` | `status` is not an OKF lifecycle value |
 | warning | `legacy-timestamp` | `timestamp` is used |
 | warning | `invalid-generated` / `invalid-verified` / `invalid-datetime` | The form of `generated`, `verified`, `stale_after` or `received_at` is wrong |
@@ -103,6 +106,19 @@ It reads links of the form `[text](target)` and reference-style links (`[text][1
 | warning | `missing-generated` | Neither `generated.at` nor `timestamp` exists. The last update of the content is unknown ("Last update" below). This includes documents with only `verified`, and documents whose `generated` has no `at`. A document with a wrongly formatted `at` is reported by `invalid-datetime`. Only `validate` in the CLI and MCP checks this |
 | warning | `stale-generated` | The body changed, but neither `generated` nor `verified` changed ("Detecting missed updates" below). Only `validate` in the CLI and MCP checks this, in a git repository |
 | warning | `stale-generated-skipped` | `stale-generated` was not checked because the clone is shallow. Or git could not compare some documents |
+
+### Misspelled keys
+
+OKF allows unknown keys, so a misspelled dependency key is not an error. The dependency is treated as absent and is missing from `impact` and `stale`.
+So the following keys get a `key-spelling` warning ([ADR-047](../../.adaptrace/decisions/adr-047-key-spelling.md)).
+
+- Ignoring case and separators (`_`, `-`, spaces), the key equals a known key (`dependsOn`, `derived-from`)
+- The key is a known key with an `s` added or removed (`block`, `tag`)
+- The key has six or more letters and is one or two letters away from a known key (`depend_on`, `recieved_at`, `supercedes`)
+- The key is another word for a dependency (`dependencies`, `depends`, `satisfy`)
+- The key states a dependency from the other side (`blocked_by`, `superseded_by`, `satisfied_by`, `derived_by`, `changed_by`). Adaptrace records a relation on one document only: write the matching key on the other document. `blocked_by` can also be written as `depends_on` on this document
+
+The known keys are the keys in the "Frontmatter" table, the dependency keys, `okf_version`, and `timestamp`. Custom keys of five letters or fewer (`size`, `due`) are not warned for a one-letter difference.
 
 ### Deadlocks
 

@@ -46,3 +46,4 @@
 * [ADR-044](adr-044-review-order.md) - 重い指摘があるうちはClaudeのレビューだけを繰り返し、なくなってからGeminiのレビューを実行する
 * [ADR-045](adr-045-sync-skill.md) - Backlog.mdとの同期は、skillが `sync` の計画を項目ごとに示し、衝突や問題の扱いを利用者と決めてから書き込む
 * [ADR-046](adr-046-sync-archived.md) - Backlog.mdでアーカイブされたタスクは、`sync` が `archived` として知らせ、問題として扱わない
+* [ADR-047](adr-047-key-spelling.md) - 依存関係のキーと型の書き間違いを、validateが既知の名前を示して警告する
